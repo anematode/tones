@@ -10,7 +10,7 @@ try {
 
 function chainNodes(nodes) {
     for (let i = 0; i < nodes.length - 1; i++) {
-        nodes[i].connect(nodes[i+1]);
+        nodes[i].connect(nodes[i + 1]);
     }
 }
 
@@ -18,10 +18,20 @@ const masterEntryNode = Context.createChannelMerger();
 const masterGainNode = Context.createGain();
 const masterAnalyzerNode = Context.createAnalyser();
 
+const voidNode = Context.createChannelMerger();
+const voidGainNode = Context.createGain();
+voidGainNode.gain.setValueAtTime(0, 0);
+
 chainNodes([
     masterEntryNode,
     masterGainNode,
     masterAnalyzerNode,
+    Context.destination
+]);
+
+chainNodes([
+    voidNode,
+    voidGainNode,
     Context.destination
 ]);
 
@@ -44,6 +54,22 @@ function contextTime() {
     return Context.currentTime;
 }
 
+class ContextTimeout {
+    constructor(node, time) {
+        this.node = node;
+        this.time = time;
+    }
+
+    ended() {
+        return Context.currentTime < this.time;
+    }
+
+    cancel() {
+        this.node.onended = (x => null);
+        this.node.stop();
+    }
+}
+
 function setTimeoutAudioCtx(func, time_delta) {
     let timingNode = Context.createOscillator();
     let curr = Context.currentTime;
@@ -53,17 +79,20 @@ function setTimeoutAudioCtx(func, time_delta) {
     timingNode.onended = func;
 
     timingNode.connect(Context.destination);
+
+    return new ContextTimeout(timingNode, curr + time_delta);
 }
 
 function setTimeoutAbsoluteAudioCtx(func, audioCtxTime) {
     let timingNode = Context.createOscillator();
-    let curr = Context.currentTime;
 
     timingNode.start(audioCtxTime);
     timingNode.stop(audioCtxTime);
     timingNode.onended = func;
 
     timingNode.connect(Context.destination);
+
+    return new ContextTimeout(timingNode, audioCtxTime);
 }
 
 export {
@@ -77,7 +106,9 @@ export {
     chainNodes,
     contextTime,
     setTimeoutAudioCtx as setTimeout,
-    setTimeoutAbsoluteAudioCtx as setTimeoutAbsolute
+    setTimeoutAbsoluteAudioCtx as setTimeoutAbsolute,
+    voidNode,
+    ContextTimeout
 }
 
 
