@@ -2,15 +2,16 @@ import * as audio from "./audio.js";
 
 class Instrument {
     constructor(destinationNode = audio.masterEntryNode) {
-        this.gainNode = audio.Context.createChannelMerger();
+        this.gainNode = audio.Context.createGain();
         this.analyzerNode = audio.Context.createAnalyser();
-        this.entryNode = audio.Context.createNode();
+        this.entryNode = audio.Context.createChannelMerger();
+        this.destinationNode = destinationNode;
 
         audio.chainNodes([
             this.entryNode,
             this.gainNode,
             this.analyzerNode,
-            this.destinationNode
+            destinationNode
         ]);
 
         this.previousVolume = null;

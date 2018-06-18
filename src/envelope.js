@@ -27,11 +27,27 @@ const EnvelopeHorizontal = {
     offset_by_absolute_time: (delta => (x => x + delta))
 };
 
+const EnvelopeHorizontalInverse = {
+    offset_current_time: function (x) {
+        return x - audio.contextTime();
+    },
+    offset_by_time: (delta => (function (x) {
+        return x - audio.contextTime() - delta;
+    })),
+    offset_by_absolute_time: (delta => (x => x - delta))
+};
+
 // Vertical functions / constructors
 const EnvelopeVertical = {
     vertical_idempotent: (x => x),
     vertical_exp: (x => (Math.exp(x) - 1) / Math.exp(2)),
-    vertical_exp_by: (exponent => (x => Math.exp(x) / Math.exp(exponent))),
+    vertical_exp_by: (exponent => (x => (Math.exp(x) - 1) / Math.exp(exponent))),
+};
+
+const EnvelopeVerticalInverse = {
+    vertical_idempotent: (x => x),
+    vertical_exp: (y => Math.log(y * Math.exp(2) + 1)),
+    vertical_exp_by: (exponent => (y => Math.log(y * Math.exp(exponent) + 1)))
 };
 
 // Sample frequency functions / constructors
@@ -203,4 +219,12 @@ class Envelope {
     }
 }
 
-export {Envelope, EnvelopeSegment, EnvelopeControlPoint, EnvelopeHorizontal, EnvelopeSamples, EnvelopeVertical};
+export {Envelope,
+    EnvelopeSegment,
+    EnvelopeControlPoint,
+    EnvelopeHorizontal,
+    EnvelopeHorizontalInverse,
+    EnvelopeSamples,
+    EnvelopeVertical,
+EnvelopeVerticalInverse
+};

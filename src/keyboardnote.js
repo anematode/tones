@@ -5,7 +5,7 @@
 // Sharp -> #, Double sharp -> ##, Flat -> b, Double flat -> bb
 
 
-const octave_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
+const octave_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 function mod(n, m) {
     return ((n % m) + m) % m;
@@ -421,7 +421,7 @@ const KeyboardNotes = {};
 for (let i = 12; i < 128; i++) { // C0 to G9, notes for easy access
     let note = new KeyboardNote(i);
 
-    KeyboardNotes[note.name()] = note;
+    KeyboardNotes[note.name().replace("#", "s")] = note;
 }
 
 export {noteToName, nameToNote, KeyboardNote, KeyboardInterval, KeyboardIntervals, KeyboardNotes, makeNote, makeInterval};
