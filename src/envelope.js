@@ -53,7 +53,9 @@ const EnvelopeVerticalInverse = {
 // Sample frequency functions / constructors
 const EnvelopeSamples = {
     sample_default: (x => 50),
-    sample_by_amount: (samples => (x => samples))
+    sample_by_amount: (samples => (x => samples)),
+    smart_sample:  (x => parseInt(5 * x.length() + 5)),
+    smart_sample_prec: (prec => (x => prec * x.length()))
 };
 
 function isNumber(n) {
@@ -107,6 +109,10 @@ class EnvelopeSegment {
 
     maxY() {
         return Math.max(this.p1.y, this.p2.y);
+    }
+
+    length() {
+        return this.maxX() - this.minX();
     }
 
     sample(samples = 50, v_apply = EnvelopeVertical.vertical_idempotent) {
@@ -214,7 +220,7 @@ class Envelope {
 
     apply(audioParam, h_apply = EnvelopeHorizontal.offset_current_time,
           v_apply = EnvelopeVertical.vertical_idempotent,
-          samplesPerSegment = EnvelopeSamples.sample_default) {
+          samplesPerSegment = EnvelopeSamples.smart_sample) {
         this.segments.forEach(x => x.apply(audioParam, samplesPerSegment(x), h_apply, v_apply));
     }
 }

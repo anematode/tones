@@ -15,7 +15,6 @@ function chainNodes(nodes) {
 }
 
 function removeNodesTimeout(nodes, timeout) {
-    console.log(nodes);
     return setTimeoutAudioCtx(() => {
         for (let i = 0; i < nodes.length; i++) {
             nodes[i].disconnect();
@@ -23,7 +22,7 @@ function removeNodesTimeout(nodes, timeout) {
     }, timeout);
 }
 
-const masterEntryNode = Context.createChannelMerger();
+const masterEntryNode = Context.createGain();
 const masterGainNode = Context.createGain();
 const masterAnalyzerNode = Context.createAnalyser();
 
@@ -34,9 +33,10 @@ voidGainNode.gain.setValueAtTime(0, 0);
 chainNodes([
     masterEntryNode,
     masterGainNode,
-    masterAnalyzerNode,
     Context.destination
 ]);
+
+masterGainNode.connect(masterAnalyzerNode);
 
 chainNodes([
     voidNode,

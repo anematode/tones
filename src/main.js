@@ -7,3 +7,4 @@ export * from "./envelope.js";
 export * from "./keyboardnote.js";
 export * from "./keyboardmapping.js";
 export * from "./simpleinstrument.js";
+export * from "./unisonoscillator.js";

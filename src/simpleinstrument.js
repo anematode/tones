@@ -1,8 +1,9 @@
 import { KeyboardInstrument } from "./keyboardinstrument.js";
 import { KeyboardMapping, getDefaultKeyboardDict } from "./keyboardmapping.js";
-import * as audio from "./audio";
+import * as audio from "./audio.js";
 import {EnvelopeSegment, Envelope, EnvelopeVertical, EnvelopeHorizontal} from "./envelope.js";
-import {EnvelopeVerticalInverse} from "./envelope";
+import {EnvelopeVerticalInverse} from "./envelope.js";
+import {UnisonOscillator} from "./unisonoscillator.js";
 
 class SimpleInstrument extends KeyboardInstrument {
     constructor(dict, destinationNode = audio.masterEntryNode) {
@@ -34,7 +35,9 @@ class SimpleInstrument extends KeyboardInstrument {
     }
 
     onplay(note) {
-        let tone = audio.Context.createOscillator();
+        console.log(note.name(), "play");
+        let tone = new UnisonOscillator({detune: 20, unison: 8, blend: 0.5});
+        // let tone = audio.Context.createOscillator();
         let tone_gain = audio.Context.createGain();
 
         audio.chainNodes([
@@ -42,7 +45,7 @@ class SimpleInstrument extends KeyboardInstrument {
             tone_gain,
             this.entryNode]);
 
-        tone.type = 'triangle';
+        tone.type = 'square';
         tone.frequency.value = note.twelveTETFrequency();
         tone_gain.gain.setValueAtTime(0, 0);
         tone.start();
@@ -55,6 +58,7 @@ class SimpleInstrument extends KeyboardInstrument {
     }
 
     onrelease(note) {
+        console.log(note.name(), "release");
         let group = this.oscillators[note.value];
 
         group.tone_gain.gain.cancelScheduledValues(0);
@@ -65,12 +69,9 @@ class SimpleInstrument extends KeyboardInstrument {
             EnvelopeHorizontal.offset_current_time,
             EnvelopeVertical.vertical_exp);
 
-        console.log(this.createDecayEnvelope(group.tone_gain.gain.value));
-
         this.oscillators[note.value] = null;
         let toneGain = group.tone_gain;
         let tone = group.tone;
-
         audio.removeNodesTimeout([toneGain, tone], this.decaylength + 0.1);
     }
 
@@ -84,6 +85,15 @@ class SimpleInstrument extends KeyboardInstrument {
 
     disableKeyboardPlay() {
         this.mapping.disable();
+    }
+}
+
+class Ian {
+    constructor(note) {
+        this.note = note;
+    }
+    disconnect() {
+        console.log(this.note.name() + " destroyed");
     }
 }
 

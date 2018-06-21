@@ -94,7 +94,7 @@ let _DefaultKeyboardMapping = {
     "0" : N.Ds5,
     "p" : N.E5,
     "[" : N.F5,
-    "+" : N.Fs5,
+    "=" : N.Fs5,
     "]" : N.G5
 };
 

@@ -16,6 +16,7 @@ class KeyboardInstrument extends Instrument {
     }
 
     play(note) {
+        note = new KeyboardNote(note);
         if (!this.keyboard[note.value]) {
             this.keyboard[note.value] = true;
             this.onplay(note);
@@ -23,9 +24,16 @@ class KeyboardInstrument extends Instrument {
     }
 
     release(note) {
+        note = new KeyboardNote(note);
         if (this.keyboard[note.value]) {
             this.keyboard[note.value] = false;
             this.onrelease(note);
+        }
+    }
+
+    releaseAll(notes) {
+        for (let i = 0; i < 128; i++) {
+            this.release(i);
         }
     }
 }

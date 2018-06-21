@@ -2,23 +2,32 @@ import * as audio from "./audio.js";
 
 class Instrument {
     constructor(destinationNode = audio.masterEntryNode) {
+        this.panNode = audio.Context.createStereoPanner();
         this.gainNode = audio.Context.createGain();
         this.analyzerNode = audio.Context.createAnalyser();
-        this.entryNode = audio.Context.createChannelMerger();
+        this.entryNode = audio.Context.createGain();
         this.destinationNode = destinationNode;
 
         audio.chainNodes([
             this.entryNode,
             this.gainNode,
-            this.analyzerNode,
+            this.panNode,
             destinationNode
         ]);
+
+        this.panNode.connect(this.analyzerNode);
+
+        this.panNode.pan.setValueAtTime(0, 0);
 
         this.previousVolume = null;
     }
 
     set volume(gain) {
         this.gainNode.gain = gain;
+    }
+
+    setVolume(volume) {
+        this.volume = volume;
     }
 
     get volume() {
