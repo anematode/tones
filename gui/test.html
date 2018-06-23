@@ -3,10 +3,55 @@
     <head>
         <meta charset="utf-8">
         <title>GUI Sandbox</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css?family=Unica+One');
+            text {
+                font-family: "Unica One";
+                font-size: 15px;
+                font-weight: 100;
+            }
+            .title {
+                font-size: 30px;
+                font-style: italic;
+            }
+        </style>
     </head>
 
     <body>
-        <svg style="background-color: #333" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg"></svg>
+        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg">
+            <defs>
+                <linearGradient id="MyGradient">
+                    <stop offset="0%"  stop-color="white" />
+                    <stop offset="100%" stop-color="black" />
+                </linearGradient>
+            </defs>
+            
+            <!-- Background -->
+            <rect x="0" y="0" width="1000" height="500" fill="#369"></rect>
+            <text x="10" y="30" fill="#fff" class="title">TONES</text>
+            <text x="90" y="30" fill="#fff" class="caption">anematode</text>
+            <rect x="0" y="40" width="1000" height="450" fill="#333639"></rect>
+            <rect x="250" y="-250" width="500" height="1000" fill="url(#MyGradient)" fill-opacity="0.05" transform="rotate(90 500 250)"></rect>
+            
+            <!-- Slider -->
+            <rect x="509.5" y="250" width="1" height="100" fill="#999"></rect>
+            <rect x="509.5" y="270" width="1" height="80" fill="#3cf"></rect>
+            <rect x="500" y="265" width="20" height="10" fill="#666" stroke="#3cf" rx="2"></rect>
+            
+            <!-- Button -->
+            <circle cx="750" cy="280" r="5" fill="#999"></circle>
+            <circle cx="750" cy="280" r="5" fill="#f36"></circle>
+            <circle cx="750" cy="280" r="4" fill="#666"></circle>
+            
+            <circle cx="750" cy="250" r="5" fill="#999"></circle>
+            <circle cx="750" cy="250" r="4" fill="#666"></circle>
+            
+            <!-- Group -->
+            <rect x="200" y="150" width="100" height="150" fill-opacity="0" stroke="#999" rx="10"></rect>
+            <rect x="200" y="150" width="100" height="20" fill="#999" rx="10"></rect>
+            <rect x="200" y="160" width="100" height="10" fill="#999"></rect>
+            <text x="205" y="165" fill="#fff">TITLE</text>
+        </svg>
         
         <script src="knob.js"></script>
         
