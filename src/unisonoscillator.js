@@ -19,7 +19,7 @@ const MIN_BLEND = 0;
 const MAX_BLEND = 1;
 const MAX_UNISON = 16;
 
-function udderMap(x) {
+function blendMapping(x) {
     if (x === 0) {
         return 0;
     } else if (0 < x && x <= 1) {
@@ -66,7 +66,7 @@ class UnisonOscillator {
                 series.o.detune.setValueAtTime(series.d * this._detune, 0);
                 series.o.type = this._type;
                 series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
-                series.pan.pan.setValueAtTime(udderMap(series.d * 2), 0);
+                series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
 
                 if (unison === 2) {
 
@@ -105,12 +105,12 @@ class UnisonOscillator {
                 series.o.detune.setValueAtTime(series.d * this._detune, 0);
                 series.o.type = this._type;
                 series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
-                series.pan.pan.setValueAtTime(udderMap(series.d * 2), 0);
+                series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
 
                 if (i === (unison - 1) / 2) {
-                    series.g.gain.setValueAtTime(Math.sqrt(this._blend), 0);
+                    series.g.gain.setValueAtTime(centerBlend, 0);
                 } else {
-                    series.g.gain.setValueAtTime(1 / Math.sqrt(this._blend), 0);
+                    series.g.gain.setValueAtTime(peripheralBlend, 0);
                 }
 
                 audio.chainNodes([

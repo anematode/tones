@@ -328,14 +328,14 @@ const KeyboardIntervals = {
 };
 
 function _isKeyboardNoteInstance(note) {
-    return (note instanceof KeyboardNote);
+    return (note instanceof KeyboardPitch);
 }
 
 function _isKeyboardIntervalInstance(interval) {
     return (interval instanceof KeyboardInterval);
 }
 
-class KeyboardNote {
+class KeyboardPitch {
     constructor(note) {
         if (isNumber(note)) {
             this.value = note;
@@ -346,17 +346,16 @@ class KeyboardNote {
         }
     }
 
-    subtract(note) {
+    subtract(note) { // or Interval
         if (_isKeyboardNoteInstance(note) || isNumber(note)) {
-            return new KeyboardInterval(this.value - new KeyboardNote(note).value);
+            return new KeyboardInterval(this.value - new KeyboardPitch(note).value);
         } else if (_isKeyboardIntervalInstance(note)) {
-            let interval = note;
-            return new KeyboardNote(this.value - interval.value);
+            return new KeyboardPitch(this.value - note.value);
         }
     }
 
     add(interval) {
-        return new KeyboardNote(this.value + interval.value);
+        return new KeyboardPitch(this.value + interval.value);
     }
 
     name() {
@@ -368,8 +367,8 @@ class KeyboardNote {
     }
 }
 
-function makeNote(...args) {
-    return new KeyboardNote(...args);
+function makeKeyboardPitch(...args) {
+    return new KeyboardPitch(...args);
 }
 
 class KeyboardInterval {
@@ -377,7 +376,7 @@ class KeyboardInterval {
         if (isNumber(arg1) && arg2 === undefined) {
             this.value = arg1;
         } else if (arg2 !== undefined) {
-            this.value = new KeyboardNote(arg2).subtract(new KeyboardNote(arg1)).value;
+            this.value = new KeyboardPitch(arg2).subtract(new KeyboardPitch(arg1)).value;
         } else if (_isKeyboardIntervalInstance(arg1)) {
             this.value = arg1.value;
         } else if (typeof arg1 === "string") {
@@ -397,8 +396,12 @@ class KeyboardInterval {
         return new KeyboardInterval(-this.value)
     }
 
-    twelveTETCents() {
+    cents() { // 12-TET
         return this.value * 100;
+    }
+
+    ratio() {
+        return Math.pow(2, this.value / 12);
     }
 
     name() {
@@ -406,7 +409,7 @@ class KeyboardInterval {
     }
 }
 
-function makeInterval(...args) {
+function makeKeyboardInterval(...args) {
     return new KeyboardInterval(...args);
 }
 
@@ -416,12 +419,12 @@ for (let key in KeyboardIntervals) {
 
 Object.freeze(KeyboardIntervals);
 
-const KeyboardNotes = {};
+const KeyboardPitches = {};
 
 for (let i = 12; i < 128; i++) { // C0 to G9, notes for easy access
-    let note = new KeyboardNote(i);
+    let note = new KeyboardPitch(i);
 
-    KeyboardNotes[note.name().replace("#", "s")] = note;
+    KeyboardPitches[note.name().replace("#", "s")] = note;
 }
 
-export {noteToName, nameToNote, KeyboardNote, KeyboardInterval, KeyboardIntervals, KeyboardNotes, makeNote, makeInterval};
+export {noteToName, nameToNote, KeyboardPitch, KeyboardInterval, KeyboardIntervals, KeyboardPitches, makeKeyboardPitch, makeKeyboardInterval};

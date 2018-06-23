@@ -1,6 +1,6 @@
 import * as audio from "./audio.js";
 import { Instrument } from "./instrument.js"
-import {KeyboardNote} from "./keyboardnote.js";
+import {KeyboardPitch} from "./keyboardnote.js";
 
 import { Envelope, EnvelopeSegment } from "./envelope.js"
 
@@ -16,7 +16,7 @@ class KeyboardInstrument extends Instrument {
     }
 
     play(note) {
-        note = new KeyboardNote(note);
+        note = new KeyboardPitch(note);
         if (!this.keyboard[note.value]) {
             this.keyboard[note.value] = true;
             this.onplay(note);
@@ -24,7 +24,7 @@ class KeyboardInstrument extends Instrument {
     }
 
     release(note) {
-        note = new KeyboardNote(note);
+        note = new KeyboardPitch(note);
         if (this.keyboard[note.value]) {
             this.keyboard[note.value] = false;
             this.onrelease(note);
