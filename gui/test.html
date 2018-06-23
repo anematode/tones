@@ -37,9 +37,6 @@
             function addKnob(cx, cy, r, t, c) {
                 let a = t * Math.PI * 2;
                 
-                let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                svg.appendChild(g);
-                
                 let c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 c1.style.cx = cx;
                 c1.style.cy = cy;
@@ -55,6 +52,14 @@
                 c2.style.r = r - 2;
                 c2.style.fill = '#666';
                 svg.appendChild(c2);
+                
+                let c3 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                c3.style.cx = cx;
+                c3.style.cy = cy + r - 8;
+                c3.style.r = 2;
+                c3.style.fill = c;
+                c3.setAttribute('transform', 'rotate(' + t * 360 + ' ' + cx + ' ' + cy + ')');
+                svg.appendChild(c3);
             }
             
             addKnob(250, 250, 20, 0.3, '#0ff');
