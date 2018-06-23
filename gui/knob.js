@@ -23,11 +23,11 @@ class Knob {
         this.svg.appendChild(arc);
     }
 
-    addKnob() {
+    add() {
         let c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         c1.style.cx = this.cx;
         c1.style.cy = this.cy;
-        c1.style.r = this.r - 1;
+        c1.style.r = this.r;
         c1.style.fill = '#999';
         this.svg.appendChild(c1);
 
@@ -36,16 +36,17 @@ class Knob {
         let c2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         c2.style.cx = this.cx;
         c2.style.cy = this.cy;
-        c2.style.r = this.r - 2;
+        c2.style.r = this.r - 1;
         c2.style.fill = '#666';
         this.svg.appendChild(c2);
 
-        let c3 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c3.style.cx = this.cx;
-        c3.style.cy = this.cy + this.r - 8;
-        c3.style.r = 2;
-        c3.style.fill = this.c;
-        c3.setAttribute('transform', 'rotate(' + this.t * 360 + ' ' + this.cx + ' ' + this.cy + ')');
-        this.svg.appendChild(c3);
+        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        r1.style.x = this.cx - 0.5;
+        r1.style.y = this.cy + this.r - this.r / 2;
+        r1.style.width = 1;
+        r1.style.height = this.r / 2;
+        r1.style.fill = this.c;
+        r1.setAttribute('transform', 'rotate(' + this.t * 360 + ' ' + this.cx + ' ' + this.cy + ')');
+        this.svg.appendChild(r1);
     }
 }
