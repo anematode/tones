@@ -10,4 +10,6 @@ export * from "./simpleinstrument.js";
 export * from "./unisonoscillator.js";
 export * from "./pitch.js";
 export * from "./pitchmapping.js";
-export * from "./piano.js";z
+export * from "./piano.js";
+export * from "./scalareader.js";
+export * from "./scales.js";

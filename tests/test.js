@@ -5,14 +5,34 @@ lowpass_filter.frequency.setValueAtTime(2000, 0);
 
 lowpass_filter.connect(TONES.masterEntryNode);
 
-let instrument = new TONES.Piano({
-    pitch_mapping: TONES.pitchMappingFromScale([
-        16/15, 9/8, 6/5, 5/4, 4/3, 7/5, 3/2, 8/5, 5/3, 16/9, 15/8, 2/1
-    ], TONES.KeyboardPitches.C3),
+let instrument = new TONES.SimpleInstrument({
     unison: 16,
     detune: 20
 });
 
 instrument.enableKeyboardPlay();
 
-let g = new TONES.Pitch(TONES.KeyboardPitches.A4);
+let tParams = {
+    scale: TONES.Scales.ET12,
+    baseNote: TONES.KeyboardPitches.A4,
+    baseFrequency: 440
+};
+
+function refreshInst() {
+    instrument.pitch_mapping = TONES.pitchMappingFromScale(tParams.scale, tParams.baseNote, tParams.baseFrequency);
+}
+
+document.getElementById("base_note_input").oninput = function(evt) {
+    let value = this.value;
+    try {
+        tParams.baseNote = TONES.makeKeyboardPitch(value);
+        refreshInst();
+        this.style.backgroundColor = "#FFFFFF";
+    } catch (e) {
+        this.style.backgroundColor = "#FA8072";
+    }
+};
+
+let reader = new TONES.ScalaReader(function(scalaFile) {
+
+}, document.getElementById("scala_file_input"));

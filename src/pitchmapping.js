@@ -27,13 +27,15 @@ let twelveTETMapping = new PitchMapping(twelveTETDict);
 
 let PitchMappings = {
     ET12 : twelveTETMapping
-};z
+};
 
 function mod(n, m) {
     return ((n % m) + m) % m;
 }
 
-function pitchMappingFromScale(scale, baseNote, baseFrequency) {
+function pitchMappingFromScale(scale, baseNote = Tones.KeyboardPitches.C4, baseFrequency) {
+    // scale is array of intervals or single arguments to an interval constructor
+
     scale = scale.map(f => new Interval(f));
     let scale_length = scale.length;
     let scale_repeating_interval = scale[scale_length - 1];
