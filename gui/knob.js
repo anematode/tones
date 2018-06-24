@@ -1,5 +1,31 @@
-class Knob {
+class Widget {
+    constructor() {
+        
+    }
+    
+    circle(cx, cy, r, c) {
+        let c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c1.style.cx = cx;
+        c1.style.cy = cy;
+        c1.style.r = r;
+        c1.style.fill = c;
+        return c1;
+    }
+    
+    rect(x, y, w, h, c) {
+        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        r1.style.x = x;
+        r1.style.y = y;
+        r1.style.width = w;
+        r1.style.height = h;
+        r1.style.fill = c;
+        return r1;
+    }
+}
+
+class Knob extends Widget {
     constructor(cx, cy, r, t, c, svg) {
+        super();
         this.cx = cx;
         this.cy = cy;
         this.r = r;
@@ -24,28 +50,15 @@ class Knob {
     }
 
     add() {
-        let c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c1.style.cx = this.cx;
-        c1.style.cy = this.cy;
-        c1.style.r = this.r;
-        c1.style.fill = '#999';
+        let c1 = this.circle(this.cx, this.cy, this.r, '#999');
         this.svg.appendChild(c1);
 
         this.addArc(this.cx, this.cy, this.r, this.t * Math.PI * 2, this.c);
 
-        let c2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c2.style.cx = this.cx;
-        c2.style.cy = this.cy;
-        c2.style.r = this.r - 1;
-        c2.style.fill = '#666';
+        let c2 = this.circle(this.cx, this.cy, this.r - 1, '#666');
         this.svg.appendChild(c2);
-
-        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        r1.style.x = this.cx - 0.5;
-        r1.style.y = this.cy + this.r - this.r / 2;
-        r1.style.width = 1;
-        r1.style.height = this.r / 2;
-        r1.style.fill = this.c;
+        
+        let r1 = this.rect(this.cx - 0.5, this.cy + this.r - this.r / 2, 1, this.r / 2, this.c);
         r1.setAttribute('transform', 'rotate(' + this.t * 360 + ' ' + this.cx + ' ' + this.cy + ')');
         this.svg.appendChild(r1);
     }
