@@ -63,3 +63,28 @@ class Knob extends Widget {
         this.svg.appendChild(r1);
     }
 }
+
+class Slider extends Widget {
+    constructor(cx, cy, h, v, c, svg) {
+        super();
+        this.cx = cx;
+        this.cy = cy;
+        this.h = h;
+        this.v = v;
+        this.c = c;
+        this.svg = svg;
+    }
+    
+    add() {
+        let r1 = this.rect(this.cx - 0.5, this.cy - this.h / 2, 1, this.h, "#999");
+        this.svg.appendChild(r1);
+        
+        let r2 = this.rect(this.cx - 0.5, this.cy + this.h / 2 - this.v, 1, this.v, "#3cf");
+        this.svg.appendChild(r2);
+        
+        let r3 = this.rect(this.cx - 10, this.cy + this.h / 2 - this.v - 5, 20, 10, "#666");
+        r3.style.stroke = "#3cf";
+        r3.style.rx = 2;
+        this.svg.appendChild(r3);
+    }
+}
