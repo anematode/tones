@@ -12,23 +12,28 @@ let b = new EnvelopeSegment(a.p2, [1, 0.2], 0.4);
 const DefaultAttackEnvelope = new Envelope([a,b]);
 
 class SimpleInstrument extends KeyboardInstrument {
-    constructor(parameters = {}, destinationNode = audio.masterEntryNode) {
-        super(destinationNode);
+    constructor(parameters = {}) {
+        super();
 
         this.params = {};
 
-        this.params.unison = parameters.unison || 8; // Unison (integer > 1)
+        this.params.unison = parameters.unison || 8; // Unison (integer >= 1)
         this.params.detune = (parameters.detune === 0) ? 0 : (parameters.detune || 20); // Spread of detune (cents)
         this.params.blend = (parameters.blend === 0) ? 0 : (parameters.blend || 0.6); // Blend between central and peripheral oscillators
         this.params.release_length = (parameters.release_length === 0) ? 0 : (parameters.release_length || 0.1); // Decay (sec)
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
+        this.params.waveform = parameters.waveform || "square";
+
+        if (parameters.destinationNode) {
+            this.connect(parameters.destinationNode);
+        }
 
         this.oscillators = {};
         for (let i = 0; i < 128; i++) {
             this.oscillators[i] = null;
         }
 
-        this.createDecayEnvelope = (gain_value) => {
+        this.createReleaseEnvelope = (gain_value) => {
             return new Envelope([new EnvelopeSegment([0, gain_value], [this.params.release_length, 0])]);
         };
 
@@ -46,8 +51,12 @@ class SimpleInstrument extends KeyboardInstrument {
     }
 
     onplay(note) {
-        let tone = new UnisonOscillator(this.params);
-        // let tone = audio.Context.createOscillator();
+        if (this.params.unison === 1) {
+            var tone = audio.Context.createOscillator();
+        } else {
+            var tone = new UnisonOscillator(this.params);
+        }
+
         let tone_gain = audio.Context.createGain();
 
         audio.chainNodes([
@@ -55,7 +64,8 @@ class SimpleInstrument extends KeyboardInstrument {
             tone_gain,
             this.entryNode]);
 
-        tone.type = 'square';
+
+        tone.type = this.waveform;
         tone.frequency.value = this.pitch_mapping.transform(note);
         tone_gain.gain.setValueAtTime(0, 0);
         tone.start();
@@ -71,7 +81,7 @@ class SimpleInstrument extends KeyboardInstrument {
         let group = this.oscillators[note.value];
 
         group.tone_gain.gain.cancelScheduledValues(0);
-        this.createDecayEnvelope(
+        this.createReleaseEnvelope(
             EnvelopeVerticalInverse.vertical_exp(group.tone_gain.gain.value)
             // We invert the value because it was transformed by EnvelopeVertical.vertical_exp
         ).apply(group.tone_gain.gain,
@@ -88,12 +98,21 @@ class SimpleInstrument extends KeyboardInstrument {
         return this.keyboard_mapping.enabled;
     }
 
+    set keyboardPlayEnabled(boolean) {
+        if (boolean) {
+            enableKeyboardPlay();
+        } else {
+            disableKeybordPlay();
+        }
+    }
+
     enableKeyboardPlay() {
         this.keyboard_mapping.enable();
     }
 
     disableKeyboardPlay() {
         this.keyboard_mapping.disable();
+        this.releaseAll();
     }
 
     oscillatorApply(func) {
@@ -102,6 +121,39 @@ class SimpleInstrument extends KeyboardInstrument {
                 func(this.oscillators[i], i);
             }
         }
+    }
+
+    set detune(value) {
+        this.params.detune = value;
+        this.oscillatorApply(function(x) {
+            x.tone.detune.value = value;
+        });
+    }
+
+    get detune() {
+        return this.params.detune;
+    }
+
+    set blend(value) {
+        this.params.blend = value;
+        this.oscillatorApply(function(x) {
+            x.tone.blend.value = value;
+        });
+    }
+
+    get blend() {
+        return this.params.blend;
+    }
+
+    set waveform(value) {
+        this.params.waveform = value;
+        this.oscillatorApply(function(x) {
+            x.tone.type = value;
+        })
+    }
+
+    get waveform() {
+        return this.params.waveform;
     }
 }
 

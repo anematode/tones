@@ -80,8 +80,8 @@ class PianoOscillator {
 }
 
 class Piano extends KeyboardInstrument {
-    constructor(parameters = {}, destinationNode = audio.masterEntryNode) {
-        super(destinationNode);
+    constructor(parameters = {}) {
+        super();
 
         this.params = {};
 
@@ -90,6 +90,10 @@ class Piano extends KeyboardInstrument {
         this.params.blend = (parameters.blend === 0) ? 0 : (parameters.blend || 0.6); // Blend between central and peripheral oscillators
         this.params.release_length = (parameters.release_length === 0) ? 0 : (parameters.release_length || 0.1); // Decay (sec)
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
+
+        if (parameters.destinationNode) {
+            this.connect(parameters.destinationNode);
+        }
 
         this.oscillators = {};
         for (let i = 0; i < 128; i++) {

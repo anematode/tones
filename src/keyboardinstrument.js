@@ -5,9 +5,8 @@ import {KeyboardPitch} from "./keyboardnote.js";
 import { Envelope, EnvelopeSegment } from "./envelope.js"
 
 class KeyboardInstrument extends Instrument {
-    constructor(destinationNode = audio.masterEntryNode) {
-        super(destinationNode);
-
+    constructor() {
+        super();
 
         this.keyboard = {};
         for (let i = 0; i < 128; i++) {

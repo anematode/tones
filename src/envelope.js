@@ -15,6 +15,8 @@ class EnvelopeControlPoint {
     }
 }
 
+// TODO: Allow 0 attack length, etc.
+
 
 // Horizontal functions / constructors
 const EnvelopeHorizontal = {
@@ -156,6 +158,11 @@ class EnvelopeSegment {
     }
 
     apply(audioParam, samples = 50, h_apply = EnvelopeHorizontal.offset_current_time, v_apply = EnvelopeVertical.vertical_idempotent) {
+        if (this.p1.x === this.p2.x) {
+            audioParam.setValueAtTime(Math.max(v_apply(this.p1.y, this.p2.y), h_apply(this.p1.x)));
+            return;
+        }
+
         audioParam.setValueCurveAtTime(this.sample(samples, v_apply),
             h_apply(this.minX()),
             h_apply(this.maxX()) - h_apply(this.minX()));

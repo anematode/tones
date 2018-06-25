@@ -66,11 +66,14 @@ class UnisonOscillator {
                 series.o.detune.setValueAtTime(series.d * this._detune, 0);
                 series.o.type = this._type;
                 series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
-                series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
 
                 if (unison === 2) {
+                    series.pan.pan.setValueAtTime(series.d * 2, 0);
+                } else {
+                    series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
+                }
 
-                } else if (i === unison / 2 - 1 || i === unison / 2) {
+                if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                     series.g.gain.setValueAtTime(centerBlend, 0);
                 } else {
                     series.g.gain.setValueAtTime(peripheralBlend, 0);
@@ -105,7 +108,12 @@ class UnisonOscillator {
                 series.o.detune.setValueAtTime(series.d * this._detune, 0);
                 series.o.type = this._type;
                 series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
-                series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
+
+                if (unison === 3) {
+                    series.pan.pan.setValueAtTime(series.d * 2, 0);
+                } else {
+                    series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
+                }
 
                 if (i === (unison - 1) / 2) {
                     series.g.gain.setValueAtTime(centerBlend, 0);
@@ -254,8 +262,8 @@ class UnisonOscillator {
             set value(value) {
                 value = clamp(value, 0, that.detune.maxValue, "detune");
 
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
+                for (let i = 0; i < that.unison; i++) {
+                    let series = that.oscillators[i];
                     series.o.detune.value = series.d * value;
                 }
             }
@@ -278,14 +286,6 @@ class UnisonOscillator {
 
         // TODO: Allow blend enveloping and such, not trivial, might not actually do it
         this.blend = {
-            /*setValueAtTime: (value, time) => {
-                let centerBlend = Math.sqrt(this._blend);
-                let peripheralBlend = Math.sqrt(1 / Math.sqrt(this._blend));
-                let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
-
-                centerBlend /= loudness;
-                peripheralBlend /= loudness;
-            }*/
             get value() {
                 if (that.unison % 2 === 0) {
                     return that.oscillators[that.unison / 2].g.gain.value;
@@ -305,9 +305,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.value = centerBlend;
                         } else {
                             series.g.gain.value = peripheralBlend;
@@ -343,9 +341,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.setValueAtTime(centerBlend, time);
                         } else {
                             series.g.gain.setValueAtTime(peripheralBlend, time);
@@ -381,9 +377,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.linearRampToValueAtTime(centerBlend, time);
                         } else {
                             series.g.gain.linearRampToValueAtTime(peripheralBlend, time);
@@ -422,9 +416,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.exponentialRampToValueAtTime(centerBlend, time);
                         } else {
                             series.g.gain.exponentialRampToValueAtTime(peripheralBlend, time);
@@ -460,9 +452,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.setTargetAtTime(centerBlend, startTime, constantTime);
                         } else {
                             series.g.gain.setTargetAtTime(peripheralBlend, startTime, constantTime);
@@ -515,9 +505,7 @@ class UnisonOscillator {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                        if (unison === 2) {
-
-                        } else if (i === unison / 2 - 1 || i === unison / 2) {
+                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.setValueCurveAtTime(centerBlendTable, startTime, endTime);
                         } else {
                             series.g.gain.setValueCurveAtTime(peripheralBlendTable, startTime, endTime);
@@ -614,8 +602,6 @@ class UnisonOscillator {
             series.o.stop(time);
         }
     }
-
-
 }
 
 export {UnisonOscillator};

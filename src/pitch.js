@@ -87,6 +87,8 @@ class Interval {
         } else if (arg1) {
             if (isNumber(arg1)) {
                 this.value = arg1;
+            } else if (_isInterval(arg1)) {
+                this.value = arg1.value;
             } else {
                 if (arg1 instanceof KeyboardInterval) {
                     this.value = arg1.ratio();

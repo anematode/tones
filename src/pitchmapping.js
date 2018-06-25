@@ -2,12 +2,14 @@ import {KeyboardPitch, KeyboardInterval} from "./keyboardnote.js";
 import {Pitch, Interval} from "./pitch.js";
 
 class PitchMapping {
-    constructor(pitchDict) {
+    constructor(pitchDict, pitchMap = (x => x), kPitchMap = (x => x)) {
         this.dict = pitchDict;
+        this.pitchMap = pitchMap; // Changing a frequency
+        this.kPitchMap = kPitchMap; // Changing the nominal meaning of a keyboard pitch
     }
 
     transform(keyboardPitch) {
-        return this.dict[keyboardPitch.value];
+        return this.pitchMap(this.dict[this.kPitchMap(keyboardPitch.value)]);
     }
 
     dictApply(func) {
@@ -37,9 +39,10 @@ function pitchMappingFromScale(scale, baseNote = Tones.KeyboardPitches.C4, baseF
     // scale is array of intervals or single arguments to an interval constructor
 
     scale = scale.map(f => new Interval(f));
+
     let scale_length = scale.length;
     let scale_repeating_interval = scale[scale_length - 1];
-    baseFrequency = baseFrequency || new Pitch(baseNote.twelveTETFrequency());
+    baseFrequency = new Pitch(baseFrequency || baseNote.twelveTETFrequency());
 
     let dict = {};
 

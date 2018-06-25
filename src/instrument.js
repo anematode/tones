@@ -1,18 +1,16 @@
 import * as audio from "./audio.js";
 
 class Instrument {
-    constructor(destinationNode = audio.masterEntryNode) {
+    constructor() {
         this.panNode = audio.Context.createStereoPanner();
         this.gainNode = audio.Context.createGain();
         this.analyzerNode = audio.Context.createAnalyser();
         this.entryNode = audio.Context.createGain();
-        this.destinationNode = destinationNode;
 
         audio.chainNodes([
             this.entryNode,
             this.gainNode,
-            this.panNode,
-            destinationNode
+            this.panNode
         ]);
 
         this.panNode.connect(this.analyzerNode);
@@ -41,6 +39,14 @@ class Instrument {
 
     unmute() {
         this.setVolume(this.volume);
+    }
+
+    connect(node) {
+        this.panNode.connect(node);
+    }
+
+    disconnect() {
+        this.panNode.disconnect();
     }
 }
 

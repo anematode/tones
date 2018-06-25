@@ -35,13 +35,20 @@ function parseSclExpression(line) {
         }
     }
 
-    throw new Error(`parseSclExpression: Invalid expression ${line}`)
+    console.log(line);
+
+    throw new Error(`parseSclExpression: Invalid expression ${line}`);
 }
 
 function sclFileToScale(file_content) {
+    return parseSclFile(file_content).scale;
+}
+
+function parseSclFile(file_content) {
     let file_lines = file_content.split('\n');
     let description = null;
     let note_count = null;
+    let notes_in = 0;
 
     let notes = [];
 
@@ -62,6 +69,11 @@ function sclFileToScale(file_content) {
         } else {
             if (note_count !== null) {
                 notes.push(parseSclExpression(file_lines[i]));
+                notes_in += 1;
+
+                if (notes_in >= note_count) {
+                    break;
+                }
             }
         }
     }
@@ -71,7 +83,7 @@ function sclFileToScale(file_content) {
         throw new Error("sclFileToScale: scale size and given scale do not match in size");
     }
 
-    return notes;
+    return {desc: description, scale: notes};
 }
 
 function sclFileToPitchMapping(file_content, baseNote = KeyboardPitches.C4, baseFrequency) {
@@ -92,34 +104,47 @@ function exportScaleAsScl(scale, description = "") {
 }
 
 class ScalaReader {
-    constructor(giveScalaFile, domElement = null) {
+    constructor(giveScalaFile, params = {}) {
         let that = this;
-        this.giveScalaFile = giveScalaFile;
+
+        params.domElement = params.domElement || null;
+        params.allowMultiple = (params.allowMultiple === undefined) ? true : params.allowMultiple;
+        params.requireExtension = (params.requireExtension === undefined) ? true : params.requireExtension;
+        params.onerror = params.onerror || (() => null);
+
+        this.params = params;
+
+        this.giveScalaFile = giveScalaFile; // arg1 -> content, arg2 -> name of file
 
         this.onchange = function() {
             let files = this.files;
-            let file = files[0];
 
-            if (!file) {
-                throw new Error("No file selected.");
+            if (!that.params.allowMultiple && files.length > 1) {
+                that.params.onerror(new Error("Only one file allowed."));
             }
 
-            if (!file.name.endsWith(".scl")) {
-                throw new Error("Invalid file extension.");
-            }
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
 
-            let reader = new FileReader();
-            reader.addEventListener("loadend", function() {
-                that.giveScalaFile(reader.result);
-            });
-            reader.readAsText(file);
+                if (!file) {
+                    that.params.onerror(new Error("No file selected."));
+                }
+
+                if (that.params.requireExtension && !file.name.endsWith(".scl")) {
+                    that.params.onerror(new Error("Invalid file extension."));
+                }
+
+                let reader = new FileReader();
+                reader.addEventListener("loadend", function () {
+                    that.giveScalaFile(reader.result, file.name);
+                });
+                reader.readAsText(file);
+            }
         };
 
-        if (domElement) {
-            this.addTo(domElement);
+        if (params.domElement) {
+            this.addTo(params.domElement);
         }
-
-
     }
 
     addTo(domElement) {
@@ -134,4 +159,4 @@ class ScalaReader {
     }
 }
 
-export {sclFileToScale, parseSclExpression, sclFileToPitchMapping, ScalaReader }
+export {sclFileToScale, parseSclExpression, sclFileToPitchMapping, ScalaReader, parseSclFile }
