@@ -50,12 +50,12 @@ class Knob extends Widget {
     }
 
     add() {
-        let c1 = this.circle(this.cx, this.cy, this.r, '#999');
+        let c1 = this.circle(this.cx, this.cy, this.r, '#998');
         this.svg.appendChild(c1);
 
         this.addArc(this.cx, this.cy, this.r, this.t * Math.PI * 2, this.c);
 
-        let c2 = this.circle(this.cx, this.cy, this.r - 1, '#666');
+        let c2 = this.circle(this.cx, this.cy, this.r - 1, '#ccb');
         this.svg.appendChild(c2);
         
         let r1 = this.rect(this.cx - 0.5, this.cy + this.r - this.r / 2, 1, this.r / 2, this.c);
@@ -76,14 +76,14 @@ class Slider extends Widget {
     }
     
     add() {
-        let r1 = this.rect(this.cx - 0.5, this.cy - this.h / 2, 1, this.h, "#999");
+        let r1 = this.rect(this.cx - 0.5, this.cy - this.h / 2, 1, this.h, "#998");
         this.svg.appendChild(r1);
         
-        let r2 = this.rect(this.cx - 0.5, this.cy + this.h / 2 - this.v, 1, this.v, "#3cf");
+        let r2 = this.rect(this.cx - 0.5, this.cy + this.h / 2 - this.v, 1, this.v, this.c);
         this.svg.appendChild(r2);
         
-        let r3 = this.rect(this.cx - 10, this.cy + this.h / 2 - this.v - 5, 20, 10, "#666");
-        r3.style.stroke = "#3cf";
+        let r3 = this.rect(this.cx - 10, this.cy + this.h / 2 - this.v - 5, 20, 10, "#ccb");
+        r3.style.stroke = this.c;
         r3.style.rx = 2;
         this.svg.appendChild(r3);
     }
