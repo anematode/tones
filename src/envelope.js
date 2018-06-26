@@ -15,6 +15,8 @@ class EnvelopeControlPoint {
     }
 }
 
+// TODO: Allow 0 attack length, etc.
+
 
 // Horizontal functions / constructors
 const EnvelopeHorizontal = {
@@ -53,7 +55,9 @@ const EnvelopeVerticalInverse = {
 // Sample frequency functions / constructors
 const EnvelopeSamples = {
     sample_default: (x => 50),
-    sample_by_amount: (samples => (x => samples))
+    sample_by_amount: (samples => (x => samples)),
+    smart_sample:  (x => parseInt(5 * x.length() + 5)),
+    smart_sample_prec: (prec => (x => prec * x.length()))
 };
 
 function isNumber(n) {
@@ -109,6 +113,10 @@ class EnvelopeSegment {
         return Math.max(this.p1.y, this.p2.y);
     }
 
+    length() {
+        return this.maxX() - this.minX();
+    }
+
     sample(samples = 50, v_apply = EnvelopeVertical.vertical_idempotent) {
         let array = new Float32Array(samples);
 
@@ -150,6 +158,11 @@ class EnvelopeSegment {
     }
 
     apply(audioParam, samples = 50, h_apply = EnvelopeHorizontal.offset_current_time, v_apply = EnvelopeVertical.vertical_idempotent) {
+        if (this.p1.x === this.p2.x) {
+            audioParam.setValueAtTime(Math.max(v_apply(this.p1.y, this.p2.y), h_apply(this.p1.x)));
+            return;
+        }
+
         audioParam.setValueCurveAtTime(this.sample(samples, v_apply),
             h_apply(this.minX()),
             h_apply(this.maxX()) - h_apply(this.minX()));
@@ -214,7 +227,7 @@ class Envelope {
 
     apply(audioParam, h_apply = EnvelopeHorizontal.offset_current_time,
           v_apply = EnvelopeVertical.vertical_idempotent,
-          samplesPerSegment = EnvelopeSamples.sample_default) {
+          samplesPerSegment = EnvelopeSamples.smart_sample) {
         this.segments.forEach(x => x.apply(audioParam, samplesPerSegment(x), h_apply, v_apply));
     }
 }

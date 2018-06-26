@@ -1,7 +1,7 @@
-import { KeyboardNote, KeyboardNotes, makeNote, makeInterval } from "./keyboardnote.js";
+import { KeyboardPitch, KeyboardPitches } from "./keyboardnote.js";
 
 class KeyboardMapping {
-    constructor(dict, func) { // Key pathway: (keypress / keyup) -> dict -> func call (KeyboardNote, bool pressed)
+    constructor(dict, func) { // Key pathway: (keypress / keyup) -> dict -> func call (KeyboardPitch, bool pressed)
         this.keydict = dict;
         this.func = func;
         this.enabled = false;
@@ -56,7 +56,7 @@ class KeyboardMapping {
     }
 }
 
-let N = KeyboardNotes;
+let N = KeyboardPitches;
 
 let _DefaultKeyboardMapping = {
     "z" : N.C3,
@@ -94,7 +94,7 @@ let _DefaultKeyboardMapping = {
     "0" : N.Ds5,
     "p" : N.E5,
     "[" : N.F5,
-    "+" : N.Fs5,
+    "=" : N.Fs5,
     "]" : N.G5
 };
 

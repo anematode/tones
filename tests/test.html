@@ -3,19 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <title>Tones Test</title>
+</head>
 
     <body>
-    <button id="test_button">TEST</button>
-<div id="envelope">
-
-</div>
+    <p>Try pressing the keys with audio on! The key mapping is very similar to FL Studio.</p>
+    <p>Unison</p>
+    <input type="number" min="1" max="16" id="unison_input" value="8" step="1">
+    <p>Detune</p>
+    <input type="range" min="0" max="2000" value="200" id="detune_input">
+    <p>Blend</p>
+    <input type="range" min="0", max="1000" value="500" id="blend_input">
+    <p>Waveform</p>
+    <input type="radio" id="sine" name="waveform">
+    <label for="sine">Sine</label>
+    <input type="radio" id="square" name="waveform" checked>
+    <label for="square">Square</label>
+    <input type="radio" id="sawtooth" name="waveform">
+    <label for="sawtooth">Sawtooth</label>
+    <input type="radio" id="triangle" name="waveform">
+    <label for="triangle">Triangle</label>
+    <p>Temperament File (.scl):</p>
+    <input type="file" id="scala_file_input" multiple>
+    <p>Base Note:</p>
+    <input type="text" id="base_note_input" value="A4">
+    <p>Base Frequency:</p>
+    <input type="number" id="base_frequency_input" value="440">
+    <p>Lowpass Filter Value:</p>
+    <input type="range" id="lowpass_input" value="1100" min="500" max="1442">
+    <p>Attack</p>
+    <input type="range" id="attack_input" value="50" min="1" max="500">
+    <p>Decay</p>
+    <input type="range" id="decay_input" value="400" min="1" max="700">
+    <p>Sustain Value</p>
+    <input type="range" id="sustain_input" value="20" min="1" max="100">
+    <p>Release</p>
+    <input type="range" id="release_input" value="55" min="1" max="700">
     </body>
 
-    <script src="../external/svg.min.js"></script>
     <script src="../build/tones.js"></script>
     <script src="test.js"></script>
-</head>
-<body>
 
-</body>
 </html>
