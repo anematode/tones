@@ -34,24 +34,28 @@ class Knob extends Widget {
     }
 
     add() {
-        let c1 = this.circle(this.cx, this.cy, this.s, '#998');
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
         this.svg.appendChild(c1);
 
         
         let angle = Math.PI * (this.v * 2 - 1.5);
         let d = {
-            x: this.s * Math.cos(angle),
-            y: this.s * Math.sin(angle)
+            x: this.s * Math.cos(angle) / 2,
+            y: this.s * Math.sin(angle) / 2
         };
         let arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        arc.setAttribute('d', 'M ' + (this.cx + d.x) + ' ' + (this.cy + d.y) + ' A ' + this.s + ' ' + this.s + ' 0 ' + Math.floor(this.v * 2) + ' 0 ' + this.cx + ' ' + (this.cy + this.s) + ' L ' + this.cx + ' ' + this.cy);
+        arc.setAttribute('d', 'M ' + (this.cx + d.x) + ' ' + (this.cy + d.y) +
+                         ' A ' + (this.s / 2) + ' ' + (this.s / 2) +
+                         ' 0 ' + Math.floor(this.v * 2) + ' 0 ' +
+                         this.cx + ' ' + (this.cy + this.s / 2) +
+                         ' L ' + this.cx + ' ' + this.cy);
         arc.style.fill = this.c;
         this.svg.appendChild(arc);
 
-        let c2 = this.circle(this.cx, this.cy, this.s - 1, '#ccb');
+        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
         this.svg.appendChild(c2);
         
-        let r1 = this.rect(this.cx - 0.5, this.cy + this.s / 2, 1, this.s / 2, this.c);
+        let r1 = this.rect(this.cx - 0.5, this.cy + this.s / 4, 1, this.s / 4, this.c);
         r1.setAttribute('transform', 'rotate(' + (this.v * 360) + ' ' + this.cx + ' ' + this.cy + ')');
         this.svg.appendChild(r1);
     }
@@ -63,13 +67,13 @@ class Slider extends Widget {
     }
     
     add() {
-        let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, "#998");
+        let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, '#998');
         this.svg.appendChild(r1);
         
         let r2 = this.rect(this.cx - 0.5, this.cy + this.s / 2 - this.v, 1, this.v, this.c);
         this.svg.appendChild(r2);
         
-        let r3 = this.rect(this.cx - 10, this.cy + this.s / 2 - this.v - 5, 20, 10, "#ccb");
+        let r3 = this.rect(this.cx - 10, this.cy + this.s / 2 - this.v - 5, 20, 10, '#ccb');
         r3.style.stroke = this.c;
         r3.style.rx = 2;
         this.svg.appendChild(r3);
@@ -82,13 +86,13 @@ class Button extends Widget {
     }
     
     add() {
-        let c1 = this.circle(this.cx, this.cy, this.s, '#998');
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
         this.svg.appendChild(c1);
         
-        let c2 = this.circle(this.cx, this.cy, this.s, this.c);
+        let c2 = this.circle(this.cx, this.cy, this.s / 2, this.c);
         this.svg.appendChild(c2);
         
-        let c3 = this.circle(this.cx, this.cy, this.s - 1, '#ccb');
+        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
         this.svg.appendChild(c3);
     }
 }
