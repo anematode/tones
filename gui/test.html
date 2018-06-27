@@ -33,20 +33,15 @@
             <rect x="0" y="40" width="1000" height="450" fill="#ffe"></rect>
             <rect x="250" y="-250" width="500" height="1000" fill="url(#MyGradient)" fill-opacity="0.1" transform="rotate(90 500 250)"></rect>
             
-            <!-- Button -->
-            <circle cx="750" cy="280" r="5" fill="#998"></circle>
-            <circle cx="750" cy="280" r="5" fill="#903"></circle>
-            <circle cx="750" cy="280" r="4" fill="#ccb"></circle>
-            
-            <circle cx="750" cy="250" r="5" fill="#998"></circle>
-            <circle cx="750" cy="250" r="4" fill="#ccb"></circle>
-            
             <!-- Group -->
             <rect x="200" y="150" width="100" height="150" fill-opacity="0" stroke="#ccb"></rect>
             <text x="205" y="165" fill="#653">FILTER</text>
             
             <rect x="300" y="150" width="100" height="150" fill-opacity="0" stroke="#ccb"></rect>
             <text x="305" y="165" fill="#653">WARM MILK</text>
+            
+            <rect x="10" y="50" width="100" height="150" fill-opacity="0" stroke="#ccb"></rect>
+            <text x="15" y="65" fill="#653">OSC</text>
         </svg>
         
         <script src="knob.js"></script>
@@ -58,6 +53,8 @@
             s.add();
             let ss = new Slider(370, 230, 100, 80, '#069', document.getElementById('svg'));
             ss.add();
+            let b = new Button(750, 280, 5, true, '#903', document.getElementById('svg'));
+            b.add();
         </script>
     </body>
 </html>

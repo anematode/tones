@@ -88,3 +88,26 @@ class Slider extends Widget {
         this.svg.appendChild(r3);
     }
 }
+
+class Button extends Widget {
+    constructor(cx, cy, r, v, c, svg) {
+        super();
+        this.cx = cx;
+        this.cy = cy;
+        this.r = r;
+        this.v = v;
+        this.c = c;
+        this.svg = svg;
+    }
+    
+    add() {
+        let c1 = this.circle(this.cx, this.cy, this.r, '#998');
+        this.svg.appendChild(c1);
+        
+        let c2 = this.circle(this.cx, this.cy, this.r, this.c);
+        this.svg.appendChild(c2);
+        
+        let c3 = this.circle(this.cx, this.cy, this.r - 1, '#ccb');
+        this.svg.appendChild(c3);
+    }
+}
