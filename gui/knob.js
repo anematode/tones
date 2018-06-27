@@ -6,7 +6,7 @@ class Widget {
         this.v = v;
         this.c = c;
         this.svg = svg;
-        this.mod = null;
+        this.mod = [];
         this.sx = 0;
         this.sy = 0;
         this.old = 0;
@@ -34,14 +34,29 @@ class Widget {
     g() {
         return document.createElementNS('http://www.w3.org/2000/svg', 'g');
     }
-    
-    center(event) {
-    }
 }
 
 class Knob extends Widget {
     constructor(cx, cy, s, v, c, svg) {
         super(cx, cy, s, v, c, svg);
+    }
+    
+    update() {
+                
+        let angle = Math.PI * (this.v * 2 - 1.5);
+        let d = {
+            x: this.s * Math.cos(angle) / 2,
+            y: this.s * Math.sin(angle) / 2
+        };
+        this.mod[0].style.opacity = this.v === 1 ? 1 : 0;
+        
+        this.mod[1].setAttribute('d', 'M ' + (this.cx + d.x) + ' ' + (this.cy + d.y) +
+                                 ' A ' + (this.s / 2) + ' ' + (this.s / 2) +
+                                 ' 0 ' + (this.v > 0.5 ? 1 : 0) + ' 0 ' +
+                                 this.cx + ' ' + (this.cy + this.s / 2) +
+                                 ' L ' + this.cx + ' ' + this.cy);
+                
+        this.mod[2].setAttribute('transform', 'rotate(' + (this.v * 360) + ' ' + this.cx + ' ' + this.cy + ')');
     }
 
     add() {
@@ -49,61 +64,41 @@ class Knob extends Widget {
         
         let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
         g1.appendChild(c1);
-
         
-        let angle = Math.PI * (this.v * 2 - 1.5);
-        let d = {
-            x: this.s * Math.cos(angle) / 2,
-            y: this.s * Math.sin(angle) / 2
-        };
+        let c3 = this.circle(this.cx, this.cy, this.s / 2, this.c);
+        g1.appendChild(c3);
+        this.mod.push(c3);
+
         let arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        arc.setAttribute('d', 'M ' + (this.cx + d.x) + ' ' + (this.cy + d.y) +
-                         ' A ' + (this.s / 2) + ' ' + (this.s / 2) +
-                         ' 0 ' + Math.floor(this.v * 2) + ' 0 ' +
-                         this.cx + ' ' + (this.cy + this.s / 2) +
-                         ' L ' + this.cx + ' ' + this.cy);
         arc.style.fill = this.c;
         g1.appendChild(arc);
-        
-        this.mod = arc;
+        this.mod.push(arc);
 
         let c2 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
         g1.appendChild(c2);
         
         let r1 = this.rect(this.cx - 0.5, this.cy + this.s / 4, 1, this.s / 4, this.c);
-        r1.setAttribute('transform', 'rotate(' + (this.v * 360) + ' ' + this.cx + ' ' + this.cy + ')');
         g1.appendChild(r1);
+        this.mod.push(r1);
         
-        let hi = this;
+        let self = this;
         g1.onmousedown = function(event) {
-            hi.sx = event.clientX;
-            hi.sy = event.clientY;
-            hi.old = hi.v;
+            self.sx = event.clientX;
+            self.sy = event.clientY;
+            self.old = self.v;
         };
         g1.ondrag = function(event) {
             if (event.clientX > 0 && event.clientY > 0) { 
-                let result = (hi.sy - event.clientY) / hi.s / 4 + hi.old;
+                let result = (self.sy - event.clientY) / self.s / 4 + self.old;
                 
-                if (Math.floor(result * 2) < 0 || Math.floor(result * 2) > 1) {
-                    return;
-                }
-                hi.v = result;
-                
-                let angle = Math.PI * (hi.v * 2 - 1.5);
-                let d = {
-                    x: hi.s * Math.cos(angle) / 2,
-                    y: hi.s * Math.sin(angle) / 2
-                };
-                arc.setAttribute('d', 'M ' + (hi.cx + d.x) + ' ' + (hi.cy + d.y) +
-                                 ' A ' + (hi.s / 2) + ' ' + (hi.s / 2) +
-                                 ' 0 ' + Math.floor(hi.v * 2) + ' 0 ' +
-                                 hi.cx + ' ' + (hi.cy + hi.s / 2) +
-                                 ' L ' + hi.cx + ' ' + hi.cy);
-                
-                r1.setAttribute('transform', 'rotate(' + (hi.v * 360) + ' ' + hi.cx + ' ' + hi.cy + ')');
+                result = result < 0 ? 0 : result > 1 ? 1 : result;
+                self.v = result;
+                self.update();
             }
         };
         this.svg.appendChild(g1);
+        
+        this.update();
     }
 }
 
@@ -112,19 +107,46 @@ class Slider extends Widget {
         super(cx, cy, s, v, c, svg);
     }
     
+    update() {
+        this.mod[0].style.y = this.cy + this.s / 2 - this.v * this.s;
+        this.mod[0].style.height = this.v * this.s;
+        this.mod[1].style.y = this.cy + this.s / 2 - this.v * this.s - 5;
+    }
+    
     add() {
+        let g1 = this.g();
+        
         let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, '#998');
-        this.svg.appendChild(r1);
+        g1.appendChild(r1);
         
-        let r2 = this.rect(this.cx - 0.5, this.cy + this.s / 2 - this.v, 1, this.v, this.c);
-        this.svg.appendChild(r2);
+        let r2 = this.rect(this.cx - 0.5, 0, 1, 0, this.c);
+        g1.appendChild(r2);
+        this.mod.push(r2);
         
-        this.mod = r2;
-        
-        let r3 = this.rect(this.cx - 10, this.cy + this.s / 2 - this.v - 5, 20, 10, '#ccb');
+        let r3 = this.rect(this.cx - 10, 0, 20, 10, '#ccb');
         r3.style.stroke = this.c;
         r3.style.rx = 2;
-        this.svg.appendChild(r3);
+        g1.appendChild(r3);
+        this.mod.push(r3);
+        
+        let self = this;
+        g1.onmousedown = function(event) {
+            self.sx = event.clientX;
+            self.sy = event.clientY;
+            self.old = self.v;
+        };
+        g1.ondrag = function(event) {
+            if (event.clientX > 0 && event.clientY > 0) { 
+                let result = (self.sy - event.clientY) / self.s + self.old;
+                
+                result = result < 0 ? 0 : result > 1 ? 1 : result;
+                self.v = result;
+                self.update();
+            }
+        };
+        this.svg.appendChild(g1);
+        
+        this.update();
     }
 }
 
