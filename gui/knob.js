@@ -180,3 +180,36 @@ class Button extends Widget {
         this.svg.appendChild(g1);
     }
 }
+
+class Group {
+    constructor(x1, y1, x2, y2, t, svg) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.t = t;
+        this.svg = svg;
+    }
+    
+    add() {
+        let g1 = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        
+        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        r1.style.x = this.x1;
+        r1.style.y = this.y1;
+        r1.style.width = this.x2 - this.x1;
+        r1.style.height = this.y2 - this.y1;
+        r1.style.stroke = '#ccb';
+        r1.style.fillOpacity = 0;
+        g1.appendChild(r1);
+        
+        let t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t1.setAttribute('x', this.x1 + 5);
+        t1.setAttribute('y', this.y1 + 15);
+        t1.style.fill = '#653';
+        t1.innerHTML = this.t;
+        g1.appendChild(t1);
+        
+        this.svg.appendChild(g1);
+    }
+}
