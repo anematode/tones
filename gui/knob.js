@@ -155,17 +155,28 @@ class Button extends Widget {
         super(cx, cy, s, v, c, svg);
     }
     
+    update() {
+        this.mod[0].style.opacity = this.v ? 1 : 0;
+    }
+    
     add() {
+        let g1 = this.g();
+        
         let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
-        this.svg.appendChild(c1);
+        g1.appendChild(c1);
         
         let c2 = this.circle(this.cx, this.cy, this.s / 2, this.c);
-        c2.style.opacity = this.v ? 1 : 0;
-        this.svg.appendChild(c2);
-        
-        this.mod = c2;
+        g1.appendChild(c2);
+        this.mod.push(c2);
         
         let c3 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
-        this.svg.appendChild(c3);
+        g1.appendChild(c3);
+        
+        let self = this;
+        g1.onmousedown = function() {
+            self.v = self.v === 0 ? 1 : 0;
+            self.update();
+        };
+        this.svg.appendChild(g1);
     }
 }
