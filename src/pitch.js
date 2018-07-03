@@ -1,4 +1,4 @@
-import {KeyboardPitch, KeyboardInterval} from "./keyboardnote.js";
+import {KeyboardPitch, KeyboardInterval} from "./keyboardpitch.js";
 // Hz is associated with Frequencies
 // ratio is associated with Intervals
 

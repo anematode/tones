@@ -19,6 +19,20 @@ const Scales = {
     ]
 };
 
+function makeET(num) {
+    if (num < 2) {
+        throw new Error("Too small subdivision of octave");
+    }
+
+    let scale = [];
+
+    for (let i = 1; i <= num; i++) {
+        scale.push(new Interval({cents: i * 1200 / num}));
+    }
+
+    return scale;
+}
+
 for (let scaleKey in Scales) {
     let scale = Scales[scaleKey];
 

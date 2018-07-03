@@ -1,4 +1,4 @@
-import { KeyboardInterval, KeyboardPitches } from "./keyboardnote.js";
+import { KeyboardInterval, KeyboardPitches } from "./keyboardpitch.js";
 import { Pitch, Interval } from "./pitch.js";
 import { PitchMapping, pitchMappingFromScale } from "./pitchmapping.js";
 

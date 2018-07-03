@@ -1,6 +1,6 @@
 import * as audio from "./audio.js";
 import { Instrument } from "./instrument.js"
-import {KeyboardPitch} from "./keyboardnote.js";
+import {KeyboardPitch} from "./keyboardpitch.js";
 
 import { Envelope, EnvelopeSegment } from "./envelope.js"
 

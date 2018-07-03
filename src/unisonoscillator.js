@@ -42,7 +42,6 @@ class UnisonOscillator {
 
         this._context = audio.Context;
         this.exit_node = audio.Context.createGain();
-        // this.exit_node.gain.setValueAtTime(1 / this.unison, 0);
         this.oscillators = [];
 
         let unison = this.unison;

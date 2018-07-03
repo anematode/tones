@@ -50,7 +50,11 @@ class SimpleInstrument extends KeyboardInstrument {
         this.pitch_mapping = parameters.pitch_mapping || PitchMappings.ET12;
     }
 
-    onplay(note) {
+    playKeyboardNote(keyboardNote) {
+        let timeout = audio.setTimeout
+    }
+
+    onplay(note, velocity = 1) {
         if (this.params.unison === 1) {
             var tone = audio.Context.createOscillator();
         } else {
@@ -58,40 +62,44 @@ class SimpleInstrument extends KeyboardInstrument {
         }
 
         let tone_gain = audio.Context.createGain();
+        let tone_vel = audio.Context.createGain();
 
         audio.chainNodes([
             tone,
             tone_gain,
+            tone_vel,
             this.entryNode]);
 
 
         tone.type = this.waveform;
         tone.frequency.value = this.pitch_mapping.transform(note);
         tone_gain.gain.setValueAtTime(0, 0);
+        tone_vel.gain.setValueAtTime(velocity, 0);
         tone.start();
 
         this.params.attack_envelope.apply(tone_gain.gain,
             EnvelopeHorizontal.offset_current_time,
             EnvelopeVertical.vertical_exp);
 
-        this.oscillators[note.value] = {tone: tone, tone_gain: tone_gain};
+        this.oscillators[note.value] = {t: tone, g: tone_gain, v: tone_vel};
     }
 
     onrelease(note) {
         let group = this.oscillators[note.value];
 
-        group.tone_gain.gain.cancelScheduledValues(0);
+        group.g.gain.cancelScheduledValues(0);
         this.createReleaseEnvelope(
-            EnvelopeVerticalInverse.vertical_exp(group.tone_gain.gain.value)
+            EnvelopeVerticalInverse.vertical_exp(group.g.gain.value)
             // We invert the value because it was transformed by EnvelopeVertical.vertical_exp
-        ).apply(group.tone_gain.gain,
+        ).apply(group.g.gain,
             EnvelopeHorizontal.offset_current_time,
             EnvelopeVertical.vertical_exp);
 
         this.oscillators[note.value] = null;
-        let toneGain = group.tone_gain;
-        let tone = group.tone;
-        audio.removeNodesTimeout([toneGain, tone], this.params.release_length + 0.1);
+        let toneGain = group.g;
+        let tone = group.t;
+        let tone_vel = group.v;
+        audio.removeNodesTimeout([toneGain, tone, tone_vel], this.params.release_length + 0.1);
     }
 
     get keyboardPlayEnabled() {
