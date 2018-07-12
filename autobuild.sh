@@ -2,15 +2,22 @@
 
 LAST_FILE=""
 COMPARATOR=""
+PLATFORM="$(uname)"
+echo "$PLATFORM"
+
 
 while true; do
-    COMPARATOR="$(find ./src -type f -exec stat -f %m \{} \; | sort -n -r | sed 1q)"
+	if [ "$PLATFORM" = "Linux" ]; then
+		COMPARATOR="$(find ./src -type f -exec stat -c %Y \{} \; | sort -n -r | sed 1q)"
+	else	
+    		COMPARATOR="$(find ./src -type f -exec stat -f %m \{} \; | sort -n -r | sed 1q)"
+	fi
 
-    if [[ "$LAST_FILE" != "$COMPARATOR" ]]; then
-        echo "File changed, building:"
-        sh compile
-        LAST_FILE="$COMPARATOR"
-    fi
+	if [[ "$LAST_FILE" != "$COMPARATOR" ]]; then
+        	echo "File changed, building:"
+		./compile.sh
+        	LAST_FILE="$COMPARATOR"
+    	fi
 
-    sleep .5
+	sleep .5
 done
