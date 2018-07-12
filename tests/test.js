@@ -39,8 +39,8 @@ function refreshInst() {
 
     instrument.pitch_mapping = TONES.pitchMappingFromScale(tParams.scale, tParams.baseNote, tParams.baseFrequency);
 
-    let a = new TONES.EnvelopeSegment([0,0], [tParams.attack,1]);
-    let b = new TONES.EnvelopeSegment(a.p2, [tParams.decay + tParams.attack, tParams.sustain]);
+    let a = new TONES.LinearEnvelopeSegment([0,0], [tParams.attack,1]);
+    let b = new TONES.LinearEnvelopeSegment(a.p2, [tParams.decay + tParams.attack, tParams.sustain]);
     let attack_env = new TONES.Envelope([a,b]);
 
     instrument.params.attack_envelope = attack_env;

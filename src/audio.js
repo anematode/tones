@@ -24,6 +24,15 @@ function removeNodesTimeout(nodes, timeout) {
     }, timeout);
 }
 
+/* Remove some nodes after an absolute timeout */
+function removeNodesTimeoutAbsolute(nodes, timeout) {
+    return setTimeoutAbsoluteAudioCtx(() => {
+        for (let i = 0; i < nodes.length; i++) {
+            nodes[i].disconnect();
+        }
+    }, timeout);
+}
+
 const masterEntryNode = Context.createGain();        // Entry node for instruments + effects
 const masterGainNode = Context.createGain();         // Master gain node
 const masterAnalyzerNode = Context.createAnalyser(); // Analyzer node to look at whole waveform
@@ -66,20 +75,29 @@ function contextTime() { // AudioContext time
     return Context.currentTime;
 }
 
-/* Class representing an AudioContext timeout allowing timeouts to be scheduled very precisely */
+/* Class representing an AudioContext timeout allowing note_timeouts to be scheduled very precisely */
 class ContextTimeout {
-    constructor(node, time) {
+    constructor(node, time, func) {
         this.node = node;
         this.time = time;
+
+        this.node.onended = () => {
+            func();
+            node.disconnect();
+        };
+
+        this.cancelled = false;
     }
 
     ended() {
-        return Context.currentTime < this.time;
+        return Context.currentTime > this.time || this.cancelled;
     }
 
     cancel() {
         this.node.onended = (x => null);
         this.node.stop();
+        this.node.disconnect();
+        this.cancelled = true;
     }
 }
 
@@ -90,11 +108,10 @@ function setTimeoutAudioCtx(func, time_delta) {
 
     timingNode.start(curr + time_delta);
     timingNode.stop(curr + time_delta);
-    timingNode.onended = func;
 
     timingNode.connect(Context.destination);
 
-    return new ContextTimeout(timingNode, curr + time_delta); // Returns a cancelable ContextTimeout object
+    return new ContextTimeout(timingNode, curr + time_delta, func); // Returns a cancelable ContextTimeout object
 }
 
 /* Set an audio context timeout offset from AudioContext time 0 */
@@ -103,11 +120,10 @@ function setTimeoutAbsoluteAudioCtx(func, audioCtxTime) {
 
     timingNode.start(audioCtxTime);
     timingNode.stop(audioCtxTime);
-    timingNode.onended = func;
 
     timingNode.connect(Context.destination);
 
-    return new ContextTimeout(timingNode, audioCtxTime); // Returns a cancelable ContextTimeout object
+    return new ContextTimeout(timingNode, audioCtxTime, func); // Returns a cancelable ContextTimeout object
 }
 
 export {

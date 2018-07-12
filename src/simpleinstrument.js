@@ -1,19 +1,31 @@
-import { KeyboardInstrument } from "./keyboardinstrument.js";
-import { KeyboardMapping, getDefaultKeyboardDict } from "./keyboardmapping.js";
+import {KeyboardInstrument} from "./keyboardinstrument.js";
+import {KeyboardMapping, getDefaultKeyboardDict} from "./keyboardmapping.js";
 import * as audio from "./audio.js";
-import {EnvelopeSegment, Envelope, EnvelopeVertical, EnvelopeHorizontal} from "./envelope.js";
+import {LinearEnvelopeSegment, Envelope, EnvelopeVertical, EnvelopeHorizontal} from "./envelope.js";
 import {EnvelopeVerticalInverse} from "./envelope.js";
 import {UnisonOscillator} from "./unisonoscillator.js";
 import {PitchMappings} from "./pitchmapping.js";
 
-let a = new EnvelopeSegment([0,0], [0.01,1]);
-let b = new EnvelopeSegment(a.p2, [1, 0.2], 0.4);
+let a = new LinearEnvelopeSegment([0, 0], [0.01, 1]);
+let b = new LinearEnvelopeSegment(a.p2, [1, 0.2], 0.4);
 
-const DefaultAttackEnvelope = new Envelope([a,b]);
+const DefaultAttackEnvelope = new Envelope([a, b]);
+const SCHEDULE_TIME = 0.05;
+
+function periodicClearTimeout(list, timeout = 1000) {
+    let timer = setInterval(() => {
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].ended()) {
+                list.splice(i, 1);
+                i--;
+            }
+        }
+    }, timeout);
+}
 
 class SimpleInstrument extends KeyboardInstrument {
     constructor(parameters = {}) {
-        super();
+        super(parameters);
 
         this.params = {};
 
@@ -24,37 +36,17 @@ class SimpleInstrument extends KeyboardInstrument {
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
         this.params.waveform = parameters.waveform || "square";
 
-        if (parameters.destinationNode) {
-            this.connect(parameters.destinationNode);
-        }
-
         this.oscillators = {};
         for (let i = 0; i < 128; i++) {
             this.oscillators[i] = null;
         }
 
         this.createReleaseEnvelope = (gain_value) => {
-            return new Envelope([new EnvelopeSegment([0, gain_value], [this.params.release_length, 0])]);
+            return new Envelope([new LinearEnvelopeSegment([0, gain_value], [this.params.release_length, 0])]);
         };
-
-        this.keyboard_mapping = new KeyboardMapping(parameters.keyboard_dict || getDefaultKeyboardDict(),
-            (note, pressing) => {
-                if (!note) return;
-                if (pressing) {
-                    this.play(note);
-                } else {
-                    this.release(note);
-                }
-        });
-
-        this.pitch_mapping = parameters.pitch_mapping || PitchMappings.ET12;
     }
 
-    playKeyboardNote(keyboardNote) {
-        let timeout = audio.setTimeout
-    }
-
-    onplay(note, velocity = 1) {
+    createNode(frequency, start, end, vel, pan) {
         if (this.params.unison === 1) {
             var tone = audio.Context.createOscillator();
         } else {
@@ -63,78 +55,64 @@ class SimpleInstrument extends KeyboardInstrument {
 
         let tone_gain = audio.Context.createGain();
         let tone_vel = audio.Context.createGain();
+        let tone_pan = audio.Context.createStereoPanner();
 
         audio.chainNodes([
             tone,
             tone_gain,
             tone_vel,
+            tone_pan,
             this.entryNode]);
 
-
         tone.type = this.waveform;
-        tone.frequency.value = this.pitch_mapping.transform(note);
+        tone.frequency.value = frequency;
         tone_gain.gain.setValueAtTime(0, 0);
-        tone_vel.gain.setValueAtTime(velocity, 0);
-        tone.start();
+        tone_vel.gain.setValueAtTime(vel, 0);
+        tone_pan.pan.setValueAtTime(pan, 0);
+        tone.start(start);
 
         this.params.attack_envelope.apply(tone_gain.gain,
-            EnvelopeHorizontal.offset_current_time,
-            EnvelopeVertical.vertical_exp);
+            EnvelopeHorizontal.absoluteOffset(start));
 
-        this.oscillators[note.value] = {t: tone, g: tone_gain, v: tone_vel};
-    }
-
-    onrelease(note) {
-        let group = this.oscillators[note.value];
-
-        group.g.gain.cancelScheduledValues(0);
+        // Make a release envelope and then apply it to tone_gain.gain
         this.createReleaseEnvelope(
-            EnvelopeVerticalInverse.vertical_exp(group.g.gain.value)
-            // We invert the value because it was transformed by EnvelopeVertical.vertical_exp
-        ).apply(group.g.gain,
-            EnvelopeHorizontal.offset_current_time,
-            EnvelopeVertical.vertical_exp);
+            this.params.attack_envelope.valueAt(end - start)
+        ).apply(tone_gain.gain,
+            EnvelopeHorizontal.absoluteOffset(end));
 
-        this.oscillators[note.value] = null;
-        let toneGain = group.g;
-        let tone = group.t;
-        let tone_vel = group.v;
-        audio.removeNodesTimeout([toneGain, tone, tone_vel], this.params.release_length + 0.1);
-    }
+        // New interface!
+        return {
+            node: tone,
+            _connect: x => tone_pan.connect(x),
+            _disconnect: () => tone_pan.disconnect(),
+            _release: () => { // When releasing the note, cancel all future values and then apply the release envelope
+                let currTime = audio.Context.currentTime;
+                if (currTime > end)
+                    return;
+                tone_gain.gain.cancelScheduledValues(0);
+                this.createReleaseEnvelope(
+                    tone_gain.gain.value
+                ).apply(tone_gain.gain,
+                    EnvelopeHorizontal.absoluteOffset(currTime));
 
-    get keyboardPlayEnabled() {
-        return this.keyboard_mapping.enabled;
-    }
-
-    set keyboardPlayEnabled(boolean) {
-        if (boolean) {
-            enableKeyboardPlay();
-        } else {
-            disableKeybordPlay();
+                window.setTimeout(function () { // Note that precision isn't necessary here, so we'll use setTimeout
+                    tone_pan.disconnect()
+                }, this.params.release_length * 1000 + 100
+                );
+            },
+            _cancel: () => tone_pan.disconnect(),
+            _destroy: () => tone_pan.disconnect()
         }
-    }
-
-    enableKeyboardPlay() {
-        this.keyboard_mapping.enable();
-    }
-
-    disableKeyboardPlay() {
-        this.keyboard_mapping.disable();
-        this.releaseAll();
     }
 
     oscillatorApply(func) {
-        for (let i = 0; i < 128; i++) {
-            if (this.oscillators[i]) {
-                func(this.oscillators[i], i);
-            }
-        }
+        this.iterateOverNodes(x => func(x.node.node));
     }
 
     set detune(value) {
         this.params.detune = value;
-        this.oscillatorApply(function(x) {
-            x.tone.detune.value = value;
+        this.oscillatorApply(function (x) {
+            x.detune.value = value;
         });
     }
 
@@ -144,8 +122,8 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set blend(value) {
         this.params.blend = value;
-        this.oscillatorApply(function(x) {
-            x.tone.blend.value = value;
+        this.oscillatorApply(function (x) {
+            x.blend.value = value;
         });
     }
 
@@ -155,8 +133,8 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set waveform(value) {
         this.params.waveform = value;
-        this.oscillatorApply(function(x) {
-            x.tone.type = value;
+        this.oscillatorApply(function (x) {
+            x.type = value;
         })
     }
 

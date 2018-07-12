@@ -16,6 +16,11 @@ class KeyboardNote {
      */
 
     constructor(params = {}) {
+        if (params instanceof KeyboardNote) {
+            this.params = params.params;
+            return;
+        }
+
         this.pitch = new KeyboardPitch(params.pitch || KeyboardPitches.A4);
         this.start = (params.start === undefined) ? 0 : params.start;
 
@@ -46,6 +51,16 @@ class KeyboardNote {
             throw new Error("Invalid end time")
         }
         this.duration = value - this.start;
+    }
+
+    translate(x) {
+        return new KeyboardNote({
+            pitch: this.pitch,
+            start: this.start + x,
+            duration: this.duration,
+            pan: this.pan,
+            vel: this.vel
+        });
     }
 }
 

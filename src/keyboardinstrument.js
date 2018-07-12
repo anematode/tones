@@ -1,24 +1,34 @@
-import * as audio from "./audio.js";
-import { Instrument } from "./instrument.js"
+import {PitchedInstrument} from "./pitchedinstrument.js"
 import {KeyboardPitch} from "./keyboardpitch.js";
+import {KeyboardMapping} from "./keyboardmapping";
+import {getDefaultKeyboardDict} from "./keyboardmapping.js";
 
-import { Envelope, EnvelopeSegment } from "./envelope.js"
-
-class KeyboardInstrument extends Instrument {
-    constructor() {
-        super();
+class KeyboardInstrument extends PitchedInstrument {
+    constructor(parameters = {}) {
+        super(parameters);
 
         this.keyboard = {};
         for (let i = 0; i < 128; i++) {
             this.keyboard[i] = false;
         }
+
+        // Play a note using keyboard mapping
+        this.keyboard_mapping = new KeyboardMapping(parameters.keyboard_dict || getDefaultKeyboardDict(),
+            (note, pressing) => {
+                if (!note) return;
+                if (pressing) {
+                    this.play(note);
+                } else {
+                    this.release(note);
+                }
+            });
     }
 
     play(note) {
         note = new KeyboardPitch(note);
         if (!this.keyboard[note.value]) {
             this.keyboard[note.value] = true;
-            this.onplay(note);
+            this.playPitch(note);
         }
     }
 
@@ -26,14 +36,29 @@ class KeyboardInstrument extends Instrument {
         note = new KeyboardPitch(note);
         if (this.keyboard[note.value]) {
             this.keyboard[note.value] = false;
-            this.onrelease(note);
+            this.releasePitch(note);
         }
     }
 
-    releaseAll(notes) {
-        for (let i = 0; i < 128; i++) {
-            this.release(i);
+    get keyboardPlayEnabled() {
+        return this.keyboard_mapping.enabled;
+    }
+
+    set keyboardPlayEnabled(boolean) {
+        if (boolean) {
+            enableKeyboardPlay();
+        } else {
+            disableKeybordPlay();
         }
+    }
+
+    enableKeyboardPlay() {
+        this.keyboard_mapping.enable();
+    }
+
+    disableKeyboardPlay() {
+        this.keyboard_mapping.disable();
+        this.releaseAll();
     }
 }
 

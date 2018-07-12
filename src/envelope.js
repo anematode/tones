@@ -15,57 +15,41 @@ class EnvelopeControlPoint {
     }
 }
 
-// TODO: Allow 0 attack length, etc.
-
-
-// Horizontal functions / constructors
-const EnvelopeHorizontal = {
-    offset_current_time: function (x) {
-        return x + audio.contextTime();
-    },
-    offset_by_time: (delta => (function (x) {
-        return x + audio.contextTime() + delta;
-    })),
-    offset_by_absolute_time: (delta => (x => x + delta))
-};
-
-const EnvelopeHorizontalInverse = {
-    offset_current_time: function (x) {
-        return x - audio.contextTime();
-    },
-    offset_by_time: (delta => (function (x) {
-        return x - audio.contextTime() - delta;
-    })),
-    offset_by_absolute_time: (delta => (x => x - delta))
-};
-
-// Vertical functions / constructors
 const EnvelopeVertical = {
-    vertical_idempotent: (x => x),
-    vertical_exp: (x => (Math.exp(x) - 1) / Math.exp(2)),
-    vertical_exp_by: (exponent => (x => (Math.exp(x) - 1) / Math.exp(exponent))),
+    none: (x => x),
+    octaves: (baseFrequency => (x => baseFrequency * Math.pow(2, x))),
+    semitones: (baseFrequency => (x => baseFrequency * Math.pow(2, x / 12))),
+    cents: (baseFrequency => (x => baseFrequency * Math.pow(2, x / 1200))),
+    decibel_gain: (x => Math.pow(10, x / 20))
 };
 
 const EnvelopeVerticalInverse = {
-    vertical_idempotent: (x => x),
-    vertical_exp: (y => Math.log(y * Math.exp(2) + 1)),
-    vertical_exp_by: (exponent => (y => Math.log(y * Math.exp(exponent) + 1)))
+    none: (x => x),
+    octaves: (baseFrequency => (x => Math.log2(x / baseFrequency))),
+    semitones: (baseFrequency => (x => Math.log(x / baseFrequency) / Math.log(1 / 12))),
+    cents: (baseFrequency => (x => Math.log(x / baseFrequency) / Math.log(1 / 1200))),
+    decibel_gain: (x => 20 * Math.log10(x))
 };
 
-// Sample frequency functions / constructors
-const EnvelopeSamples = {
-    sample_default: (x => 50),
-    sample_by_amount: (samples => (x => samples)),
-    smart_sample:  (x => parseInt(5 * x.length() + 5)),
-    smart_sample_prec: (prec => (x => prec * x.length()))
+const EnvelopeHorizontal = {
+    none: (x => x),
+    currTimeOffset: (x => x + audio.Context.currentTime),
+    absoluteOffset: (time => (x => x + time)),
+    offset: (time => (x => x + audio.Context.currentTime + time))
 };
 
-function isNumber(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
-}
+/* General envelope segment type. Envelope segment subclasses should have the following methods:
+
+valueAt(x)
+(maybe) override maxY()
+(maybe) override minY()
+sample(nPoints, minX = minX(), maxX = maxX()) returns array of y values for evenly spaced x values
+samplePoints(nPoints, minX = minX(), maxX = maxX()) returns array of x, y values
+segmentApproximation(fidelity = 0.95)
+ */
 
 class EnvelopeSegment {
-    constructor(p1i, p2i, inter_y) {
+    constructor(p1i, p2i) {
         p1i = new EnvelopeControlPoint(p1i);
         p2i = new EnvelopeControlPoint(p2i);
 
@@ -86,15 +70,6 @@ class EnvelopeSegment {
 
         this.p1 = p1;
         this.p2 = p2;
-
-        if (isNumber(inter_y) && ((p1.y < inter_y && inter_y < p2.y) || (p2.y < inter_y && inter_y < p1.y))) {
-            this.inter_y = inter_y;
-        } else {
-            if (isNumber(inter_y)) {
-                throw new Error("Intermediate y value must be well between y values of the endpoints.");
-            }
-            this.inter_y = (p1.y + p2.y) / 2;
-        }
     }
 
     minX() {
@@ -113,66 +88,213 @@ class EnvelopeSegment {
         return Math.max(this.p1.y, this.p2.y);
     }
 
+    contains(x) {
+        return (this.minX() <= x && x <= this.maxX());
+    }
+
     length() {
         return this.maxX() - this.minX();
     }
+}
 
-    sample(samples = 50, v_apply = EnvelopeVertical.vertical_idempotent) {
-        let array = new Float32Array(samples);
+function desmosPrint(pointArray, minX, maxX) {
+    let out_str = "";
+    if (minX) { // just y values
+        for (let i = 0; i < pointArray.length; i++) {
+            out_str += `${i / (pointArray.length - 1) * (maxX - minX) + minX}\t${pointArray[i]}\n`;
+        }
+    } else { // x, y, x, y
+        for (let i = 0; i < pointArray.length / 2; i++) {
+            out_str += `${pointArray[i * 2]}\t${pointArray[i * 2 + 1]}\n`;
+        }
+    }
+    console.log(out_str)
+}
 
-        samples -= 1;
+class LinearEnvelopeSegment extends EnvelopeSegment {
+    constructor(p1i, p2i) {
+        super(p1i, p2i);
+    }
 
-        let delta_v = this.p1.y - this.p2.y;
+    valueAt(x) {
+        return (x - this.p1.x) / (this.p2.x - this.p1.x) * (this.p2.y - this.p1.y) + this.p1.y;
+    }
 
-        if (Math.abs(this.inter_y - (this.p1.y + this.p2.y) / 2) < Math.abs(delta_v) / 200 || delta_v === 0) {
-            // The segment is pretty linear, so calculate as such
+    sample(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(nPoints);
+        let x_delta = maxX - minX;
 
-            let minX = this.minX(), maxX = this.maxX(), startY = this.p1.y, endY = this.p2.y;
-            let x_delta = maxX - minX;
-            let y_delta = endY - startY;
-            let x_jump = x_delta / samples;
-
-            for (let i = minX, j = 0; j <= samples; i += x_jump, j++) {
-                array[j] = v_apply((i - minX) / x_delta * y_delta + startY);
-            }
-        } else {
-            // Exponential calculation
-
-            let minX = this.minX(), maxX = this.maxX();
-            let x_delta = maxX - minX;
-            let x_jump = x_delta / samples;
-
-            let a1 = this.p1.x, a2 = this.p1.y, b2 = this.inter_y, c1 = this.p2.x, c2 = this.p2.y;
-            let k = (c1 - a1) / 2;
-
-            let q = Math.pow((c2 - b2) / (b2 - a2), 1 / k);
-            let p = (a2 - c2) / (Math.pow(q, a1) - Math.pow(q, c1));
-            let s = a2 - p * Math.pow(q, a1);
-
-            for (let i = minX, j = 0; j <= samples; i += x_jump, j++) {
-                array[j] = v_apply(p * Math.pow(q, i) + s);
-            }
+        for (let i = 0; i < nPoints; i++) {
+            array[i] = this.valueAt(i / (nPoints - 1) * x_delta + minX);
         }
 
         return array;
     }
 
-    apply(audioParam, samples = 50, h_apply = EnvelopeHorizontal.offset_current_time, v_apply = EnvelopeVertical.vertical_idempotent) {
-        if (this.p1.x === this.p2.x) {
-            audioParam.setValueAtTime(Math.max(v_apply(this.p1.y, this.p2.y), h_apply(this.p1.x)));
-            return;
+    samplePoints(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(2 * nPoints);
+        let x_delta = maxX - minX;
+
+        for (let i = 0; i < nPoints; i++) {
+            let x_value = i / (nPoints - 1) * x_delta + minX;
+            array[2 * i] = x_value;
+            array[2 * i + 1] = this.valueAt(x_value);
         }
 
-        audioParam.setValueCurveAtTime(this.sample(samples, v_apply),
-            h_apply(this.minX()),
-            h_apply(this.maxX()) - h_apply(this.minX()));
+        return array;
+    }
+
+    segmentApproximation(fidelity = 0.95) {
+        return new Float32Array([this.p1.x, this.p1.y, this.p2.x, this.p2.y]);
+    }
+
+    static _segApproxArrayLength(fidelity = 0.95) {
+        return 4;
     }
 }
 
+function expEnvSegApproxLen(fidelity, b2) {
+    return Math.min(2 * Math.ceil(Math.max(1 / (1.51 - fidelity - Math.abs(b2 - 0.5)), 2 + 5 * fidelity)), 75);
+}
+
+class ExponentialEnvelopeSegment extends EnvelopeSegment {
+    constructor(p1i, p2i, inter_y) {
+        super(p1i, p2i);
+        if (inter_y <= this.minY() || inter_y >= this.maxY()) {
+            throw new Error("Intermediate y value must be between point y values");
+        }
+        this._inter_y = inter_y || (this.p1.y + this.p2.y) / 2;
+    }
+
+    valid() {
+        return (inter_y > this.minY() && inter_y < this.maxY());
+    }
+
+    get inter_y() {
+        return this._inter_y;
+    }
+
+    set inter_y(value) {
+        if (value < this.minY() || value > this.maxY()) {
+            throw new Error("Intermediate y value must be between point y values");
+        }
+    }
+
+    valueAt(x) {
+        let c1 = this.p2.x - this.p1.x, c2 = this.p2.y - this.p1.y;
+
+        let b2 = (this.inter_y - this.p1.y) / c2;
+
+        let q = (1 - b2) / b2;
+
+        if (q > 1 - 1e-6 && q < 1 + 1e-6) {
+            // Treat as linear
+            return c2 * (x - this.p1.x) / c1 + this.p1.y;
+        }
+
+        return c2 * (Math.pow(q, 2 * (x - this.p1.x) / c1) - 1) / (q * q - 1) + this.p1.y;
+    }
+
+    sample(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(nPoints);
+        let x_delta = maxX - minX;
+
+        for (let i = 0; i < nPoints; i++) {
+            array[i] = this.valueAt(i / (nPoints - 1) * x_delta + minX);
+        }
+
+        return array;
+    }
+
+    samplePoints(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(2 * nPoints);
+        let x_delta = maxX - minX;
+
+        for (let i = 0; i < nPoints; i++) {
+            let x_value = i / (nPoints - 1) * x_delta + minX;
+            array[2 * i] = x_value;
+            array[2 * i + 1] = this.valueAt(x_value);
+        }
+
+        return array;
+    }
+
+    segmentApproximation(fidelity = 0.95) {
+        // Pretty optimized (about 0.0017 ms for 14 points at fidelity = 1)
+        let c2 = this.p2.y - this.p1.y;
+        let b2 = (this.inter_y - this.p1.y) / c2;
+
+        let q = (1 - b2) / b2;
+
+        if (q > 1 - 1e-6 && q < 1 + 1e-6) {
+            // Treat as linear
+            return new Float32Array([this.p1.x, this.p1.y, this.p2.x, this.p2.y]);
+        }
+
+        let nPoints = expEnvSegApproxLen(fidelity, b2);
+        let array = new Float32Array(2 * nPoints);
+        let g = q * q;
+
+        let log_g = Math.log(g);
+
+        let inverse_derivative = x => Math.log(x * (g - 1) / log_g) / log_g;
+
+        let value = x => c2 * (x * (g - 1) / log_g - 1) / (g - 1) + this.p1.y;
+
+        let d_0 = Math.atan(log_g / (g - 1));
+        let h_a = Math.atan(g * log_g / (g - 1)) - d_0;
+
+        let c1 = this.p2.x - this.p1.x;
+
+        for (let i = 0; i < nPoints; i++) {
+            let slope = Math.tan(i / (nPoints - 1) * h_a + d_0);
+
+            array[2 * i] = inverse_derivative(slope) * c1 + this.p1.x;
+            array[2 * i + 1] = value(slope);
+        }
+
+        return array;
+    }
+
+
+    _segApproxArrayLength(fidelity = 0.95) {
+        let b2 = (this.inter_y - this.p1.y) / (this.p2.y - this.p1.y);
+        let q = (1 - b2) / b2;
+
+        if (q > 1 - 1e-6 && q < 1 + 1e-6) {
+            return 4;
+        }
+
+        return 2 * expEnvSegApproxLen(fidelity, b2);
+    }
+}
+
+class QuadraticEnvelopeSegment extends EnvelopeSegment {
+    constructor(p1i, p2i, inter_point) {
+        inter_point = new EnvelopeControlPoint(inter_point);
+
+        super(p1i, p2i);
+
+        this._inter_point = inter_point || new EnvelopeControlPoint([(p1i.x + p2i.x) / 2, (p1i.y + p2i.y) / 2]);
+    }
+}
+
+function transformPoints(segments, vTransform) {
+    for (let i = 0; i < segments.length/2; i++) {
+        segments[2*i+1] = vTransform(segments[2*i + 1]);
+    }
+    return segments;
+}
+
+function transformSegments(segments, vTransform, fidelity = 0.95) {
+    for (let i = 0; i < segments.length/2; i++) {
+        segments[2*i+1] = vTransform(segments[2*i + 1]);
+    }
+    return segments;
+}
 
 class Envelope {
-    constructor(segments) {
-
+    constructor(segments, vTransform = EnvelopeVertical.none) {
         if (!Array.isArray(segments)) {
             throw new Error("Array of segments must be passed to Envelope constructor.");
         }
@@ -183,17 +305,21 @@ class Envelope {
         this.segments = [];
 
         for (let i = 0; i < segments.length; i++) {
+            // Make sure segments don't intersect
             if (i !== 0) {
                 let prevMax = segments[i - 1].maxX();
                 let currMin = segments[i].minX();
                 if (prevMax > currMin) {
-                    throw new Error("Discontinuous segments at indices " + String(i - 1) + ", " + String(i));
+                    throw new Error("Intersecting or invalid segments at indices " + String(i - 1) + ", " + String(i));
                 } else if (prevMax < currMin) {
-                    this.segments.push(new EnvelopeSegment(segments[i - 1].p2, segments[i].p1));
+                    // interpolation between end and start points that are discontinuous (instant jump to later value)
+                    this.segments.push(new LinearEnvelopeSegment(segments[i - 1].p2, [segments[i].p1.x, segments[i - 1].p2.y]));
                 }
             }
             this.segments.push(segments[i]);
         }
+
+        this.vTransform = vTransform;
     }
 
     minX() {
@@ -225,19 +351,126 @@ class Envelope {
         }
     }
 
-    apply(audioParam, h_apply = EnvelopeHorizontal.offset_current_time,
-          v_apply = EnvelopeVertical.vertical_idempotent,
-          samplesPerSegment = EnvelopeSamples.smart_sample) {
-        this.segments.forEach(x => x.apply(audioParam, samplesPerSegment(x), h_apply, v_apply));
+    valueAt(x) {
+        if (x < this.minX()) {
+            return this.valueAt(this.minX());
+        } else if (x > this.maxX()) {
+            return this.valueAt(this.maxX());
+        }
+
+        for (let i = 0; i < this.segments.length; i++) {
+            let segment = this.segments[i];
+
+            if (segment.minX() <= x && segment.maxX() >= x) {
+                return segment.valueAt(x);
+            }
+        }
+    }
+
+    sample(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(nPoints);
+        let x_delta = maxX - minX;
+
+        for (let i = 0; i < nPoints; i++) {
+            array[i] = this.valueAt(i / (nPoints - 1) * x_delta + minX);
+        }
+
+        return array.map(this.vTransform);
+    }
+
+    samplePoints(nPoints, minX = this.minX(), maxX = this.maxX()) {
+        let array = new Float32Array(2 * nPoints);
+        let x_delta = maxX - minX;
+
+        for (let i = 0; i < nPoints; i++) {
+            let x_value = i / (nPoints - 1) * x_delta + minX;
+            array[2 * i] = x_value;
+            array[2 * i + 1] = this.valueAt(x_value);
+        }
+
+        return transformPoints(array, this.vTransform);
+    }
+
+    segmentApproximation(fidelity = 0.95) {
+        let arrayLength = 0;
+
+        for (let i = 0; i < this.segments.length; i++) {
+            arrayLength += this.segments[i]._segApproxArrayLength(fidelity);
+        }
+
+        let array = new Float32Array(arrayLength);
+
+        let x_value = 0;
+
+        for (let i = 0; i < this.segments.length; i++) {
+            let approximation = this.segments[i].segmentApproximation(fidelity);
+
+            array.set(approximation, x_value);
+            x_value += approximation.length;
+        }
+
+        return transformSegments(array, this.vTransform, fidelity);
+    }
+
+    smartSample(resolution = 0.1, minSegSamples = 3) {
+        let nPoints = 0;
+        for (let i = 0; i < this.segments.length; i++) {
+            let segment = this.segments[i];
+
+            nPoints += Math.max(Math.ceil(segment.length() / resolution), 3);
+        }
+
+        let array = new Float32Array(2 * nPoints);
+        let x_value = 0;
+
+        for (let i = 0; i < this.segments.length; i++) {
+            let segment = this.segments[i];
+            let approximation = segment.samplePoints(Math.max(Math.ceil(segment.length() / resolution), minSegSamples));
+
+            for (let j = 0; j < approximation.length / 2; j++) {
+                approximation[2 * j + 1] = this.vTransform(approximation[2 * j + 1]);
+            }
+
+            array.set(approximation, x_value);
+            x_value += approximation.length;
+        }
+
+        return array;
+    }
+
+    apply(parameter, hTransform = EnvelopeHorizontal.currTimeOffset, resolution = 0.1, minSegSamples = 3, vTransform = EnvelopeVertical.none) {
+        applySegmentsToParameter(this.smartSample(resolution, minSegSamples), parameter, hTransform);
     }
 }
 
-export {Envelope,
-    EnvelopeSegment,
+function applySegmentsToParameter(segments, parameter, hTransform = EnvelopeHorizontal.currTimeOffset, vTransform = EnvelopeVertical.none) {
+    let prev_x = hTransform(segments[0]);
+    let prev_y = vTransform(segments[1]);
+    parameter.setValueAtTime(prev_y, prev_x);
+
+    for (let i = 0; i < segments.length / 2; i++) {
+        let new_x = hTransform(segments[2 * i]);
+        let new_y = vTransform(segments[2 * i + 1]);
+
+        if (prev_x === new_x) {
+            parameter.setValueAtTime(new_y, new_x);
+        } else {
+            parameter.linearRampToValueAtTime(new_y, new_x);
+        }
+
+        prev_x = new_x;
+        prev_y = new_y;
+    }
+}
+
+export {
+    Envelope,
     EnvelopeControlPoint,
-    EnvelopeHorizontal,
-    EnvelopeHorizontalInverse,
-    EnvelopeSamples,
     EnvelopeVertical,
-EnvelopeVerticalInverse
-};
+    EnvelopeHorizontal,
+    LinearEnvelopeSegment,
+    QuadraticEnvelopeSegment,
+    ExponentialEnvelopeSegment,
+    applySegmentsToParameter,
+    EnvelopeVerticalInverse
+}

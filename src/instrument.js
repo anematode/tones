@@ -1,7 +1,7 @@
 import * as audio from "./audio.js";
 
 class Instrument {
-    constructor() {
+    constructor(parameters) {
         this.panNode = audio.Context.createStereoPanner();
         this.gainNode = audio.Context.createGain();
         this.analyzerNode = audio.Context.createAnalyser();
@@ -14,6 +14,8 @@ class Instrument {
         ]);
 
         this.panNode.connect(this.analyzerNode);
+        if (parameters.destinationNode)
+            this.panNode.connect(parameters.destinationNode);
 
         this.panNode.pan.setValueAtTime(0, 0);
 
