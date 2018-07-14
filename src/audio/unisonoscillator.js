@@ -1,16 +1,6 @@
 import * as audio from "./audio.js";
-
-function clamp(value, min, max, name) {
-    if (value > max) {
-        console.warn(`Value ${name} outside nominal range [${min}, ${max}]; value will be clamped.`);
-        return max;
-    } else if (value < min) {
-        console.warn(`Value ${name} outside nominal range [${min}, ${max}]; value will be clamped.`);
-        return min;
-    } else {
-        return value;
-    }
-}
+import * as utils from "../utils.js";
+import {SourceNode} from "./node.js";
 
 const MAX_DETUNE_CENTS = 200;
 const MIN_FREQUENCY = -22050;
@@ -29,19 +19,19 @@ function blendMapping(x) {
     }
 }
 
-class UnisonOscillator {
+class UnisonOscillator extends SourceNode {
     constructor(parameters = {}) {
+        super(parameters.context);
 
-        this._frequency = clamp(parameters.frequency || 440, MIN_FREQUENCY, MAX_FREQUENCY, "frequency"); // frequency of average oscillation
-        this._detune = clamp((parameters.detune === 0) ? 0 : (parameters.detune || 20), 0, MAX_DETUNE_CENTS, "detune"); // spread width of oscillators (symmetric)
-        this._unison_obj = {value : clamp((parameters.unison || 4), 2, MAX_UNISON)}; // Number of oscillators
+        this._frequency = utils.clamp(parameters.frequency || 440, MIN_FREQUENCY, MAX_FREQUENCY, "frequency"); // frequency of average oscillation
+        this._detune = utils.clamp((parameters.detune === 0) ? 0 : (parameters.detune || 20), 0, MAX_DETUNE_CENTS, "detune"); // spread width of oscillators (symmetric)
+        this._unison_obj = {value : utils.clamp((parameters.unison || 4), 2, MAX_UNISON)}; // Number of oscillators
 
         Object.freeze(this._unison_obj);
-        this._blend = clamp((parameters.blend === 0) ? 0 : (parameters.blend || 0.5), MIN_BLEND, MAX_BLEND, "blend"); // ratio (gain of centermost oscillators) / (gain of peripheral oscillators)
+        this._blend = utils.clamp((parameters.blend === 0) ? 0 : (parameters.blend || 0.5), MIN_BLEND, MAX_BLEND, "blend"); // ratio (gain of centermost oscillators) / (gain of peripheral oscillators)
         this._type = parameters.type || "triangle"; // type of waveform
 
         this._context = audio.Context;
-        this.exit_node = audio.Context.createGain();
         this.oscillators = [];
 
         let unison = this.unison;
@@ -51,7 +41,7 @@ class UnisonOscillator {
             let peripheralBlend = 1 - this._blend;
             let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-            this.exit_node.gain.value = 1 / loudness;
+            this.exit.gain.value = 1 / loudness;
 
             for (let i = 0; i < unison; i++) {
                 let series = {d: (i - unison / 2 + 1 / 2) / (unison - 1),
@@ -83,7 +73,7 @@ class UnisonOscillator {
                     series.delay,
                     series.g,
                     series.pan,
-                    this.exit_node
+                    this.exit
                 ]);
 
                 this.oscillators.push(series);
@@ -93,7 +83,7 @@ class UnisonOscillator {
             let peripheralBlend = 1 - this._blend;
             let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-            this.exit_node.gain.value = 1 / loudness;
+            this.exit.gain.value = 1 / loudness;
 
             for (let i = 0; i < unison; i++) {
                 let series = {d: (i - unison / 2 + 1 / 2) / (unison - 1),
@@ -125,7 +115,7 @@ class UnisonOscillator {
                     series.delay,
                     series.g,
                     series.pan,
-                    this.exit_node
+                    this.exit
                 ]);
 
                 this.oscillators.push(series);
@@ -140,32 +130,32 @@ class UnisonOscillator {
 
         this.frequency = {
             setValueAtTime: (value, time) => {
-                value = clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.setValueAtTime(value, time);
                 }
             },
             linearRampToValueAtTime: (value, time) => {
-                value = clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.linearRampToValueAtTime(value, time);
                 }
             },
             exponentialRampToValueAtTime: (value, time) => {
-                value = clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.exponentialRampToValueAtTime(value, time);
                 }
             },
             setTargetAtTime: (value, startTime, constantTime) => {
-                value = clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.setTargetAtTime(value, startTime, constantTime);
                 }
             },
             setValueCurveAtTime: (table, startTime, endTime) => {
                 for (let i = 0; i < table.length; i++) {
-                    table[i] = clamp(table[i], MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                    table[i] = utils.clamp(table[i], MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 }
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.setValueCurveAtTime(table, startTime, endTime);
@@ -180,7 +170,7 @@ class UnisonOscillator {
                 return that.oscillators[0].o.frequency.value;
             },
             set value(value) {
-                value = clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
+                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < that.unison; i++) {
                     that.oscillators[i].o.frequency.value = value;
                 }
@@ -204,7 +194,7 @@ class UnisonOscillator {
 
         this.detune = {
             setValueAtTime: (value, time) => {
-                value = clamp(value, 0, that.detune.maxValue, "detune");
+                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < this.unison; i++) {
                     let series = this.oscillators[i];
@@ -212,7 +202,7 @@ class UnisonOscillator {
                 }
             },
             linearRampToValueAtTime: (value, time) => {
-                value = clamp(value, 0, that.detune.maxValue, "detune");
+                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < this.unison; i++) {
                     let series = this.oscillators[i];
@@ -220,7 +210,7 @@ class UnisonOscillator {
                 }
             },
             exponentialRampToValueAtTime: (value, time) => {
-                value = clamp(value, 0, that.detune.maxValue, "detune");
+                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < this.unison; i++) {
                     let series = this.oscillators[i];
@@ -228,7 +218,7 @@ class UnisonOscillator {
                 }
             },
             setTargetAtTime: (value, startTime, constantTime) => {
-                value = clamp(value, 0, that.detune.maxValue, "detune");
+                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < this.unison; i++) {
                     let series = this.oscillators[i];
@@ -237,7 +227,7 @@ class UnisonOscillator {
             },
             setValueCurveAtTime: (table, startTime, endTime) => {
                 for (let i = 0; i < table.length; i++) {
-                    table[i] = clamp(table[i], 0, that.detune.maxValue, "detune");
+                    table[i] = utils.clamp(table[i], 0, that.detune.maxValue, "detune");
                 }
                 for (let i = 0; i < this.unison; i++) {
                     let series = this.oscillators[i];
@@ -259,7 +249,7 @@ class UnisonOscillator {
                 return that.oscillators[0].o.detune.value / that.oscillators[0].d;
             },
             set value(value) {
-                value = clamp(value, 0, that.detune.maxValue, "detune");
+                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < that.unison; i++) {
                     let series = that.oscillators[i];
@@ -293,13 +283,13 @@ class UnisonOscillator {
                 }
             },
             set value(value) {
-                value = clamp(value, MIN_BLEND, MAX_BLEND, "blend");
+                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
                 if (that.unison % 2 === 0) {
                     let centerBlend = value;
                     let peripheralBlend = 1 - value;
                     let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-                    that.exit_node.gain.value = 1 / loudness;
+                    that.exit.gain.value = 1 / loudness;
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -315,7 +305,7 @@ class UnisonOscillator {
                     let peripheralBlend = 1 - value;
                     let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-                    that.exit_node.gain.value = 1 / loudness;
+                    that.exit.gain.value = 1 / loudness;
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -329,13 +319,13 @@ class UnisonOscillator {
                 }
             },
             setValueAtTime(value, time) {
-                value = clamp(value, MIN_BLEND, MAX_BLEND, "blend");
+                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
                 if (that.unison % 2 === 0) {
                     let centerBlend = value;
                     let peripheralBlend = 1 - value;
                     let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-                    that.exit_node.gain.setValueAtTime(1 / loudness, time);
+                    that.exit.gain.setValueAtTime(1 / loudness, time);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -351,7 +341,7 @@ class UnisonOscillator {
                     let peripheralBlend = 1 - value;
                     let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-                    that.exit_node.gain.setValueAtTime(1 / loudness, time);
+                    that.exit.gain.setValueAtTime(1 / loudness, time);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -365,13 +355,13 @@ class UnisonOscillator {
                 }
             },
             linearRampToValueAtTime: (value, time) => {
-                value = clamp(value, MIN_BLEND, MAX_BLEND, "blend");
+                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
                 if (that.unison % 2 === 0) {
                     let centerBlend = value;
                     let peripheralBlend = 1 - value;
                     let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-                    that.exit_node.gain.linearRampToValueAtTime(1 / loudness, time);
+                    that.exit.gain.linearRampToValueAtTime(1 / loudness, time);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -387,7 +377,7 @@ class UnisonOscillator {
                     let peripheralBlend = 1 - value;
                     let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-                    that.exit_node.gain.linearRampToValueAtTime(1 / loudness, time);
+                    that.exit.gain.linearRampToValueAtTime(1 / loudness, time);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -403,14 +393,14 @@ class UnisonOscillator {
             exponentialRampToValueAtTime: (value, time) => {
                 console.warn("exponentialRampToValueAtTime for UnisonOscillator.blend does not work well.");
 
-                value = clamp(value, MIN_BLEND, MAX_BLEND, "blend");
+                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
 
                 if (that.unison % 2 === 0) {
                     let centerBlend = value;
                     let peripheralBlend = 1 - value;
                     let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-                    that.exit_node.gain.exponentialRampToValueAtTime(1 / loudness, time);
+                    that.exit.gain.exponentialRampToValueAtTime(1 / loudness, time);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -426,7 +416,7 @@ class UnisonOscillator {
                     let peripheralBlend = 1 - value;
                     let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-                    that.exit_node.gain.value = 1 / loudness;
+                    that.exit.gain.value = 1 / loudness;
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -440,13 +430,13 @@ class UnisonOscillator {
                 }
             },
             setTargetAtTime: (value, startTime, constantTime) => {
-                value = clamp(value, MIN_BLEND, MAX_BLEND, "blend");
+                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
                 if (that.unison % 2 === 0) {
                     let centerBlend = value;
                     let peripheralBlend = 1 - value;
                     let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
 
-                    that.exit_node.gain.setTargetAtTime(1 / loudness, startTime, constantTime);
+                    that.exit.gain.setTargetAtTime(1 / loudness, startTime, constantTime);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -462,7 +452,7 @@ class UnisonOscillator {
                     let peripheralBlend = 1 - value;
                     let loudness = centerBlend + (unison - 1) * peripheralBlend;
 
-                    that.exit_node.gain.linearRampToValueAtTime(1 / loudness, startTime, constantTime);
+                    that.exit.gain.linearRampToValueAtTime(1 / loudness, startTime, constantTime);
 
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
@@ -477,7 +467,7 @@ class UnisonOscillator {
             },
             setValueCurveAtTime: (table, startTime, endTime) => {
                 for (let i = 0; i < table.length; i++) {
-                    table[i] = clamp(table[i], MIN_BLEND, MAX_BLEND, "blend");
+                    table[i] = utils.clamp(table[i], MIN_BLEND, MAX_BLEND, "blend");
                 }
                 let centerBlendTable = new Float32Array(table.length);
                 let peripheralBlendTable = centerBlendTable.slice();
@@ -522,7 +512,7 @@ class UnisonOscillator {
                     }
                 }
 
-                this.exit_node.gain.setValueCurveAtTime(loudnessTable, startTime, endTime);
+                this.exit.gain.setValueCurveAtTime(loudnessTable, startTime, endTime);
             },
             cancelScheduledValues: () => {
                 for (let i = 0; i < this.unison; i++) {
@@ -579,11 +569,11 @@ class UnisonOscillator {
     }
 
     connect(node) {
-        this.exit_node.connect(node);
+        this.exit.connect(node);
     }
 
     disconnect() {
-        this.exit_node.disconnect();
+        this.exit.disconnect();
     }
 
     start(time = this._context.currentTime) {

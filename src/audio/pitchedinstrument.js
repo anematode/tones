@@ -1,5 +1,5 @@
 import { Instrument } from "./instrument.js";
-import { PitchMappings } from "./pitchmapping.js";
+import { PitchMappings, PitchMapping } from "./pitchmapping.js";
 import * as audio from "./audio.js";
 
 function periodicClearTimeout(list, timeout = 1000) {
@@ -11,6 +11,22 @@ function periodicClearTimeout(list, timeout = 1000) {
             }
         }
     }, timeout);
+}
+
+class PitchedInstrumentNode {
+    constructor(parent) {
+        this.gain = audio.Context.createGain();
+        this.pan = audio.Context.createStereoPanner();
+        this.parent = parent;
+    }
+
+    _connect(x) {
+        this.pan.connect(x);
+    }
+
+    _disconnect() {
+        this.pan.disconnect();
+    }
 }
 
 // Abstract class, Instrument with pitch
@@ -67,7 +83,7 @@ class PitchedInstrument extends Instrument {
 
         this.internal_timeouts = [];
 
-        periodicClearTimeout(this.internal_timeouts);
+        this._timeout_interval = periodicClearTimeout(this.internal_timeouts);
     }
 
     frequencyOf(keyboardPitch) {
@@ -268,7 +284,18 @@ class PitchedInstrument extends Instrument {
             }
         }
     }
+
+    setPitchMapping(mapping) {
+        this.pitch_mapping = (mapping instanceof PitchMapping) ? mapping : new PitchMapping(mapping);
+    }
+
+    destroy() {
+        this.cancelAll();
+        clearInterval(this._timeout_interval);
+        this.enableKeyboardPlay = false;
+
+    }
 }
 
 
-export {PitchedInstrument};
+export {PitchedInstrument, PitchedInstrumentNode};

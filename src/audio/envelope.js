@@ -124,6 +124,14 @@ class LinearEnvelopeSegment extends EnvelopeSegment {
         let array = new Float32Array(nPoints);
         let x_delta = maxX - minX;
 
+        if (x_delta === 0) { // segment with 0 length
+            let y_delta = this.p2.y - this.p1.y;
+            for (let i = 0; i < nPoints; i++) {
+                array[i] = i / (nPoints - 1) * y_delta + this.p1.y;
+            }
+            return array;
+        }
+
         for (let i = 0; i < nPoints; i++) {
             array[i] = this.valueAt(i / (nPoints - 1) * x_delta + minX);
         }
@@ -134,6 +142,15 @@ class LinearEnvelopeSegment extends EnvelopeSegment {
     samplePoints(nPoints, minX = this.minX(), maxX = this.maxX()) {
         let array = new Float32Array(2 * nPoints);
         let x_delta = maxX - minX;
+
+        if (x_delta === 0) { // segment with 0 length
+            let y_delta = this.p2.y - this.p1.y;
+            for (let i = 0; i < nPoints; i++) {
+                array[2 * i] = this.minX();
+                array[2 * i + 1] = i / (nPoints - 1) * y_delta + this.p1.y;
+            }
+            return array;
+        }
 
         for (let i = 0; i < nPoints; i++) {
             let x_value = i / (nPoints - 1) * x_delta + minX;
@@ -199,6 +216,14 @@ class ExponentialEnvelopeSegment extends EnvelopeSegment {
         let array = new Float32Array(nPoints);
         let x_delta = maxX - minX;
 
+        if (x_delta === 0) { // segment with 0 length
+            let y_delta = this.p2.y - this.p1.y;
+            for (let i = 0; i < nPoints; i++) {
+                array[i] = i / (nPoints - 1) * y_delta + this.p1.y;
+            }
+            return array;
+        }
+
         for (let i = 0; i < nPoints; i++) {
             array[i] = this.valueAt(i / (nPoints - 1) * x_delta + minX);
         }
@@ -209,6 +234,15 @@ class ExponentialEnvelopeSegment extends EnvelopeSegment {
     samplePoints(nPoints, minX = this.minX(), maxX = this.maxX()) {
         let array = new Float32Array(2 * nPoints);
         let x_delta = maxX - minX;
+
+        if (x_delta === 0) { // segment with 0 length
+            let y_delta = this.p2.y - this.p1.y;
+            for (let i = 0; i < nPoints; i++) {
+                array[2 * i] = this.minX();
+                array[2 * i + 1] = i / (nPoints - 1) * y_delta + this.p1.y;
+            }
+            return array;
+        }
 
         for (let i = 0; i < nPoints; i++) {
             let x_value = i / (nPoints - 1) * x_delta + minX;

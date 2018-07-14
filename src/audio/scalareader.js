@@ -1,6 +1,6 @@
-import { KeyboardInterval, KeyboardPitches } from "./keyboardpitch.js";
+import { KeyboardPitches } from "./keyboardpitch.js";
 import { Pitch, Interval } from "./pitch.js";
-import { PitchMapping, pitchMappingFromScale } from "./pitchmapping.js";
+import { pitchMappingFromScale } from "./pitchmapping.js";
 
 function parseSclExpression(line) {
     line = line.trim().replace(/\s/g, '');

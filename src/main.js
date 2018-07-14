@@ -1,16 +1,20 @@
+// Audio
 
+export * from "./audio/instrument.js";
+export * from "./audio/audio.js";
+export * from "./audio/envelope.js";
+export * from "./audio/keyboardpitch.js";
+export * from "./audio/keyboardmapping.js";
+export * from "./audio/simpleinstrument.js";
+export * from "./audio/unisonoscillator.js";
+export * from "./audio/pitch.js";
+export * from "./audio/pitchmapping.js";
+export * from "./audio/scalareader.js";
+export * from "./audio/scales.js";
+export * from "./audio/keyboardnote.js";
+export * from "./audio/pitchedinstrument.js";
 
-export * from "./instrument.js";
-export * from "./audio.js";
-export * from "./envelope.js";
-export * from "./keyboardpitch.js";
-export * from "./keyboardmapping.js";
-export * from "./simpleinstrument.js";
-export * from "./unisonoscillator.js";
-export * from "./pitch.js";
-export * from "./pitchmapping.js";
-// export * from "./piano.js";
-export * from "./scalareader.js";
-export * from "./scales.js";
-export * from "./keyboardnote.js";
-export * from "./pitchedinstrument.js";
+// Music
+
+export * from "./music/note.js";
+export * from "./music/notegroup.js";
