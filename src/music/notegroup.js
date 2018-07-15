@@ -51,7 +51,7 @@ class NoteGroup {
     }
 
     addGroup(group) {
-        this.addNotes(group.notes);
+        this.notes = unionNoteGroups(this, group).notes;
     }
 
     removeNote(note) {
@@ -166,33 +166,77 @@ class NoteGroup {
     }
 }
 
-const COINCIDENT_TYPE = {
-    sum_velocities: "sum_velocities"
-};
-
 const UNION_TYPE = {
-    union: "union",
+    union: function(x, y) {
+        if (x.start === y.start) {
+            return new Note({
+                pitch: x.pitch,
+                vel: x.vel + y.vel,
+                end: Math.max(x.end, y.end),
+                pan: (x.pan + y.pan) / 2
+            });
+        } else if (x.start < y.start) {
+            return new Note({
+                pitch: x.pitch,
+                vel: x.vel,
+                end: y.end,
+                pan: x.pan
+            });
+        } else {
+            return new Note({
+                pitch: y.pitch,
+                vel: y.vel,
+                end: x.end,
+                pan: y.pan
+            });
+        }
+    },
     only_first: "only_first"
 };
 
-function unionNoteGroups(group1, group2, coincidentStrategy = COINCIDENT_TYPE.sum_velocities, unionStrategy = UNION_TYPE.union) {
+function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.union) {
     let notes = group1.notes.concat(group2.notes);
     let process = false;
 
     do {
-        for (let i = 0; i < notes.length; i++) {
+        process = false;
+
+        let n_len = notes.length;
+
+        for (let i = 0; i < n_len; i++) {
             let note1 = notes[i];
-            for (let j = i + 1; j < notes.length; j++) { // (note1, note2) is every pair of notes
+            for (let j = i + 1; j < n_len; j++) { // (note1, note2) is every pair of notes
                 let note2 = notes[j];
 
-                if (note1.pitch === note2.pitch) { // same pitch, might need a union strategy
+                if (note1.pitch.value === note2.pitch.value) { // same pitch, might need a union strategy
+                    if ((note2.start <= note1.start && note1.start <= note2.end) ||
+                        (note1.start <= note2.start && note2.start <= note1.end)) {
 
+                        let result = unionStrategy(note1, note2);
+
+                        if (Array.isArray(result)) {
+                            for (let k = 0; k < result.length; k++) {
+                                notes.push(result[k]);
+                            }
+                        } else if (result) {
+                            notes.push(result);
+                        }
+
+                        notes.splice(j, 1);
+                        notes.splice(i, 1);
+
+                        i--; j--; n_len--;
+                        process = true;
+                        break;
+                    }
                 }
             }
+
         }
     } while (process);
 
-
+    console.log(notes);
+    return new NoteGroup(notes);
 }
 
 export {NoteGroup};
