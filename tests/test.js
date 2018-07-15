@@ -161,3 +161,9 @@ let reader = new TONES.ScalaReader(function(scalaFile) {
     tParams.scale = scale;
     refreshInst();
 }, {domElement: document.getElementById("scala_file_input")});
+
+let note_group = new TONES.NoteGroup(["A4", "C4", "E4"]);
+note_group.addGroup(new TONES.NoteGroup(["B4"]).tr(2));
+let time_context = new TONES.TimeContext(70, 4);
+
+note_group.schedule(instrument, time_context);

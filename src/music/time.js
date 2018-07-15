@@ -1,6 +1,5 @@
-import {Note} from "./note.js";
-import {NoteGroup} from "./notegroup.js";
 import * as audio from "../audio/audio.js";
+import * as utils from "../utils.js";
 
 /*
 This class represents a mapping from audioContext time to beat time, and vice versa
@@ -30,4 +29,16 @@ class TimeContext {
     parseLength(string) {
         return this.beatToCtxTime(parseLength(string));
     }
+
+    currentBeat() {
+        return this.ctxTimeToBeat(audio.Context.currentTime);
+    }
 }
+
+function parseLength(s) {
+    if (utils.isNumeric(s))
+        return s;
+
+}
+
+export { TimeContext };

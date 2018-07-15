@@ -1,6 +1,7 @@
 import { Instrument } from "./instrument.js";
 import { PitchMappings, PitchMapping } from "./pitchmapping.js";
 import * as audio from "./audio.js";
+import * as utils from "../utils.js";
 
 function periodicClearTimeout(list, timeout = 1000) {
     let timer = setInterval(() => {
@@ -161,9 +162,17 @@ class PitchedInstrument extends Instrument {
         if (note.start > audio.Context.currentTime + createMsBefore / 1e3 + 1e-3) {
             let future_timeout = null;
 
-            let timeout = audio.setTimeoutAbsolute(() => {
-                this.schedule(note, createMsBefore, x => {future_timeout = x});
-            }, note.start - createMsBefore / 1e3);
+            if (note.start > audio.Context.currentTime + 3 * createMsBefore / 1e3) {
+                var timeout = new utils.CancellableTimeout(() => {
+                    this.schedule(note, createMsBefore, x => {future_timeout = x});
+                }, note.start - 3 * createMsBefore / 1e3 - audio.Context.currentTime);
+            } else {
+                var timeout = audio.setTimeoutAbsolute(() => {
+                    this.schedule(note, createMsBefore, x => {
+                        future_timeout = x
+                    });
+                }, note.start - createMsBefore / 1e3);
+            }
 
             this._addInternalTimeout(timeout);
 

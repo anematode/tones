@@ -18,3 +18,4 @@ export * from "./audio/pitchedinstrument.js";
 
 export * from "./music/note.js";
 export * from "./music/notegroup.js";
+export * from "./music/time.js";

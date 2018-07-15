@@ -55,15 +55,25 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
         parent.params.attack_envelope.apply(gain.gain,
             EnvelopeHorizontal.absoluteOffset(start));
 
+        gain.gain.cancelScheduledValues(end);
+
         // Make a release envelope and then apply it to tone_gain.gain
         parent.createReleaseEnvelope(
             parent.params.attack_envelope.valueAt(end - start)
         ).apply(gain.gain,
             EnvelopeHorizontal.absoluteOffset(end));
 
+        console.log(parent.createReleaseEnvelope(
+            parent.params.attack_envelope.valueAt(end - start)
+        ).smartSample());
+
         this.node = tone;
         this.vel = vel;
         this.end = end;
+
+        /*window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
+            this._destroy();
+        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 500);*/
     }
 
     _release() {
@@ -86,7 +96,7 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
 
         window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
             this._destroy();
-        }, this.parent.params.release_length * 1000 + 100);
+        }, this.parent.params.release_length * 1000 + 500);
     }
 
     _cancel() {

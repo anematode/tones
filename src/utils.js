@@ -14,4 +14,24 @@ function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-export {clamp, isNumeric};
+class CancellableTimeout {
+    constructor(func, secs) {
+        this.timeout = setTimeout(() => {
+            this._ended = true;
+            func();
+        }, secs * 1000);
+
+        this._ended = false;
+    }
+
+    cancel() {
+        clearTimeout(this.timeout);
+        this._ended = true;
+    }
+
+    ended() {
+        return this._ended;
+    }
+}
+
+export {clamp, isNumeric, CancellableTimeout};

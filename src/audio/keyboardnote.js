@@ -21,7 +21,7 @@ class KeyboardNote {
             return;
         }
 
-        this.pitch = new KeyboardPitch(params.pitch || KeyboardPitches.A4);
+        this.pitch = (params.pitch !== undefined) ? params.pitch : KeyboardPitches.A4;
         this.start = (params.start === undefined) ? 0 : params.start;
 
         if (params.end) {
