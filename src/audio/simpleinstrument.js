@@ -63,10 +63,6 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
         ).apply(gain.gain,
             EnvelopeHorizontal.absoluteOffset(end));
 
-        console.log(parent.createReleaseEnvelope(
-            parent.params.attack_envelope.valueAt(end - start)
-        ).smartSample());
-
         this.node = tone;
         this.vel = vel;
         this.end = end;

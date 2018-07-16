@@ -12,8 +12,13 @@ class Note {
             this.pitch = new KeyboardPitch((params.pitch !== undefined) ? params.pitch : 69);
         }
 
-        this.duration = 1 || params.duration; // beats, would be quarter note in 4/4 and eighth note in 6/8, etc.
         this.start = (params.start !== undefined) ? params.start : 0;
+        if (params.end) {
+            this.duration = params.end - this.start;
+        } else {
+            this.duration = (params.duration === undefined) ? 1 : params.duration;
+        }
+
         this.vel = (params.vel !== undefined) ? params.vel : 1;
         this.pan = (params.pan !== undefined) ? params.pan : 0;
     }

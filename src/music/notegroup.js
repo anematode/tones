@@ -166,35 +166,113 @@ class NoteGroup {
     }
 }
 
-const UNION_TYPE = {
-    union: function(x, y) {
+const COINCIDENT_TYPE = { // Union cases where two notes of the same pitch start at the same time
+    sum: function(x, y) { // Merge the notes properties
+        return new Note({
+            pitch: x.pitch,
+            vel: x.vel + y.vel,
+            end: Math.max(x.end, y.end),
+            pan: (x.pan + y.pan) / 2,
+            start: x.start
+        });
+    },
+    remove: function(x, y) { // Remove both notes
+        return;
+    },
+    longer: function(x, y) { // Choose the longer one
+        if (y.end > x.end) {
+            return y;
+        } else {
+            return x;
+        }
+    },
+    shorter: function(x, y) { // Choose the shorter one
+        if (y.end > x.end) {
+            return x;
+        } else {
+            return y;
+        }
+    },
+    max_properties: function(x, y) { // Choose the maximum properties
+        return new Note({
+            pitch: x.pitch,
+            vel: Math.max(x.vel, y.vel),
+            end: Math.max(x.end, y.end),
+            pan: (x.pan + y.pan) / 2,
+            start: x.start
+        });
+    }
+};
+
+const UNION_TYPE = { // Union cases where two notes of the same pitch intersect
+    merge: ((coincident_type = COINCIDENT_TYPE.sum) => function(x, y) { // Merge the notes together into one note with max length
         if (x.start === y.start) {
-            return new Note({
-                pitch: x.pitch,
-                vel: x.vel + y.vel,
-                end: Math.max(x.end, y.end),
-                pan: (x.pan + y.pan) / 2
-            });
+            return coincident_type(x, y);
         } else if (x.start < y.start) {
             return new Note({
                 pitch: x.pitch,
                 vel: x.vel,
                 end: y.end,
-                pan: x.pan
+                pan: x.pan,
+                start: x.start
             });
         } else {
             return new Note({
                 pitch: y.pitch,
                 vel: y.vel,
                 end: x.end,
-                pan: y.pan
+                pan: y.pan,
+                start: y.start
             });
         }
-    },
-    only_first: "only_first"
+    }),
+    trim: ((coincident_type = COINCIDENT_TYPE.sum) => function(x, y) { // Trim the first note so it ends when the second note starts
+        if (x.start === y.start) {
+            return coincident_type(x, y);
+        } else if (x.start < y.start) {
+            return [new Note({
+                pitch: x.pitch,
+                vel: x.vel,
+                end: y.start,
+                pan: x.pan,
+                start: x.start
+            }), y];
+        } else {
+            return [new Note({
+                pitch: y.pitch,
+                vel: y.vel,
+                end: x.start,
+                pan: y.pan,
+                start: y.start
+            }), x];
+        }
+    }),
+    remove: ((coincident_type = COINCIDENT_TYPE.sum) => function(x, y) { // Remove the notes
+        if (x.start === y.start) {
+            return coincident_type(x, y);
+        }
+    }),
+    first: ((coincident_type = COINCIDENT_TYPE.sum) => function(x, y) { // choose the first note
+        if (x.start === y.start) {
+            return coincident_type(x, y);
+        } else if (x.start < y.start) {
+            return x;
+        } else {
+            return y;
+        }
+    }),
+    second: ((coincident_type = COINCIDENT_TYPE.sum) => function(x, y) { // choose the second note
+        if (x.start === y.start) {
+            return coincident_type(x, y);
+        } else if (x.start > y.start) {
+            return x;
+        } else {
+            return y;
+        }
+    })
 };
 
-function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.union) {
+function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
     let notes = group1.notes.concat(group2.notes);
     let process = false;
 
@@ -209,23 +287,25 @@ function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.union) {
                 let note2 = notes[j];
 
                 if (note1.pitch.value === note2.pitch.value) { // same pitch, might need a union strategy
-                    if ((note2.start <= note1.start && note1.start <= note2.end) ||
-                        (note1.start <= note2.start && note2.start <= note1.end)) {
+                    if ((note2.start < note1.start && note1.start < note2.end) ||
+                        (note1.start < note2.start && note2.start < note1.end)) {
 
                         let result = unionStrategy(note1, note2);
 
                         if (Array.isArray(result)) {
                             for (let k = 0; k < result.length; k++) {
                                 notes.push(result[k]);
+                                n_len++;
                             }
                         } else if (result) {
                             notes.push(result);
+                            n_len++;
                         }
 
                         notes.splice(j, 1);
                         notes.splice(i, 1);
 
-                        i--; j--; n_len--;
+                        i--; j--; n_len -= 2;
                         process = true;
                         break;
                     }
@@ -235,7 +315,6 @@ function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.union) {
         }
     } while (process);
 
-    console.log(notes);
     return new NoteGroup(notes);
 }
 
