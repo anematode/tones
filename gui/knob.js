@@ -33,6 +33,16 @@ class Widget {
         return r1;
     }
     
+    text(x, y, v, c) {
+        let t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t1.setAttribute('x', x);
+        t1.setAttribute('y', y);
+        t1.style.fill = c;
+        t1.innerHTML = v;
+        t1.setAttribute('text-anchor', 'middle');
+        return t1;
+    }
+    
     g() {
         return document.createElementNS('http://www.w3.org/2000/svg', 'g');
     }
@@ -179,6 +189,21 @@ class Button extends Widget {
             self.v = self.v === 0 ? 1 : 0;
             self.update();
         };
+        this.svg.appendChild(g1);
+    }
+}
+
+class Text extends Widget {
+    constructor(cx, cy, v, c, svg) {
+        super(cx, cy, 0, v, c, svg);
+    }
+    
+    add() {
+        let g1 = this.g();
+        
+        let t1 = this.text(this.cx, this.cy, this.v, this.c);
+        g1.appendChild(t1);
+        
         this.svg.appendChild(g1);
     }
 }
