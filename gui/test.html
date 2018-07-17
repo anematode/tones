@@ -15,7 +15,6 @@
             }
             .title {
                 font-size: 30px;
-                font-style: italic;
             }
         </style>
     </head>
@@ -24,7 +23,7 @@
         <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg" draggable="true">
             <rect x="0" y="0" width="1000" height="500" fill="#963"></rect>
             <text x="10" y="30" fill="#fff" class="title">TONES</text>
-            <text x="90" y="30" fill="#fff" class="caption">anematode</text>
+            <text x="90" y="30" fill="#fff" class="caption">by anematode</text>
             <rect x="0" y="40" width="1000" height="450" fill="#eee"></rect>
         </svg>
         
@@ -34,13 +33,13 @@
             let g = new Group(10, 50, 210, 480, 'OSC', document.getElementById('svg'));
             g.add();
             
-            let k = new Knob(250, 250, 20, 0.3, '#096', document.getElementById('svg'));
+            let k = new Knob(250, 250, 50, 0.3, '#096', document.getElementById('svg'));
             k.add();
-            let s = new Slider(330, 230, 100, 0.5, '#069', document.getElementById('svg'));
+            let s = new Slider(330, 230, 200, 0.5, '#069', document.getElementById('svg'));
             s.add();
-            let ss = new Slider(370, 230, 100, 0.8, '#069', document.getElementById('svg'));
+            let ss = new Slider(370, 230, 200, 0.8, '#069', document.getElementById('svg'));
             ss.add();
-            let b = new Button(750, 280, 10, true, '#903', document.getElementById('svg'));
+            let b = new Button(750, 280, 25, true, '#903', document.getElementById('svg'));
             b.add();
         </script>
     </body>

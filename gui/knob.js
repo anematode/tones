@@ -76,10 +76,10 @@ class Knob extends Widget {
         g1.appendChild(arc);
         this.mod.push(arc);
 
-        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 1, this.light);
+        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 2, this.light);
         g1.appendChild(c2);
         
-        let r1 = this.rect(this.cx - 0.5, this.cy + this.s / 4, 1, this.s / 4, this.c);
+        let r1 = this.rect(this.cx - 1, this.cy + this.s / 4, 2, this.s / 4, this.c);
         g1.appendChild(r1);
         this.mod.push(r1);
         
@@ -112,24 +112,24 @@ class Slider extends Widget {
     update() {
         this.mod[0].style.y = this.cy + this.s / 2 - this.v * this.s;
         this.mod[0].style.height = this.v * this.s;
-        this.mod[1].style.y = this.cy + this.s / 2 - this.v * this.s - 5;
+        this.mod[1].style.cy = this.cy + this.s / 2 - this.v * this.s;
     }
     
     add() {
         let g1 = this.g();
         
-        let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, this.dark);
+        let r1 = this.rect(this.cx - 1, this.cy - this.s / 2, 2, this.s, this.dark);
         g1.appendChild(r1);
         
-        let r2 = this.rect(this.cx - 0.5, 0, 1, 0, this.c);
+        let r2 = this.rect(this.cx - 1, 0, 2, 0, this.c);
         g1.appendChild(r2);
         this.mod.push(r2);
         
-        let r3 = this.rect(this.cx - 10, 0, 20, 10, this.light);
-        r3.style.stroke = this.c;
-        r3.style.rx = 2;
-        g1.appendChild(r3);
-        this.mod.push(r3);
+        let c1 = this.circle(this.cx, 0, 10, this.light);
+        c1.style.stroke = this.c;
+        c1.style.strokeWidth = 2;
+        g1.appendChild(c1);
+        this.mod.push(c1);
         
         let self = this;
         g1.onmousedown = function(event) {
@@ -171,7 +171,7 @@ class Button extends Widget {
         g1.appendChild(c2);
         this.mod.push(c2);
         
-        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 1, this.light);
+        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 2, this.light);
         g1.appendChild(c3);
         
         let self = this;
