@@ -10,6 +10,8 @@ class Widget {
         this.sx = 0;
         this.sy = 0;
         this.old = 0;
+        this.dark = '#ccc';
+        this.light = '#ddd';
     }
     
     circle(cx, cy, r, c) {
@@ -62,7 +64,7 @@ class Knob extends Widget {
     add() {
         let g1 = this.g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.dark);
         g1.appendChild(c1);
         
         let c3 = this.circle(this.cx, this.cy, this.s / 2, this.c);
@@ -74,7 +76,7 @@ class Knob extends Widget {
         g1.appendChild(arc);
         this.mod.push(arc);
 
-        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
+        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 1, this.light);
         g1.appendChild(c2);
         
         let r1 = this.rect(this.cx - 0.5, this.cy + this.s / 4, 1, this.s / 4, this.c);
@@ -89,7 +91,7 @@ class Knob extends Widget {
         };
         g1.ondrag = function(event) {
             if (event.clientX > 0 && event.clientY > 0) { 
-                let result = (self.sy - event.clientY) / self.s / 4 + self.old;
+                let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) / 4 + self.old;
                 
                 result = result < 0 ? 0 : result > 1 ? 1 : result;
                 self.v = result;
@@ -116,14 +118,14 @@ class Slider extends Widget {
     add() {
         let g1 = this.g();
         
-        let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, '#998');
+        let r1 = this.rect(this.cx - 0.5, this.cy - this.s / 2, 1, this.s, this.dark);
         g1.appendChild(r1);
         
         let r2 = this.rect(this.cx - 0.5, 0, 1, 0, this.c);
         g1.appendChild(r2);
         this.mod.push(r2);
         
-        let r3 = this.rect(this.cx - 10, 0, 20, 10, '#ccb');
+        let r3 = this.rect(this.cx - 10, 0, 20, 10, this.light);
         r3.style.stroke = this.c;
         r3.style.rx = 2;
         g1.appendChild(r3);
@@ -136,8 +138,8 @@ class Slider extends Widget {
             self.old = self.v;
         };
         g1.ondrag = function(event) {
-            if (event.clientX > 0 && event.clientY > 0) { 
-                let result = (self.sy - event.clientY) / self.s + self.old;
+            if (event.clientX > 0 && event.clientY > 0) {
+                let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) + self.old;
                 
                 result = result < 0 ? 0 : result > 1 ? 1 : result;
                 self.v = result;
@@ -162,14 +164,14 @@ class Button extends Widget {
     add() {
         let g1 = this.g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, '#998');
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.dark);
         g1.appendChild(c1);
         
         let c2 = this.circle(this.cx, this.cy, this.s / 2, this.c);
         g1.appendChild(c2);
         this.mod.push(c2);
         
-        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 1, '#ccb');
+        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 1, this.light);
         g1.appendChild(c3);
         
         let self = this;
@@ -206,7 +208,7 @@ class Group {
         let t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         t1.setAttribute('x', this.x1 + 5);
         t1.setAttribute('y', this.y1 + 15);
-        t1.style.fill = '#653';
+        t1.style.fill = '#666';
         t1.innerHTML = this.t;
         g1.appendChild(t1);
         
