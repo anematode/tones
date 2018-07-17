@@ -135,7 +135,7 @@ class Slider extends Widget {
         g1.appendChild(r2);
         this.mod.push(r2);
         
-        let c1 = this.circle(this.cx, 0, 10, this.light);
+        let c1 = this.circle(this.cx, 0, 5, this.light);
         c1.style.stroke = this.c;
         c1.style.strokeWidth = 2;
         g1.appendChild(c1);
@@ -226,7 +226,7 @@ class Group {
         r1.style.y = this.y1;
         r1.style.width = this.x2 - this.x1;
         r1.style.height = this.y2 - this.y1;
-        r1.style.stroke = '#ccb';
+        r1.style.stroke = '#ccc';
         r1.style.fillOpacity = 0;
         g1.appendChild(r1);
         
