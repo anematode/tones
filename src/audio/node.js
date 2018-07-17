@@ -13,14 +13,20 @@ class Node {
         } else {
             this.exit.connect(x);
         }
+        return this;
     }
 
     disconnect() {
         this.exit.disconnect();
+        return this;
     }
 
     destroy() {
         this.disconnect();
+    }
+
+    connectToMaster() {
+        this.connect(audio.masterEntryNode);
     }
 }
 
@@ -36,16 +42,22 @@ class SourceNode {
         } else {
             this.exit.connect(x);
         }
+        return this;
     }
 
     disconnect() {
         setTimeout(function() {
             this.exit.disconnect();
         }, 100);
+        return this;
     }
 
     destroy() {
         this.disconnect();
+    }
+
+    connectToMaster() {
+        this.connect(audio.masterEntryNode);
     }
 }
 

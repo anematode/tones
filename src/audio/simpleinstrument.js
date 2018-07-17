@@ -69,7 +69,7 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
 
         window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
             this._destroy();
-        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 500);
+        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 1000);
     }
 
     _release() {
@@ -96,8 +96,6 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
     }
 
     _disconnect() {
-        console.log("ian");
-
         this.node.stop();
         setTimeout(() => {
             this.pan.disconnect();

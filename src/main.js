@@ -13,6 +13,7 @@ export * from "./audio/scalareader.js";
 export * from "./audio/scales.js";
 export * from "./audio/keyboardnote.js";
 export * from "./audio/pitchedinstrument.js";
+export * from "./audio/filters.js";
 
 // Music
 

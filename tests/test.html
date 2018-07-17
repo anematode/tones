@@ -7,6 +7,7 @@
 
     <body>
     <p>Try pressing the keys with audio on! The key mapping is very similar to FL Studio.</p>
+    <button onclick="playDDD();">Play Sample</button>
     <p>Unison</p>
     <input type="number" min="1" max="16" id="unison_input" value="8" step="1">
     <p>Detune</p>
@@ -38,6 +39,11 @@
     <input type="range" id="sustain_input" value="20" min="0" max="100">
     <p>Release</p>
     <input type="range" id="release_input" value="55" min="1" max="700">
+    <p>Dry</p>
+    <input type="range" id="dry_input" value="50" min="0" max="100">
+    <p>Wet</p>
+    <input type="range" id="wet_input" value="50" min="0" max="100">
+    <br>
     </body>
 
     <script src="../build/tones.js"></script>
