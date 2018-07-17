@@ -14,9 +14,14 @@ export * from "./audio/scales.js";
 export * from "./audio/keyboardnote.js";
 export * from "./audio/pitchedinstrument.js";
 export * from "./audio/filters.js";
+export * from "./audio/analyzers.js";
 
 // Music
 
 export * from "./music/note.js";
 export * from "./music/notegroup.js";
 export * from "./music/time.js";
+
+// Graphics
+
+export * from "./graphics/frequencyvisualizer.js";

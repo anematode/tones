@@ -10,6 +10,20 @@ function clamp(value, min, max, name) {
     }
 }
 
+function desmosPrint(pointArray, minX, maxX) {
+    let out_str = "";
+    if (minX) { // just y values
+        for (let i = 0; i < pointArray.length; i++) {
+            out_str += `${i / (pointArray.length - 1) * (maxX - minX) + minX}\t${pointArray[i]}\n`;
+        }
+    } else { // x, y, x, y
+        for (let i = 0; i < pointArray.length / 2; i++) {
+            out_str += `${pointArray[i * 2]}\t${pointArray[i * 2 + 1]}\n`;
+        }
+    }
+    console.log(out_str)
+}
+
 function isNumeric(n) {
     return !!n.toFixed;
 }
@@ -38,4 +52,4 @@ class CancellableTimeout {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString};
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint};

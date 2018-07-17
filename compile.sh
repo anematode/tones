@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rollup -c
+rollup -c quickbuild.js

@@ -39,7 +39,7 @@ class TimeContext {
 function parseLength(s) {
     if (utils.isNumeric(s))
         return s;
-
+    // TODO: add evaluation with more complex strings
 }
 
 export { TimeContext };

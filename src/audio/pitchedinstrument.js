@@ -150,7 +150,7 @@ class PitchedInstrument extends Instrument {
         }
     }
 
-    schedule(note, createMsBefore = 300, set_cancel_function) {
+    schedule(note, createMsBefore = 500, set_cancel_function) {
         // note is KeyboardNote
         if (note.start < audio.Context.currentTime) { // if note is old news, ignore it
             return null;

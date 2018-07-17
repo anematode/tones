@@ -1,7 +1,4 @@
-let lowpass_filter = TONES.Context.createBiquadFilter();
-
-lowpass_filter.type = "lowpass";
-lowpass_filter.frequency.setValueAtTime(2048, 0);
+let lowpass_filter = new TONES.LowpassFilter();
 
 let instrument = new TONES.SimpleInstrument({
     unison: 8,
@@ -13,9 +10,11 @@ let instrument = new TONES.SimpleInstrument({
 instrument.connect(lowpass_filter);
 instrument.enableKeyboardPlay();
 
-let reverb = new TONES.Reverb();
+let reverb = new TONES.Reverb({decay: 4});
+let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
 
-lowpass_filter.connect(reverb.entry);
+lowpass_filter.connect(delay.entry);
+delay.connect(reverb);
 reverb.connect(TONES.masterEntryNode);
 
 let tParams = {
@@ -183,7 +182,7 @@ let MIDDLE_TUNE_2 = "(A3{d:q,v:0.7}Bb3D4){d:e}G4R{d:-e}";
 let MIDDLE_TUNE_3 = "(A3{d:q,v:0.7}C4D4){d:e}G4R{d:-e}";
 let HIGH_FOURTH = "[D6G6]{d:e,v:1}R{d:-h}";
 
-let note_group = TONES.parseAbbreviatedGroup(`
+let strn = `
 ${BASS_1}
 ${MIDDLE_TUNE}
 ${BASS_1}
@@ -214,10 +213,21 @@ ${BASS_2}
 ${MIDDLE_TUNE_3}
 ${BASS_2}
 ${HIGH_FOURTH}
-`);
+`;
+
+let note_group = TONES.parseAbbreviatedGroup(strn);
 
 function playDDD() {
     instrument.cancelAll();
     let time_context = new TONES.TimeContext(140, TONES.Context.currentTime + 0.3);
     note_group.schedule(instrument, time_context);
 }
+
+let visualizer = new TONES.FrequencyVisualizer();
+let canvas = document.getElementById("vis_canvas");
+
+visualizer.setCanvas(canvas);
+
+visualizer.startDrawLoop();
+
+visualizer.connectFrom(TONES.masterEntryNode);

@@ -14,7 +14,7 @@ class PitchMapping {
 
     dictApply(func) {
         for (let key in this.dict) {
-            this.keydict[key] = func(this.keydict[key]);
+            this.dict[key] = func(this.dict[key]);
         }
     }
 }
