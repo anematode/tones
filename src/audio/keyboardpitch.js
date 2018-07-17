@@ -1,3 +1,7 @@
+import * as utils from "../utils.js";
+
+const isNumeric = utils.isNumeric;
+
 // Terminology
 
 // 0 -> C-1, 1 -> C#-1, etc., like MIDI in scientific pitch notation
@@ -17,11 +21,6 @@ function noteToName(note) {
     return octave_names[mod(note, 12)] + String(parseInt(note / 12) - 1);
 }
 
-/* Test if object is a number */
-function isNumber(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
 /* Number of semitones corresponding with each letter; C is base note */
 const letter_nums = {
     "C": 0,
@@ -37,14 +36,18 @@ const letter_nums = {
 const accidental_offsets = {
     "#": 1,
     "##": 2,
-    "b": -1,
-    "bb": -2
+    "B": -1,
+    "BB": -2,
+    "b" : -1,
+    "bb": -2,
+    "s": 1,
+    "ss" : 2
 };
 
 /* Convert a note name to a numerical note */
 function nameToNote(name) {
     //                letter   accidental  -?  number
-    let groups = /^([ABCDEFG])(#|##|B|BB)?(-)?([0-9]+)$/.exec(name.toUpperCase().trim());
+    let groups = /^([ABCDEFG])(#|##|B|BB|S|SS)?(-)?([0-9]+)$/.exec(name.toUpperCase().trim());
 
     try {
         return letter_nums[groups[1]] +                           // semitone offset of note without accidental
@@ -168,7 +171,7 @@ function nameToInterval(name) {
     let quality = getIntervalQuality(groups[1]);
     let value = getIntervalSize(groups[2]);
 
-    if (!isNumber(value) || !quality || !value)
+    if (!isNumeric(value) || !quality || !value)
         throw new Error("Invalid interval.");
 
     let m_value = value % 7;            // offset from the octave
@@ -277,7 +280,7 @@ function _isKeyboardIntervalInstance(interval) {
 /* Unique note on the piano */
 class KeyboardPitch {
     constructor(note) {
-        if (isNumber(note)) {
+        if (isNumeric(note)) {
             this.value = note;
         } else if (_isKeyboardNoteInstance(note)) {
             this.value = note.value;
@@ -287,7 +290,7 @@ class KeyboardPitch {
     }
 
     subtract(note) { // or Interval
-        if (_isKeyboardNoteInstance(note) || isNumber(note)) {
+        if (_isKeyboardNoteInstance(note) || isNumeric(note)) {
             return new KeyboardInterval(this.value - new KeyboardPitch(note).value);
         } else if (_isKeyboardIntervalInstance(note)) {
             return new KeyboardPitch(this.value - note.value);
@@ -315,7 +318,7 @@ function makeKeyboardPitch(...args) {
 /* Interval on the piano */
 class KeyboardInterval {
     constructor(arg1, arg2) {
-        if (isNumber(arg1) && arg2 === undefined) {
+        if (isNumeric(arg1) && arg2 === undefined) {
             this.value = arg1;
         } else if (arg2 !== undefined) {
             this.value = new KeyboardPitch(arg2).subtract(new KeyboardPitch(arg1)).value;

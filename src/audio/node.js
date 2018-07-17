@@ -39,7 +39,9 @@ class SourceNode {
     }
 
     disconnect() {
-        this.exit.disconnect();
+        setTimeout(function() {
+            this.exit.disconnect();
+        }, 100);
     }
 
     destroy() {

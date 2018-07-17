@@ -11,7 +11,11 @@ function clamp(value, min, max, name) {
 }
 
 function isNumeric(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
+    return !!n.toFixed;
+}
+
+function isString(s) {
+    return (typeof s === 'string' || s instanceof String);
 }
 
 class CancellableTimeout {
@@ -34,4 +38,4 @@ class CancellableTimeout {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout};
+export {clamp, isNumeric, CancellableTimeout, isString};

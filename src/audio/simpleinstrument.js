@@ -67,9 +67,9 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
         this.vel = vel;
         this.end = end;
 
-        /*window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
+        window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
             this._destroy();
-        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 500);*/
+        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 500);
     }
 
     _release() {
@@ -93,6 +93,15 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
         window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
             this._destroy();
         }, this.parent.params.release_length * 1000 + 500);
+    }
+
+    _disconnect() {
+        console.log("ian");
+
+        this.node.stop();
+        setTimeout(() => {
+            this.pan.disconnect();
+        }, 100);
     }
 
     _cancel() {

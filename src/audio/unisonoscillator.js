@@ -572,10 +572,6 @@ class UnisonOscillator extends SourceNode {
         this.exit.connect(node);
     }
 
-    disconnect() {
-        this.exit.disconnect();
-    }
-
     start(time = this._context.currentTime) {
         for (let i = 0; i < this.oscillators.length; i++) {
             let series = this.oscillators[i];

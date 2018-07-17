@@ -1,4 +1,6 @@
 import {Note, makeNote} from "./note.js";
+import * as utils from "../utils.js";
+import { KeyboardPitch } from "../audio/keyboardpitch.js";
 
 class NoteGroup {
     constructor(notes) {
@@ -14,6 +16,7 @@ class NoteGroup {
             }
         }
 
+        this.fix();
         this.sort();
     }
 
@@ -34,6 +37,7 @@ class NoteGroup {
             this.notes.push(new Note(params));
         }
 
+        this.fix();
         this.sort();
     }
 
@@ -47,6 +51,7 @@ class NoteGroup {
             }
         }
 
+        this.fix();
         this.sort();
     }
 
@@ -63,7 +68,12 @@ class NoteGroup {
                 }
             }
         } else if (note instanceof Function) {
-
+            for (let i = 0; i < this.notes.length; i++) {
+                if (note(this.notes[i])) {
+                    this.notes.splice(i, 1);
+                    return;
+                }
+            }
         }
     }
 
@@ -114,6 +124,10 @@ class NoteGroup {
         }
 
         return new NoteGroup(notes);
+    }
+
+    fix(unionStrategy = UNION_TYPE.trim()) {
+        this.notes = fixNoteArray(this.notes, unionStrategy);
     }
 
     minStart() {
@@ -272,19 +286,18 @@ const UNION_TYPE = { // Union cases where two notes of the same pitch intersect
     })
 };
 
-function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
-    let notes = group1.notes.concat(group2.notes);
+function fixNoteArray(arr, unionStrategy = UNION_TYPE.trim()) {
     let process = false;
 
     do {
         process = false;
 
-        let n_len = notes.length;
+        let n_len = arr.length;
 
         for (let i = 0; i < n_len; i++) {
-            let note1 = notes[i];
+            let note1 = arr[i];
             for (let j = i + 1; j < n_len; j++) { // (note1, note2) is every pair of notes
-                let note2 = notes[j];
+                let note2 = arr[j];
 
                 if (note1.pitch.value === note2.pitch.value) { // same pitch, might need a union strategy
                     if ((note2.start < note1.start && note1.start < note2.end) ||
@@ -294,16 +307,16 @@ function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
 
                         if (Array.isArray(result)) {
                             for (let k = 0; k < result.length; k++) {
-                                notes.push(result[k]);
+                                arr.push(result[k]);
                                 n_len++;
                             }
                         } else if (result) {
-                            notes.push(result);
+                            arr.push(result);
                             n_len++;
                         }
 
-                        notes.splice(j, 1);
-                        notes.splice(i, 1);
+                        arr.splice(j, 1);
+                        arr.splice(i, 1);
 
                         i--; j--; n_len -= 2;
                         process = true;
@@ -315,7 +328,377 @@ function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
         }
     } while (process);
 
-    return new NoteGroup(notes);
+    return arr;
 }
 
-export {NoteGroup};
+function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
+    let notes = group1.notes.concat(group2.notes);
+
+    return new NoteGroup(fixNoteArray(notes, unionStrategy));
+}
+
+function trimComments(line) {
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === "#") {
+            return line.slice(0, i);
+        }
+    }
+    return line;
+}
+
+class Rest extends Note {
+    constructor(params) {
+        super(params);
+        this.isRest = true;
+    }
+}
+
+let ENV = {
+    d1: 1,
+    whole: 1,
+    w: 1,
+    d2: 0.5,
+    half: 0.5,
+    h: 0.5,
+    d4: 0.25,
+    q: 0.25,
+    quarter: 0.25,
+    d8: 0.125,
+    eighth: 0.125,
+    e: 0.125,
+    d16: 1 / 16,
+    sixteenth: 1 / 16,
+    s: 1/16,
+    d32: 1/32,
+    tt: 1/32,
+    d64: 1/64,
+    sf: 1/64,
+    d128: 1/128,
+    d256: 1/256,
+    d512: 1/512
+};
+
+let WARNED_EVAL_EXPRESSION = false;
+
+
+function _evalExpressions(exprs) {
+    if (!WARNED_EVAL_EXPRESSION) {
+        WARNED_EVAL_EXPRESSION = true;
+        console.warn("evalExpression uses eval(), which is dangerous and therefore should only be used for testing purposes.");
+    }
+    try {
+        return new Function("ENV", "exprs", "let _=[];with(ENV){for(let i=0;i<exprs.length;i++){_.push([exprs[i][0],eval(exprs[i][1])])}}return _")(ENV, exprs);
+    } catch (e) {
+        throw new Error(`Invalid expression ${exprs}`);
+    }
+}
+
+function exprApply(note, kv_pair) {
+    let value = kv_pair[1];
+
+    switch (kv_pair[0]) {
+        case 'd':
+        case 'dur':
+        case 'duration':
+            if (value <= 0 && !note.isRest)
+                throw new Error(`Duration length ${value} is invalid`);
+            note.duration = value;
+            break;
+        case 's':
+        case 'start':
+            note.start = value;
+            break;
+        case 'e':
+        case 'end':
+            note.duration = value - note.start;
+            if (note.duration <= 0 && !note.isRest)
+                throw new Error(`End value ${value} is invalid`);
+            break;
+        case 's_off':
+        case 's_offset':
+        case 'start_offset':
+            note.start += value;
+            break;
+        case 'd_off':
+        case 'd_offset':
+        case 'duration_offset':
+        case 'dur_offset':
+            note.duration += value;
+            if (note.duration <= 0)
+                throw new Error(`Duration offset value ${value} makes a duration of ${note.duration}`);
+            break;
+        case 'v':
+        case 'vel':
+        case 'velocity':
+            if (value <= 0)
+                throw new Error(`Velocity value ${value} is invalid`);
+            note.vel = value;
+            break;
+        case 'p':
+        case 'pan':
+            if (pan < -1 || pan > 1)
+                throw new Error(`Pan value ${value} is invalid`);
+            note.pan = value;
+            break;
+    }
+}
+
+function applyCurly(notes, exprs_string) {
+    if (!exprs_string)
+        return;
+
+    let exprs = exprs_string.split(',').map(expr => {
+        let kv_pair = expr.split(":");
+        if (kv_pair.length !== 2)
+            throw new Error(`Invalid key value pair ${expr}`);
+        return kv_pair;
+    });
+
+    exprs = _evalExpressions(exprs);
+
+    for (let i = 0; i < notes.length; i++) {
+        let note = notes[i];
+
+        for (let j = 0; j < exprs.length; j++) {
+            exprApply(note, exprs[j]);
+        }
+    }
+}
+
+function parseGroupString(string, prev_note, override_prev_note = false, depth = 0) {
+    prev_note = prev_note || new Note({start: -0.25, duration: 0.25, pan: 0, vel: 1});
+    prev_note._depth = depth;
+
+    let next_start = prev_note.end;
+
+    let generator = parserGenerator(string);
+    let token = null;
+
+    let notes = [];
+    let active_notes = [];
+
+    function pushNotes() {
+        if (!override_prev_note && active_notes.length > 0) {
+            prev_note = active_notes[active_notes.length - 1];
+        }
+        for (let i = 0; i < active_notes.length; i++) {
+            if (!active_notes[i].isRest) {
+                notes.push(active_notes[i]);
+            }
+        }
+        active_notes = [];
+    }
+
+    while (true) {
+        token = generator.next();
+
+        if (token.done) break;
+
+        let contents = token.value;
+        let value = contents.value;
+
+        switch (contents.type) {
+            case "pitch":
+                pushNotes();
+
+                let c = new Note({
+                    pan: prev_note.pan,
+                    vel: prev_note.vel,
+                    duration: prev_note.duration,
+                    start: prev_note.end,
+                    pitch: value
+                });
+
+                c._depth = depth;
+                active_notes = [c];
+
+                break;
+            case "curly":
+                applyCurly(active_notes, value);
+                pushNotes();
+
+                break;
+            case "bracket":
+                pushNotes();
+
+                active_notes = parseGroupString(value, prev_note, true, depth + 1);
+                break;
+            case "paren":
+                pushNotes();
+
+                active_notes = parseGroupString(value, prev_note, false, depth + 1);
+                break;
+            case "rest":
+                pushNotes();
+
+                let rest = new Rest({
+                    pan: prev_note.pan,
+                    vel: prev_note.vel,
+                    duration: prev_note.duration,
+                    start: prev_note.end,
+                    pitch: prev_note.pitch
+                });
+
+                active_notes = [rest];
+
+                break;
+        }
+    }
+
+    pushNotes();
+
+    return notes;
+}
+
+function* parserGenerator(string) {
+    let groupingHistory = [];
+
+    let in_paren = function () {
+        return (groupingHistory.includes('('));
+    };
+
+    let in_bracket = function () {
+        return (groupingHistory.includes('['));
+    };
+
+    let in_properties = function () {
+        return (groupingHistory.includes('{'));
+    };
+
+    let last_opening = function () {
+        if (groupingHistory.length === 0) {
+            throw new Error("Unbalanced parentheses, brackets, and/or curly braces");
+        }
+        return (groupingHistory[groupingHistory.length - 1]);
+    };
+
+    let remove_last_opening = function () {
+        if (groupingHistory.length === 0) {
+            throw new Error("Unbalanced parentheses, brackets, and/or curly braces");
+        }
+        return groupingHistory.splice(groupingHistory.length - 1, 1);
+    };
+
+    let at_top_level = function() {
+        return !groupingHistory.length;
+    };
+
+    let ltoi = -1; // Last top level opening index
+    let note_concat = "";
+
+    for (let i = 0; i < string.length; i++) {
+        //console.log(groupingHistory, string[i]);
+        let ret_value = null;
+
+        switch (string[i]) {
+            case '[':
+                if (in_properties())
+                    throw new Error("Cannot have bracket in properties");
+                if (at_top_level())
+                    ltoi = i + 1;
+                groupingHistory.push('[');
+                break;
+            case ']':
+                if (last_opening() === '[')
+                    remove_last_opening();
+                else
+                    throw new Error("Mismatched bracket");
+                if (at_top_level())
+                    ret_value = {type: "bracket", value: string.slice(ltoi, i)};
+                break;
+            case '(':
+                if (at_top_level())
+                    ltoi = i + 1;
+                groupingHistory.push('(');
+                break;
+            case ')':
+                if (last_opening() === '(')
+                    remove_last_opening();
+                else
+                    throw new Error("Mismatched parentheses");
+                if (at_top_level())
+                    ret_value = {type: "paren", value: string.slice(ltoi, i)};
+                break;
+            case '{':
+                if (in_properties())
+                    throw new Error("Cannot have nested curly braces");
+                if (at_top_level())
+                    ltoi = i + 1;
+                groupingHistory.push('{');
+                break;
+            case '}':
+                if (last_opening() === '{')
+                    remove_last_opening();
+                else
+                    throw new Error("Mismatched curly braces");
+                if (at_top_level())
+                    ret_value = {type: "curly", value: string.slice(ltoi, i)};
+                break;
+            case 'R':
+                if (at_top_level())
+                    ret_value = {type: "rest", value: "R"};
+                break;
+            default:
+                if (at_top_level()) {
+                    let prev_note_concat = note_concat;
+                    note_concat += string[i];
+                    try {
+                        let p = new KeyboardPitch(note_concat);
+                    } catch (e) {
+                        try {
+                            yield {type: "pitch", value: new KeyboardPitch(prev_note_concat)};
+                            note_concat = string[i];
+                        } catch (f) {
+
+                        }
+                    }
+                } else {
+                    continue;
+                }
+        }
+
+        if (ret_value) {
+            if (note_concat) {
+                try {
+                    let p = new KeyboardPitch(note_concat);
+                    yield {type: "pitch", value: p};
+                    note_concat = "";
+                } catch (e) {
+                    throw new Error(`Invalid pitch "${note_concat}"`)
+                }
+            }
+
+            yield ret_value;
+        }
+    }
+
+    if (note_concat) {
+        try {
+            let p = new KeyboardPitch(note_concat);
+            yield {type: "pitch", value: p};
+        } catch (e) {
+            throw new Error(`Invalid pitch "${note_concat}"`)
+        }
+    }
+}
+
+/*
+A somewhat difficult to use function, but useful for quick tests
+ */
+function parseAbbreviatedGroup(string) {
+    if (!utils.isString(string)) {
+        throw new Error("Parse group must act on a string");
+    }
+
+    let lines = string.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+        lines[i] = trimComments(lines[i]).replace(/\s/g,''); // remove comments and whitespace
+    }
+
+    string = lines.join('');
+
+    return new NoteGroup(parseGroupString(string));
+}
+
+export {NoteGroup, parseAbbreviatedGroup};

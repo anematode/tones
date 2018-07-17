@@ -302,7 +302,6 @@ class PitchedInstrument extends Instrument {
         this.cancelAll();
         clearInterval(this._timeout_interval);
         this.enableKeyboardPlay = false;
-
     }
 }
 
