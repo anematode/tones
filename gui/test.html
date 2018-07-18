@@ -60,35 +60,43 @@
         
         <script>
             
-            let unik = new Knob(550, 100, 50, 0.6, '#c90', document.getElementById('svg'));
-            let unit = new Text(550, 150, 'UNISON', '#333', document.getElementById('svg'));
-            let unii = new Text(550, 105, '10', '#c90', document.getElementById('svg'));
+            const svg = document.getElementById('svg');
             
-            let detk = new Knob(625, 100, 50, 0.3, '#096', document.getElementById('svg'));
-            let dett = new Text(625, 150, 'DETUNE', '#333', document.getElementById('svg'));
+            let unik = new Knob(550, 100, 50, 0.6, '#c90', svg);
+            let unit = new Text(550, 150, 'VOICES', '#333', svg);
+            let unii = new Text(550, 105, '10', '#c90', svg);
             
-            let blek = new Knob(700, 100, 50, 0.3, '#096', document.getElementById('svg'));
-            let blet = new Text(700, 150, 'BLEND', '#333', document.getElementById('svg'));
+            let detk = new Knob(625, 100, 50, 0.3, '#096', svg);
+            let dett = new Text(625, 150, 'DETUNE', '#333', svg);
+            let deti = new Text(625, 105, '60', '#096', svg);
+            
+            let blek = new Knob(700, 100, 50, 0.3, '#096', svg);
+            let blet = new Text(700, 150, 'BLEND', '#333', svg);
+            let blei = new Text(700, 105, '30', '#096', svg);
             
             //adsr
             
-            let atts = new Slider(550, 250, 100, 0.1, '#069', document.getElementById('svg'));
-            let attt = new Text(550, 325, 'A', '#333', document.getElementById('svg'));
+            let atts = new Slider(550, 250, 100, 0.1, '#069', svg);
+            let attt = new Text(550, 325, 'A', '#333', svg);
+            let atti = new Text(550, 190, '9', '#333', svg);
             
-            let decs = new Slider(600, 250, 100, 0.8, '#069', document.getElementById('svg'));
-            let dect = new Text(600, 325, 'D', '#333', document.getElementById('svg'));
+            let decs = new Slider(600, 250, 100, 0.8, '#069', svg);
+            let dect = new Text(600, 325, 'D', '#333', svg);
+            let deci = new Text(600, 190, '165', '#333', svg);
             
-            let suss = new Slider(650, 250, 100, 0.6, '#069', document.getElementById('svg'));
-            let sust = new Text(650, 325, 'S', '#333', document.getElementById('svg'));
+            let suss = new Slider(650, 250, 100, 0.6, '#069', svg);
+            let sust = new Text(650, 325, 'S', '#333', svg);
+            let susi = new Text(650, 190, '60', '#333', svg);
             
-            let rels = new Slider(700, 250, 100, 0.2, '#069', document.getElementById('svg'));
-            let relt = new Text(700, 325, 'R', '#333', document.getElementById('svg'));
+            let rels = new Slider(700, 250, 100, 0.2, '#069', svg);
+            let relt = new Text(700, 325, 'R', '#333', svg);
+            let reli = new Text(700, 190, '27', '#333', svg);
             
             //stuff
             
-            let g = new Group(750, 65, 975, 250, 'PLACEHOLDER', document.getElementById('svg'));
+            let g = new Group(750, 65, 975, 250, 'PLACEHOLDER', svg);
             
-            let b = new Button(770, 270, 20, true, '#903', document.getElementById('svg'));
+            let b = new Button(770, 270, 20, true, '#903', svg);
             
         </script>
         

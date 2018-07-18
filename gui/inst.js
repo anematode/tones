@@ -1,7 +1,7 @@
 let instrument = new TONES.SimpleInstrument({
-    unison: 5,
-    detune: 20,
-    blend: 0.5,
+    unison: 10,
+    detune: 60,
+    blend: 0.3,
     waveform: "square"
 });
 
@@ -13,12 +13,12 @@ let tParams = {
     scale: TONES.Scales.ET12,
     baseNote: TONES.KeyboardPitches.A4,
     baseFrequency: 440,
-    unison: 8,
-    detune: 20,
-    blend: 0.5,
+    unison: 10,
+    detune: 60,
+    blend: 0.3,
     waveform: "square",
-    attack: 0.01,
-    decay: 1,
+    attack: 0.09,
+    decay: 0,
     sustain: 0.2,
     release: 0.1
 };
@@ -43,11 +43,53 @@ function refreshInst() {
 
             
 unik.change = function() {
-    let val = Math.round(unik.v * 15) + 1;
+    let val = Math.floor(unik.v * 15) + 1;
     unii.set(val);
     tParams.unison = val;
     refreshInst();
 }
+
+detk.change = function() {
+    let val = detk.v * 200;
+    deti.set(Math.round(val));
+    tParams.detune = val;
+    refreshInst();
+};
+
+blek.change = function() {
+    let val = blek.v;
+    blei.set(Math.round(val * 100));
+    tParams.blend = val;
+    refreshInst();
+};
+
+atts.change = function() {
+    let val = Math.pow(2, 5 * atts.v / 4) - 1;
+    atti.set(Math.round(val * 100));
+    tParams.attack = val;
+    refreshInst();
+};
+
+decs.change = function() {
+    let val = Math.pow(2, 7 * decs.v / 4) - 0.99;
+    deci.set(Math.round(val * 100));
+    tParams.decay = val;
+    refreshInst();
+};
+
+suss.change = function() {
+    let val = suss.v;
+    susi.set(Math.round(val * 100));
+    tParams.sustain = val;
+    refreshInst();
+};
+
+rels.change = function() {
+    let val = Math.pow(2, 7 * rels.v / 4) - 0.99;
+    reli.set(Math.round(val * 100));
+    tParams.release = val;
+    refreshInst();
+};
 
 let BASS_1 = "(G2{d:e,v:0.5}D3G3){d:1.3*e}R{d:-0.3*e}";
 let BASS_2 = "(F2{d:e,v:0.5}C3F3){d:1.3*e}R{d:-0.3*e}";
