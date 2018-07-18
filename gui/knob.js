@@ -1,3 +1,5 @@
+const url = 'http://www.w3.org/2000/svg';
+
 class Widget {
     constructor(cx, cy, s, v, c, svg) {
         this.cx = cx;
@@ -16,7 +18,7 @@ class Widget {
     }
     
     circle(cx, cy, r, c) {
-        let c1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        let c1 = document.createElementNS(url, 'circle');
         c1.style.cx = cx;
         c1.style.cy = cy;
         c1.style.r = r;
@@ -25,7 +27,7 @@ class Widget {
     }
     
     rect(x, y, w, h, c) {
-        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        let r1 = document.createElementNS(url, 'rect');
         r1.style.x = x;
         r1.style.y = y;
         r1.style.width = w;
@@ -35,7 +37,7 @@ class Widget {
     }
     
     text(x, y, v, c) {
-        let t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        let t1 = document.createElementNS(url, 'text');
         t1.setAttribute('x', x);
         t1.setAttribute('y', y);
         t1.style.fill = c;
@@ -45,10 +47,16 @@ class Widget {
     }
     
     g() {
-        return document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        return document.createElementNS(url, 'g');
     }
     
+    set(v) {
+        this.v = v;
+        this.update();
+    }
     add() {}
+    change() {}
+    update() {}
 }
 
 class Knob extends Widget {
@@ -57,7 +65,6 @@ class Knob extends Widget {
     }
     
     update() {
-                
         let angle = Math.PI * (this.v * 2 - 1.5);
         let d = {
             x: this.s * Math.cos(angle) / 2,
@@ -72,6 +79,8 @@ class Knob extends Widget {
                                  ' L ' + this.cx + ' ' + this.cy);
                 
         this.mod[2].setAttribute('transform', 'rotate(' + (this.v * 360) + ' ' + this.cx + ' ' + this.cy + ')');
+        
+        this.change();
     }
 
     add() {
@@ -84,7 +93,7 @@ class Knob extends Widget {
         g1.appendChild(c3);
         this.mod.push(c3);
 
-        let arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let arc = document.createElementNS(url, 'path');
         arc.style.fill = this.c;
         g1.appendChild(arc);
         this.mod.push(arc);
@@ -132,6 +141,8 @@ class Slider extends Widget {
         this.mod[0].style.y = this.cy + this.s / 2 - this.v * this.s;
         this.mod[0].style.height = this.v * this.s;
         this.mod[1].style.cy = this.cy + this.s / 2 - this.v * this.s;
+        
+        this.change();
     }
     
     add() {
@@ -184,6 +195,8 @@ class Button extends Widget {
     
     update() {
         this.mod[0].style.opacity = this.v ? 1 : 0;
+        
+        this.change();
     }
     
     add() {
@@ -213,11 +226,16 @@ class Text extends Widget {
         super(cx, cy, 0, v, c, svg);
     }
     
+    update() {
+        this.mod[0].innerHTML = this.v;
+    }
+    
     add() {
         let g1 = this.g();
         
         let t1 = this.text(this.cx, this.cy, this.v, this.c);
         g1.appendChild(t1);
+        this.mod.push(t1);
         
         this.svg.appendChild(g1);
     }
@@ -235,9 +253,9 @@ class Group {
     }
     
     add() {
-        let g1 = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        let g1 = document.createElementNS(url, 'g');
         
-        let r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        let r1 = document.createElementNS(url, 'rect');
         r1.style.x = this.x1;
         r1.style.y = this.y1;
         r1.style.width = this.x2 - this.x1;
@@ -246,7 +264,7 @@ class Group {
         r1.style.fillOpacity = 0;
         g1.appendChild(r1);
         
-        let t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        let t1 = document.createElementNS(url, 'text');
         t1.setAttribute('x', this.x1 + 5);
         t1.setAttribute('y', this.y1 + 15);
         t1.style.fill = '#666';
