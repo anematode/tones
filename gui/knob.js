@@ -12,6 +12,7 @@ class Widget {
         this.old = 0;
         this.dark = '#ccc';
         this.light = '#ddd';
+        this.add();
     }
     
     circle(cx, cy, r, c) {
@@ -46,6 +47,8 @@ class Widget {
     g() {
         return document.createElementNS('http://www.w3.org/2000/svg', 'g');
     }
+    
+    add() {}
 }
 
 class Knob extends Widget {
@@ -216,6 +219,7 @@ class Group {
         this.y2 = y2;
         this.t = t;
         this.svg = svg;
+        this.add();
     }
     
     add() {
