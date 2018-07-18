@@ -34,10 +34,18 @@ function isString(s) {
 
 class CancellableTimeout {
     constructor(func, secs) {
-        this.timeout = setTimeout(() => {
-            this._ended = true;
-            func();
-        }, secs * 1000);
+        this.end_time = Date.now() + secs * 1000;
+
+        let f_c = () => {
+            if (Date.now() >= this.end_time - 100) {
+                this._ended = true;
+                func();
+            } else {
+                this.timeout = setTimeout(f_c, 2/3 * (this.end_time - Date.now()));
+            }
+        };
+
+        this.timeout = setTimeout(f_c, secs * 1000 * 2/3);
 
         this._ended = false;
     }

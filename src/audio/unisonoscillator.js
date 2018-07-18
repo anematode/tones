@@ -112,7 +112,7 @@ class UnisonOscillator extends SourceNode {
 
                 audio.chainNodes([
                     series.o,
-                    series.delay,
+                    //series.delay,
                     series.g,
                     series.pan,
                     this.exit
@@ -566,10 +566,6 @@ class UnisonOscillator extends SourceNode {
 
     static get context() {
         return this._context;
-    }
-
-    connect(node) {
-        this.exit.connect(node);
     }
 
     start(time = this._context.currentTime) {

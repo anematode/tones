@@ -1,7 +1,6 @@
 import * as audio from "../audio/audio.js";
 import {SimpleFFT} from "../audio/analyzers.js";
 
-
 const HEX_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
 function toHex(num) {
@@ -103,6 +102,14 @@ class FrequencyVisualizer extends SimpleFFT {
             this.setCanvas(params.domElement);
         }
 
+        this.color = params.color || {
+            r: 250,
+            g: 175,
+            b: 162
+        };
+
+        this.opacity = params.opacity || 255;
+
         this.draw_loop_enabled = false;
     }
 
@@ -191,6 +198,9 @@ class FrequencyVisualizer extends SimpleFFT {
         let buffer = this.buffer;
 
         let color_array = this._image ? this._image.data : new Uint8ClampedArray(4 * s_size);
+        let r = this.color.r / 256.;
+        let g = this.color.g / 256.;
+        let b = this.color.b / 256.;
 
         for (let i = 0; i < s_size; i++) {
             let x = transformUnit(i / s_size);
@@ -202,10 +212,10 @@ class FrequencyVisualizer extends SimpleFFT {
             let value = parseInt(buffer[nearest_i]);
             value *= value / 256;
 
-            color_array[4 * i] = value;
-            color_array[4 * i + 1] = value / 2;
-            color_array[4 * i + 2] = 0;
-            color_array[4 * i + 3] = 255;
+            color_array[4 * i] = value * r;
+            color_array[4 * i + 1] = value * g;
+            color_array[4 * i + 2] = value * b;
+            color_array[4 * i + 3] = this.opacity;
         }
 
         let image = this._image ? this._image : new ImageData(color_array, texture_size, texture_size);

@@ -11,7 +11,7 @@ instrument.connect(lowpass_filter);
 instrument.enableKeyboardPlay();
 
 let reverb = new TONES.Reverb({decay: 4});
-let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
+let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.0001});
 
 lowpass_filter.connect(delay.entry);
 delay.connect(reverb);
@@ -227,7 +227,10 @@ let visualizer = new TONES.FrequencyVisualizer();
 let canvas = document.getElementById("vis_canvas");
 
 visualizer.setCanvas(canvas);
-
 visualizer.startDrawLoop();
 
 visualizer.connectFrom(TONES.masterEntryNode);
+
+let downsampler = new TONES.Downsampler();
+
+downsampler.connectFrom(TONES.masterEntryNode);

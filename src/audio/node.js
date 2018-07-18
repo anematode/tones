@@ -46,9 +46,9 @@ class SourceNode {
     }
 
     disconnect() {
-        setTimeout(function() {
+        setTimeout(() => {
             this.exit.disconnect();
-        }, 100);
+        }, 50);
         return this;
     }
 

@@ -97,9 +97,10 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
 
     _disconnect() {
         this.node.stop();
+
         setTimeout(() => {
             this.pan.disconnect();
-        }, 100);
+        }, 150);
     }
 
     _cancel() {

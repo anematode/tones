@@ -2,6 +2,7 @@ import { Instrument } from "./instrument.js";
 import { PitchMappings, PitchMapping } from "./pitchmapping.js";
 import * as audio from "./audio.js";
 import * as utils from "../utils.js";
+import {noteToName} from "./keyboardpitch.js";
 
 function periodicClearTimeout(list, timeout = 1000) {
     let timer = setInterval(() => {
@@ -85,6 +86,9 @@ class PitchedInstrument extends Instrument {
         this.internal_timeouts = [];
 
         this._timeout_interval = periodicClearTimeout(this.internal_timeouts);
+        this._active_node_remover = setInterval(() => {
+            this.clearOldActiveNodes();
+        }, 500);
     }
 
     frequencyOf(keyboardPitch) {
@@ -143,6 +147,7 @@ class PitchedInstrument extends Instrument {
         if (note_state.active_node)
             note_state.active_node.node._release();
 
+
         note_state.active_node = {
             node: node,
             start: audio.Context.currentTime,
@@ -150,7 +155,21 @@ class PitchedInstrument extends Instrument {
         }
     }
 
+    clearOldActiveNodes() {
+        for (let i = 0; i < 128; i++) {
+            let curr_state = this.getNoteState(i);
+
+            if (curr_state.active_node) {
+                if (curr_state.active_node.end < audio.Context.currentTime + 0.05) {
+                    console.log("ian");
+                    curr_state.active_node = null;
+                }
+            }
+        }
+    }
+
     schedule(note, createMsBefore = 500, set_cancel_function) {
+        console.log(`Schedule ${noteToName(note.pitch.value)}`);
         // note is KeyboardNote
         if (note.start < audio.Context.currentTime) { // if note is old news, ignore it
             return null;
@@ -162,10 +181,10 @@ class PitchedInstrument extends Instrument {
         if (note.start > audio.Context.currentTime + createMsBefore / 1e3 + 1e-3) {
             let future_timeout = null;
 
-            if (note.start > audio.Context.currentTime + 3 * createMsBefore / 1e3) {
+            if (note.start > audio.Context.currentTime + 8 * createMsBefore / 1e3) {
                 var timeout = new utils.CancellableTimeout(() => {
                     this.schedule(note, createMsBefore, x => {future_timeout = x});
-                }, note.start - 3 * createMsBefore / 1e3 - audio.Context.currentTime);
+                }, note.start - 10 * createMsBefore / 1e3 - audio.Context.currentTime);
             } else {
                 var timeout = audio.setTimeoutAbsolute(() => {
                     this.schedule(note, createMsBefore, x => {
@@ -222,8 +241,7 @@ class PitchedInstrument extends Instrument {
             this.pitch_mapping.transform(pitch),
             audio.Context.currentTime,
             1e10,
-            vel, pan
-        );
+            vel, pan);
 
         node._connect(this.entryNode);
 
@@ -232,8 +250,10 @@ class PitchedInstrument extends Instrument {
 
     releasePitch(pitch) {
         let note = this.getActiveNote(pitch.value);
-        if (note)
+        if (note) {
             note.node._release();
+            note.end = -1;
+        }
     }
 
     cancelAll() {
@@ -301,6 +321,7 @@ class PitchedInstrument extends Instrument {
     destroy() {
         this.cancelAll();
         clearInterval(this._timeout_interval);
+        clearInterval(this._active_node_remover);
         this.enableKeyboardPlay = false;
     }
 }
