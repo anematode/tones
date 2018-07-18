@@ -8,7 +8,7 @@
             text {
                 font-family: "Unica One";
                 font-size: 15px;
-                font-weight: 100;
+                pointer-events: none;
             }
             text::selection {
                 background: none;
@@ -17,6 +17,9 @@
                 font-size: 30px;
             }
         </style>
+        
+        <script src="../external/glmatrix.js"></script>
+        <script src="../build/tones.js"></script>
     </head>
 
     <body>
@@ -59,6 +62,7 @@
             
             let unik = new Knob(550, 100, 50, 0.6, '#c90', document.getElementById('svg'));
             let unit = new Text(550, 150, 'UNISON', '#333', document.getElementById('svg'));
+            let unii = new Text(550, 105, '10', '#c90', document.getElementById('svg'));
             
             let detk = new Knob(625, 100, 50, 0.3, '#096', document.getElementById('svg'));
             let dett = new Text(625, 150, 'DETUNE', '#333', document.getElementById('svg'));
@@ -87,5 +91,7 @@
             let b = new Button(770, 270, 20, true, '#903', document.getElementById('svg'));
             
         </script>
+        
+        <script src="inst.js"></script>
     </body>
 </html>
