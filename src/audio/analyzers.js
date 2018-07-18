@@ -17,47 +17,39 @@ class SimpleFFT extends EndingNode {
         this.buffer = new Uint8Array(this.bufferLength);
     }
 
+    getFloatFrequencyData(buffer) {
+        this.analyzer.getFloatFrequencyData(buffer);
+    }
+
+    getByteFrequencyData(buffer) {
+        this.analyzer.getByteFrequencyData(buffer);
+    }
+
+    get frequencyBinCount() {
+        return this.bufferLength;
+    }
+
     getFrequencies() {
         this.analyzer.getByteFrequencyData(this.buffer);
 
         return {
             values: this.buffer,
             min_freq: 0,
-            max_freq: audio.Context.samplingRate / 2, // Nyquist
-            bin_size: audio.Context.samplingRate / 2 / this.buffer.length
+            max_freq: audio.Context.sampleRate / 2, // Nyquist
+            bin_size: audio.Context.sampleRate / 2 / this.bufferLength
         }
     }
-}
 
-// This is a tiny radix-2 FFT implementation in JavaScript.
-// The function takes a complex valued input signal, and performs an in-place
-// Fast Fourier Transform (i.e. the result is returned in x_re, x_im). The
-// function arguments can be any Array type (including typed arrays).
-// Code size: <300 bytes after Closure Compiler.
-function FFT(x_re, x_im) {
-    var m = x_re.length / 2, k, X_re = [], X_im = [], Y_re = [], Y_im = [],
-        a, b, tw_re, tw_im;
-
-    for (k = 0; k < m; ++k) {
-        X_re[k] = x_re[2 * k];
-        X_im[k] = x_im[2 * k];
-        Y_re[k] = x_re[2 * k + 1];
-        Y_im[k] = x_im[2 * k + 1];
+    nyquist() {
+        return audio.Context.sampleRate / 2;
     }
 
-    if (m > 1) {
-        FFT(X_re, X_im);
-        FFT(Y_re, Y_im);
+    resolution() {
+        return audio.Context.sampleRate / 2 / this.bufferLength;
     }
 
-    for (k = 0; k < m; ++k) {
-        a = -Math.PI * k / m, tw_re = Math.cos(a), tw_im = Math.sin(a);
-        a = tw_re * Y_re[k] - tw_im * Y_im[k];
-        b = tw_re * Y_im[k] + tw_im * Y_re[k];
-        x_re[k] = X_re[k] + a;
-        x_im[k] = X_im[k] + b;
-        x_re[k + m] = X_re[k] - a;
-        x_im[k + m] = X_im[k] - b;
+    semitoneBlurred() {
+        return this.resolution() / SEMITONE;
     }
 }
 
@@ -65,32 +57,56 @@ class Downsampler extends EndingNode {
     constructor(params = {}) {
         super();
 
-        this.sample_delta = Math.max(1, Math.round((params.sdelta !== undefined) ? params.sdelta : 5));
-        this.tracked_length = Math.max(256, (params.tracked_length) ? params.tracked_length : 1024);
-        this.processor = audio.Context.createScriptProcessor(256, 1, 1); // Create a script processor with one input and one output
+        this.sample_delta = Math.max(1, Math.round((params.rate !== undefined) ? params.rate : 20));
+
+        this.tracked_length = Math.max(256, (params.size) ? params.size : 1024);
+
+        this.processor = audio.Context.createScriptProcessor(256, 2, 1); // Create a script processor with one input and one (void) output
         this.index = 0;
 
-        this.data = new Float32Array(this.tracked_length);
+        this.circular_buffer = new Float32Array(this.tracked_length);
         this.dataWriteIndex = 0;
 
         this.entry.connect(this.processor);
 
+
         this.processor.onaudioprocess = (event) => {
+            let channel_count = event.inputBuffer.numberOfChannels;
+            let arr = [];
 
-            let input = event.inputBuffer.getChannelData(0);
-
-            let prev_index = -2;
-            let index = -1;
-
-            while (index > prev_index) {
-                prev_index = index;
-                index = this.getNextIndex();
-
-                this.writeData(input[index]);
+            for (let i = 0; i < channel_count; i++) {
+                arr.push(event.inputBuffer.getChannelData(i));
             }
+
+                let prev_index = -2;
+                let index = -1;
+
+                while (index > prev_index) {
+                    prev_index = index;
+                    index = this.getNextIndex();
+
+                    let sum = 0;
+
+                    for (let i = 0; i < channel_count; i++) {
+                        sum += arr[i][index];
+                    }
+
+                    this.writeData(sum);
+                }
+
+                this.backCycle();
         };
 
         this.processor.connect(TONES.voidNode);
+    }
+
+    backCycle() {
+        this.index += 256 - this.sample_delta;
+        this.dataWriteIndex--;
+
+        if (this.dataWriteIndex < 0) {
+            this.dataWriteIndex = this.tracked_length - 1;
+        }
     }
 
     getNextIndex() {
@@ -104,8 +120,280 @@ class Downsampler extends EndingNode {
         let index = this.dataWriteIndex++;
         this.dataWriteIndex %= this.tracked_length;
 
-        this.data[index] = d;
+        this.circular_buffer[index] = d;
+    }
+
+    getData() {
+        let flattened_data = new Float32Array(this.tracked_length);
+
+        this.writeDataTo(flattened_data);
+
+        return flattened_data;
+    }
+
+    writeDataTo(array) {
+        let max_index = this.dataWriteIndex;
+
+        if (array instanceof Float32Array) {
+            if (max_index < this.tracked_length - 1)
+                array.set(this.circular_buffer.subarray(max_index, this.tracked_length), 0);
+            if (max_index > 0)
+                array.set(this.circular_buffer.subarray(0, max_index), this.tracked_length - max_index);
+            return;
+        }
+
+        let j = 0;
+
+        for (let i = max_index; i < this.tracked_length; i++, j++) {
+            array[j] = this.circular_buffer[i];
+        }
+
+        for (let i = 0; i < max_index; i++, j++) {
+            array[j] = this.circular_buffer[i];
+        }
     }
 }
 
-export { SimpleFFT, Downsampler };
+// https://gist.github.com/mbitsnbites/a065127577ff89ff885dd0a932ec2477
+function computeFFTInPlace(x_real, x_imag) {
+    let middle = x_real.length / 2;
+    let X_r = [], X_i = [], Y_r = [], Y_i = [];
+
+    for (let i = 0; i < middle; i++) {
+        X_r[i] = x_real[2 * i];
+        Y_r[i] = x_real[2 * i + 1];
+        X_i[i] = x_imag[2 * i];
+        Y_i[i] = x_imag[2 * i + 1];
+    }
+
+    if (middle > 1) {
+        computeFFTInPlace(X_r, X_i);
+        computeFFTInPlace(Y_r, Y_i);
+    }
+
+    for (let i = 0; i < middle; ++i) {
+        let a = -Math.PI * i / middle,
+            tw_re = Math.cos(a),
+            tw_im = Math.sin(a),
+            b = tw_re * Y_i[i] + tw_im * Y_r[i];
+
+        a = tw_re * Y_r[i] - tw_im * Y_i[i];
+
+        x_real[i] = X_r[i] + a;
+        x_imag[i] = X_i[i] + b;
+        x_real[i + middle] = X_r[i] - a;
+        x_imag[i + middle] = X_i[i] - b;
+    }
+}
+
+function clampUint8(x) {
+    if (x > 255)
+        x = 255;
+    else if (x < 0)
+        x = 0;
+    return parseInt(x);
+}
+
+const SEMITONE = Math.pow(2, 1/36) - 1;
+
+const dbMin = -100;
+const dbMax = -30;
+
+class DownsamplerFFT extends Downsampler {
+    constructor(params = {}) {
+        super(params);
+
+        let fftReal = new Float32Array(this.tracked_length);
+        let fftImag = fftReal.slice();
+
+        this.fftReal = fftReal;
+        this.fftImag = fftImag;
+
+        this.buffer = new Float32Array(this.tracked_length / 2);
+        this.buffer.fill(0);
+
+        this.smoothingTimeConstant = (params.sTC !== undefined) ? params.sTC : 0.3;
+    }
+
+    resetImag() {
+        this.fftImag.fill(0);
+    }
+
+    read() {
+        this.writeDataTo(this.fftReal);
+        this.resetImag();
+    }
+
+    smoothFFT() {
+        let N = this.tracked_length;
+
+        let real = this.fftReal;
+        let old = this.buffer;
+
+        for (let i = 0; i < N / 2; i++) {
+            real[i] *= 1 - this.smoothingTimeConstant;
+            real[i] += old[i] * this.smoothingTimeConstant;
+        }
+    }
+
+    computeFFT() {
+        let N = this.tracked_length;
+
+        let real = this.fftReal;
+        let imag = this.fftImag;
+
+        computeFFTInPlace(real, imag);
+
+        for (let i = 0; i < N / 2; i++) {
+            real[i] = Math.sqrt((real[i] * real[i] + imag[i] * imag[i])) / N;
+        }
+
+        this.smoothFFT();
+
+        //this.buffer.set(real.subarray(0, N / 2));
+    }
+
+    computeWindow() {
+        let N = this.tracked_length;
+
+        let a = 0.16;
+        let a0 = (1 - a) / 2;
+        let a1 = 1 / 2;
+        let a2 = a / 2;
+
+        for (let i = 0; i < N; i++) {
+            this.fftReal[i] *= a0 - a1 * Math.cos(2 * Math.PI * i / N) + a2 * Math.cos(4 * Math.PI * i / N);
+        }
+    }
+
+    decibelConvert() {
+        let real = this.fftReal;
+
+        for (let i = 0; i < this.tracked_length / 2; i++) {
+            real[i] = Math.log10(real[i]) * 20;
+        }
+    }
+
+    computeAll() {
+        this.read();
+        this.computeWindow();
+        this.computeFFT();
+        this.decibelConvert();
+    }
+
+    get frequencyBinCount() {
+        return this.tracked_length / 2;
+    }
+
+    getByteFrequencyData(array) {
+        this.computeAll();
+
+        let real = this.fftReal;
+        for (let i = 0; i < this.tracked_length / 2; i++) {
+            array[i] = clampUint8(Math.floor(255 / (dbMax - dbMin) * (real[i] - dbMin)))
+        }
+    }
+
+    getFloatFrequencyData(array) {
+        this.computeAll();
+
+        let real = this.fftReal;
+        for (let i = 0; i < this.tracked_length / 2; i++) {
+            array[i] = real[i];
+        }
+    }
+
+    getFrequencies() {
+        let buffer = new Float32Array(this.tracked_length);
+        this.getByteFrequencyData(buffer);
+
+        return {
+            values: buffer,
+            min_freq: 0,
+            max_freq: audio.Context.sampleRate / 2 / this.sample_delta, // Nyquist
+            bin_size: audio.Context.sampleRate / 2 / this.tracked_length / this.sample_delta
+        }
+    }
+
+    nyquist() {
+        return audio.Context.sampleRate / 2 / this.sample_delta;
+    }
+
+    resolution() {
+        return audio.Context.sampleRate / 2 / this.tracked_length / this.sample_delta;
+    }
+
+    semitoneBlurred() {
+        return this.resolution() / SEMITONE;
+    }
+}
+
+function powerOfTwo(x) {
+    return Math.log2(x) % 1 === 0;
+}
+
+class MultilayerFFT extends EndingNode {
+    constructor(params = {}) {
+        super();
+
+        this.size = params.size || 2048;
+        this.layers = params.layers || 5;
+
+        if (this.layers > 8)
+            throw new Error("too many layers");
+
+        if (!powerOfTwo(this.size))
+            throw new Error("FFT must be power of two in size");
+
+        this.ffts = [];
+        this.arrays = [];
+
+        let main_fft = new SimpleFFT({
+            fftSize: this.size
+        });
+
+        this.entry.connect(main_fft.entry);
+
+        this.ffts.push(main_fft);
+
+        for (let i = 1; i < this.layers; i++) {
+            let downsampler_fft = new DownsamplerFFT({
+                size: this.size,
+                rate: Math.pow(2, i)
+            });
+
+            this.entry.connect(downsampler_fft.entry);
+
+            this.ffts.push(downsampler_fft);
+        }
+    }
+
+    computeAll() {
+        for (let i = 0; i < this.ffts.length; i++) {
+            if (this.arrays[i])
+                this.ffts[i].getByteFrequencyData(this.arrays[i]);
+            else
+                this.arrays[i] = new Uint8Array(this.ffts[i].frequencyBinCount);
+        }
+    }
+
+    getValue(frequency) {
+        let sum = 0;
+        let count = 0;
+
+        for (let i = 0; i < this.layers; i++) {
+            let fft = this.ffts[i];
+            let buffer = this.arrays[i];
+
+            if ((frequency < fft.nyquist() || i === 0) && (frequency > fft.semitoneBlurred() || i === this.layers - 1)) {
+                let nearest_i = Math.round(frequency / fft.nyquist() * buffer.length);
+                sum += buffer[nearest_i];
+                count++;
+            }
+        }
+
+        return sum / count;
+    }
+}
+
+export { SimpleFFT, Downsampler, computeFFTInPlace as computeFFT, DownsamplerFFT, MultilayerFFT};
