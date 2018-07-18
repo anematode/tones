@@ -191,7 +191,7 @@ function clampUint8(x) {
         x = 255;
     else if (x < 0)
         x = 0;
-    return parseInt(x);
+    return parseInt(Math.round(x));
 }
 
 const SEMITONE = Math.pow(2, 1/36) - 1;
@@ -332,6 +332,8 @@ function powerOfTwo(x) {
     return Math.log2(x) % 1 === 0;
 }
 
+let g = 0;
+
 class MultilayerFFT extends EndingNode {
     constructor(params = {}) {
         super();
@@ -387,11 +389,18 @@ class MultilayerFFT extends EndingNode {
 
             if ((frequency < fft.nyquist() || i === 0) && (frequency > fft.semitoneBlurred() || i === this.layers - 1)) {
                 let nearest_i = Math.round(frequency / fft.nyquist() * buffer.length);
+
                 sum += buffer[nearest_i];
                 count++;
             }
         }
 
+        if (count === 0) {
+            return 0;
+        }
+
+        if (g++%1280===0)
+            console.log(sum / count, sum, count);
         return sum / count;
     }
 }
