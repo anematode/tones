@@ -108,7 +108,7 @@ class Piano extends KeyboardInstrument {
             (note, pressing) => {
                 if (!note) return;
                 if (pressing) {
-                    this.play(note);
+                    this.playPitch(note);
                 } else {
                     this.release(note);
                 }

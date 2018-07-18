@@ -1,4 +1,4 @@
-import { KeyboardPitch, KeyboardPitches } from "./keyboardnote.js";
+import { KeyboardPitch, KeyboardPitches } from "./keyboardpitch.js";
 
 class KeyboardMapping {
     constructor(dict, func) { // Key pathway: (keypress / keyup) -> dict -> func call (KeyboardPitch, bool pressed)
@@ -9,6 +9,7 @@ class KeyboardMapping {
             try {
                 this.func(this.keydict[evt.key], true);
             } catch (e) {
+                console.log(e);
                 // Key that's not in the mapping, ok
             }
         });
@@ -16,6 +17,7 @@ class KeyboardMapping {
             try {
                 this.func(this.keydict[evt.key], false);
             } catch (e) {
+                console.log(e);
                 // Key that's not in the mapping, ok
             }
         });

@@ -1,4 +1,4 @@
-import {KeyboardPitch, KeyboardInterval} from "./keyboardnote.js";
+import {KeyboardPitch} from "./keyboardpitch.js";
 import {Pitch, Interval} from "./pitch.js";
 
 class PitchMapping {
@@ -14,7 +14,7 @@ class PitchMapping {
 
     dictApply(func) {
         for (let key in this.dict) {
-            this.keydict[key] = func(this.keydict[key]);
+            this.dict[key] = func(this.dict[key]);
         }
     }
 }
