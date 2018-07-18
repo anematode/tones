@@ -101,15 +101,21 @@ class Knob extends Widget {
             self.sx = event.clientX;
             self.sy = event.clientY;
             self.old = self.v;
-        };
-        g1.ondrag = function(event) {
-            if (event.clientX > 0 && event.clientY > 0) { 
-                let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) / 4 + self.old;
-                
-                result = result < 0 ? 0 : result > 1 ? 1 : result;
-                self.v = result;
-                self.update();
-            }
+            
+            document.onmousemove = function(event) {
+                if (event.clientX > 0 && event.clientY > 0) { 
+                    let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) / 4 + self.old;
+
+                    result = result < 0 ? 0 : result > 1 ? 1 : result;
+                    self.v = result;
+                    self.update();
+                }
+            };
+            
+            document.onmouseup = function() {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
         };
         this.svg.appendChild(g1);
         
@@ -149,15 +155,21 @@ class Slider extends Widget {
             self.sx = event.clientX;
             self.sy = event.clientY;
             self.old = self.v;
-        };
-        g1.ondrag = function(event) {
-            if (event.clientX > 0 && event.clientY > 0) {
-                let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) + self.old;
-                
-                result = result < 0 ? 0 : result > 1 ? 1 : result;
-                self.v = result;
-                self.update();
-            }
+            
+            document.onmousemove = function(event) {
+                if (event.clientX > 0 && event.clientY > 0) {
+                    let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) + self.old;
+
+                    result = result < 0 ? 0 : result > 1 ? 1 : result;
+                    self.v = result;
+                    self.update();
+                }
+            };
+            
+            document.onmouseup = function() {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
         };
         this.svg.appendChild(g1);
         
@@ -243,4 +255,8 @@ class Group {
         
         this.svg.appendChild(g1);
     }
+}
+
+function stop(event) {
+    event.preventDefault();
 }
