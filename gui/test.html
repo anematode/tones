@@ -8,7 +8,7 @@
             text {
                 font-family: "Unica One";
                 font-size: 15px;
-                font-weight: 100;
+                pointer-events: none;
             }
             text::selection {
                 background: none;
@@ -17,38 +17,43 @@
                 font-size: 30px;
             }
         </style>
+        
+        <script src="../external/glmatrix.js"></script>
+        <script src="../build/tones.js"></script>
     </head>
 
     <body>
-        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg" draggable="true">
-            <rect x="0" y="0" width="1000" height="500" fill="#333"></rect>
-            <text x="10" y="30" fill="#fff" class="title">TONES</text>
-            <text x="90" y="30" fill="#fff" class="caption">by anematode</text>
-            <rect x="0" y="40" width="1000" height="450" fill="#eee"></rect>
-            
-            <text x="5" y="70">COMPRESSOR</text>
-            <text x="5" y="105">DELAY</text>
-            <text x="5" y="140">DISTORTION</text>
-            <text x="5" y="175">EQUALIZER</text>
-            <text x="5" y="210">FILTER</text>
-            <text x="5" y="245">CHORUS</text>
-            <text x="5" y="280">REVERB</text>
-            
-            <rect x="5" y="75" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="110" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="145" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="180" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="215" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="250" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="285" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="320" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="355" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="390" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="425" width="95" height="1" fill="#999"></rect>
-            <rect x="5" y="460" width="95" height="1" fill="#999"></rect>
-            
-            <rect x="99" y="40" width="1" height="450" fill="#333"></rect>
-            <rect x="499" y="40" width="1" height="450" fill="#333"></rect>
+        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg" draggable="true" ondragstart="stop(event)">
+            <g>
+                <rect x="0" y="0" width="1000" height="500" fill="#333"></rect>
+                <text x="10" y="30" fill="#fff" class="title">TONES</text>
+                <text x="90" y="30" fill="#fff" class="caption">by anematode</text>
+                <rect x="0" y="40" width="1000" height="450" fill="#eee"></rect>
+
+                <text x="5" y="70">COMPRESSOR</text>
+                <text x="5" y="105">DELAY</text>
+                <text x="5" y="140">DISTORTION</text>
+                <text x="5" y="175">EQUALIZER</text>
+                <text x="5" y="210">FILTER</text>
+                <text x="5" y="245">CHORUS</text>
+                <text x="5" y="280">REVERB</text>
+
+                <rect x="5" y="75" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="110" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="145" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="180" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="215" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="250" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="285" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="320" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="355" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="390" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="425" width="95" height="1" fill="#999"></rect>
+                <rect x="5" y="460" width="95" height="1" fill="#999"></rect>
+
+                <rect x="99" y="40" width="1" height="450" fill="#333"></rect>
+                <rect x="499" y="40" width="1" height="450" fill="#333"></rect>
+            </g>
         </svg>
         
         <script src="knob.js"></script>
@@ -56,50 +61,37 @@
         <script>
             
             let unik = new Knob(550, 100, 50, 0.6, '#c90', document.getElementById('svg'));
-            unik.add();
             let unit = new Text(550, 150, 'UNISON', '#333', document.getElementById('svg'));
-            unit.add();
+            let unii = new Text(550, 105, '10', '#c90', document.getElementById('svg'));
             
             let detk = new Knob(625, 100, 50, 0.3, '#096', document.getElementById('svg'));
-            detk.add();
             let dett = new Text(625, 150, 'DETUNE', '#333', document.getElementById('svg'));
-            dett.add();
             
             let blek = new Knob(700, 100, 50, 0.3, '#096', document.getElementById('svg'));
-            blek.add();
             let blet = new Text(700, 150, 'BLEND', '#333', document.getElementById('svg'));
-            blet.add();
             
             //adsr
             
             let atts = new Slider(550, 250, 100, 0.1, '#069', document.getElementById('svg'));
-            atts.add();
             let attt = new Text(550, 325, 'A', '#333', document.getElementById('svg'));
-            attt.add();
             
             let decs = new Slider(600, 250, 100, 0.8, '#069', document.getElementById('svg'));
-            decs.add();
             let dect = new Text(600, 325, 'D', '#333', document.getElementById('svg'));
-            dect.add();
             
             let suss = new Slider(650, 250, 100, 0.6, '#069', document.getElementById('svg'));
-            suss.add();
             let sust = new Text(650, 325, 'S', '#333', document.getElementById('svg'));
-            sust.add();
             
             let rels = new Slider(700, 250, 100, 0.2, '#069', document.getElementById('svg'));
-            rels.add();
             let relt = new Text(700, 325, 'R', '#333', document.getElementById('svg'));
-            relt.add();
             
             //stuff
             
             let g = new Group(750, 65, 975, 250, 'PLACEHOLDER', document.getElementById('svg'));
-            g.add();
             
             let b = new Button(770, 270, 20, true, '#903', document.getElementById('svg'));
-            b.add();
             
         </script>
+        
+        <script src="inst.js"></script>
     </body>
 </html>
