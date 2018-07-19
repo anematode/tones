@@ -12,6 +12,8 @@ class Node {
     connect(x) { // connect to node
         if (x instanceof Node) {
             this.exit.connect(x.entry);
+        } else if (x instanceof EndingNode) {
+            this.exit.connect(x.entry);
         } else {
             this.exit.connect(x);
         }
@@ -42,6 +44,8 @@ class SourceNode {
 
     connect(x) { // connect to node
         if (x instanceof Node) {
+            this.exit.connect(x.entry);
+        } else if (x instanceof EndingNode) {
             this.exit.connect(x.entry);
         } else {
             this.exit.connect(x);
