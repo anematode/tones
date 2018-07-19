@@ -51,7 +51,7 @@ class KeyboardInstrument extends PitchedInstrument {
         if (boolean) {
             enableKeyboardPlay();
         } else {
-            disableKeybordPlay();
+            disableKeyboardPlay();
         }
     }
 
