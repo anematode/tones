@@ -2,7 +2,16 @@ import * as audio from "./audio.js";
 import * as utils from "../utils.js";
 import { EndingNode } from "./node.js";
 
+/*
+This class wraps the Web Audio API's analyzer node
+ */
 class SimpleFFT extends EndingNode {
+    /*
+    Parameters:
+
+    fftSize = size of the fft,
+    sTC = smoothing time constant of the fft
+     */
     constructor(params = {}) {
         super();
 
@@ -17,117 +26,144 @@ class SimpleFFT extends EndingNode {
         this.buffer = new Uint8Array(this.bufferLength);
     }
 
+    /*
+    Copy the frequency data, as bins from [0, ..., nyquist] in decibels, to Float32Array buffer
+     */
     getFloatFrequencyData(buffer) {
         this.analyzer.getFloatFrequencyData(buffer);
     }
 
+    /*
+    Copy the frequency data, as bins from [0, ..., nyquist] in decibels scaled to [0, ..., 255], to Uint8Array buffer
+     */
     getByteFrequencyData(buffer) {
         this.analyzer.getByteFrequencyData(buffer);
     }
 
+    // Size of returned frequencies
     get frequencyBinCount() {
         return this.bufferLength;
     }
 
+    // Copy to internal buffer
     computeAll() {
         this.analyzer.getByteFrequencyData(this.buffer);
     }
 
+    // Output with more context for easier use
     getFrequencies() {
-        this.analyzer.getByteFrequencyData(this.buffer);
+        this.computeAll();
 
         return {
-            values: this.buffer,
-            min_freq: 0,
-            max_freq: audio.Context.sampleRate / 2, // Nyquist
-            bin_size: audio.Context.sampleRate / 2 / this.bufferLength
+            values: this.buffer,  // Frequency values
+            min_freq: 0, // Smallest frequency
+            max_freq: audio.Context.sampleRate / 2, // Nyquist frequency, max frequency
+            bin_size: audio.Context.sampleRate / 2 / this.bufferLength // Size in Hz of each bin
         }
     }
 
+    /*
+    The Nyquist frequency, or half the sample rate. This frequency is the maximum frequency outputted by the FFT
+     */
     nyquist() {
         return audio.Context.sampleRate / 2;
     }
 
+    /*
+    The resolution, in hertz, or the bin size
+     */
     resolution() {
         return audio.Context.sampleRate / 2 / this.bufferLength;
     }
 
+    /*
+    Frequency at which a semitone becomes indistinguishable (in the sense that two adjacent frequencies near this point
+    differing by a semitone would nominally fall into the same bin)
+     */
     semitoneBlurred() {
         return this.resolution() / SEMITONE;
     }
 }
 
+/*
+This class allows live audio to be downsampled and sent to an array
+ */
 class Downsampler extends EndingNode {
+    /*
+    Parameters:
+
+    rate = delta between consecutive samples taken,
+    size = size of the buffer keeping track of previous samples
+     */
     constructor(params = {}) {
         super();
 
         this.sample_delta = Math.max(1, Math.round((params.rate !== undefined) ? params.rate : 20));
 
-        this.tracked_length = Math.max(256, (params.size) ? params.size : 1024);
+        this.tracked_length = Math.max(256, (params.size) ? params.size : 1024); // Size of the script processor window
 
-        this.processor = audio.Context.createScriptProcessor(256, 2, 1); // Create a script processor with one input and one (void) output
+        this.processor = audio.Context.createScriptProcessor(this.tracked_length, 2, 1); // Create a script processor with one input and one (void) output
         this.index = 0;
 
-        this.circular_buffer = new Float32Array(this.tracked_length);
+        this.circular_buffer = new Float32Array(this.tracked_length); // This circular buffer will temporally start at dataWriteIndex and wrap around
         this.dataWriteIndex = 0;
 
         this.entry.connect(this.processor);
 
-
         this.processor.onaudioprocess = (event) => {
             let channel_count = event.inputBuffer.numberOfChannels;
-            let arr = [];
+            let channels = []; // Use all channels
 
             for (let i = 0; i < channel_count; i++) {
-                arr.push(event.inputBuffer.getChannelData(i));
+                channels.push(event.inputBuffer.getChannelData(i));
             }
 
                 let prev_index = -2;
                 let index = -1;
 
-                while (index > prev_index) {
+                while (index > prev_index) { // If the previous index is larger than the new index, the new index lies outside of the current window
                     prev_index = index;
-                    index = this.getNextIndex();
+                    index = this.getNextIndex(); // Index tells us where to get the sample from
 
                     let sum = 0;
 
-                    for (let i = 0; i < channel_count; i++) {
-                        sum += arr[i][index];
+                    for (let i = 0; i < channel_count; i++) { // Add up the channel data
+                        sum += channels[i][index];
                     }
 
-                    this.writeData(sum);
+                    this.writeData(sum); // Write to the circular buffer
                 }
 
-                this.backCycle();
+                this.backCycle(); // We went one index too far, so go back by one
         };
 
-        this.processor.connect(TONES.voidNode);
+        this.processor.connect(TONES.voidNode); // Connect to the void node so the processor actually runs
     }
 
-    backCycle() {
-        this.index += 256 - this.sample_delta;
+    backCycle() { // Jump back one step after ending a window
+        this.index += this.tracked_length - this.sample_delta;
         this.dataWriteIndex--;
 
-        if (this.dataWriteIndex < 0) {
+        if (this.dataWriteIndex < 0) { // If the dataWriteIndex should wrap around
             this.dataWriteIndex = this.tracked_length - 1;
         }
     }
 
     getNextIndex() {
         this.index += this.sample_delta;
-        this.index %= 256;
+        this.index %= this.tracked_length; // Modulo tracked_length so it always stays in the range of the window
 
         return this.index;
     }
 
     writeData(d) {
         let index = this.dataWriteIndex++;
-        this.dataWriteIndex %= this.tracked_length;
+        this.dataWriteIndex %= this.tracked_length; // Circulate the dataWriteIndex
 
         this.circular_buffer[index] = d;
     }
 
-    getData() {
+    getData() { // Get the data as a Float32Array, but aligned correctly (not circular)
         let flattened_data = new Float32Array(this.tracked_length);
 
         this.writeDataTo(flattened_data);
@@ -135,11 +171,11 @@ class Downsampler extends EndingNode {
         return flattened_data;
     }
 
-    writeDataTo(array) {
+    writeDataTo(array) { // Write the de-circularized data to an array
         let max_index = this.dataWriteIndex;
 
-        if (array instanceof Float32Array) {
-            if (max_index < this.tracked_length - 1)
+        if (array instanceof Float32Array) { // If the array is a Float32Array, use built-in methods to copy
+            if (max_index < this.tracked_length - 1) // Array
                 array.set(this.circular_buffer.subarray(max_index, this.tracked_length), 0);
             if (max_index > 0)
                 array.set(this.circular_buffer.subarray(0, max_index), this.tracked_length - max_index);

@@ -11,7 +11,7 @@ instrument.connect(lowpass_filter);
 instrument.enableKeyboardPlay();
 
 let reverb = new TONES.Reverb({decay: 4});
-let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.0001});
+let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
 
 lowpass_filter.connect(delay.entry);
 delay.connect(reverb);
@@ -227,39 +227,11 @@ let visualizer = new TONES.FrequencyVisualizer();
 let canvas = document.getElementById("vis_canvas");
 let g_canvas = document.getElementById("dup_canvas");
 
-const MIN_FREQ = 40;
-const MAX_FREQ = 16000;
-const MIN_FREQ_LOG2 = Math.log2(MIN_FREQ);
-const MAX_FREQ_LOG2 = Math.log2(MAX_FREQ);
-const FREQ_DIFF = MAX_FREQ_LOG2 - MIN_FREQ_LOG2;
-
-function transformUnit(x) {
-    return Math.pow(2, MIN_FREQ_LOG2 + FREQ_DIFF * x);
-}
-
-let UDDEREL = true;
-
-
 visualizer.setCanvas(canvas);
 visualizer.startDrawLoop();
 
-
-    let grapher = new TONES.ArrayGrapher({
-        domElement: g_canvas,
-        transformation: TONES.stretchToCanvas(g_canvas, 0, 1, -1, 257)
-    });
-
-    let dup_grapher = new TONES.ArrayGrapher({
-        domElement: g_canvas,
-        transformation: TONES.stretchToCanvas(canvas, 0, 1, -180, 0.01)
-    });
-
-    function drawIan() {
-        requestAnimationFrame(drawIan);
-
-        let arr = [];
-    }
-
-    drawIan();
-
 visualizer.connectFrom(TONES.masterEntryNode);
+
+let downsampler = new TONES.Downsampler();
+
+downsampler.connectFrom(TONES.masterEntryNode);
