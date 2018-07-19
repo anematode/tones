@@ -180,7 +180,7 @@ let BASS_3 = "(Eb2{d:e,v:0.5}Bb2Eb3){d:1.3*e}R{d:-0.3*e}";
 let MIDDLE_TUNE = "(A3{d:q,v:0.7}B3D4){d:e}G4R{d:-e}";
 let MIDDLE_TUNE_2 = "(A3{d:q,v:0.7}Bb3D4){d:e}G4R{d:-e}";
 let MIDDLE_TUNE_3 = "(A3{d:q,v:0.7}C4D4){d:e}G4R{d:-e}";
-let HIGH_FOURTH = "[D6G6]{d:e,v:1}R{d:-h}";
+let HIGH_FOURTH = "[D6G6]{d:e,v:0.7}R{d:-h}";
 
 let strn = `
 ${BASS_1}
@@ -225,12 +225,41 @@ function playDDD() {
 
 let visualizer = new TONES.FrequencyVisualizer();
 let canvas = document.getElementById("vis_canvas");
+let g_canvas = document.getElementById("dup_canvas");
+
+const MIN_FREQ = 40;
+const MAX_FREQ = 16000;
+const MIN_FREQ_LOG2 = Math.log2(MIN_FREQ);
+const MAX_FREQ_LOG2 = Math.log2(MAX_FREQ);
+const FREQ_DIFF = MAX_FREQ_LOG2 - MIN_FREQ_LOG2;
+
+function transformUnit(x) {
+    return Math.pow(2, MIN_FREQ_LOG2 + FREQ_DIFF * x);
+}
+
+let UDDEREL = true;
+
 
 visualizer.setCanvas(canvas);
 visualizer.startDrawLoop();
 
+
+    let grapher = new TONES.ArrayGrapher({
+        domElement: g_canvas,
+        transformation: TONES.stretchToCanvas(g_canvas, 0, 1, -1, 257)
+    });
+
+    let dup_grapher = new TONES.ArrayGrapher({
+        domElement: g_canvas,
+        transformation: TONES.stretchToCanvas(canvas, 0, 1, -180, 0.01)
+    });
+
+    function drawIan() {
+        requestAnimationFrame(drawIan);
+
+        let arr = [];
+    }
+
+    drawIan();
+
 visualizer.connectFrom(TONES.masterEntryNode);
-
-let downsampler = new TONES.Downsampler();
-
-downsampler.connectFrom(TONES.masterEntryNode);

@@ -25,6 +25,7 @@ export * from "./music/time.js";
 // Graphics
 
 export * from "./graphics/frequencyvisualizer.js";
+export * from "./graphics/grapharray.js";
 
 // Utils
 

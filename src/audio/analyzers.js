@@ -29,6 +29,10 @@ class SimpleFFT extends EndingNode {
         return this.bufferLength;
     }
 
+    computeAll() {
+        this.analyzer.getByteFrequencyData(this.buffer);
+    }
+
     getFrequencies() {
         this.analyzer.getByteFrequencyData(this.buffer);
 
@@ -194,7 +198,7 @@ function clampUint8(x) {
     return parseInt(Math.round(x));
 }
 
-const SEMITONE = Math.pow(2, 1/36) - 1;
+const SEMITONE = Math.pow(2, 1/12) - 1;
 
 const dbMin = -100;
 const dbMax = -30;
@@ -212,7 +216,7 @@ class DownsamplerFFT extends Downsampler {
         this.buffer = new Float32Array(this.tracked_length / 2);
         this.buffer.fill(0);
 
-        this.smoothingTimeConstant = (params.sTC !== undefined) ? params.sTC : 0.3;
+        this.smoothingTimeConstant = (params.sTC !== undefined) ? params.sTC : 0.5;
     }
 
     resetImag() {
@@ -234,6 +238,8 @@ class DownsamplerFFT extends Downsampler {
             real[i] *= 1 - this.smoothingTimeConstant;
             real[i] += old[i] * this.smoothingTimeConstant;
         }
+
+        this.buffer.set(real.subarray(0, N / 2));
     }
 
     computeFFT() {
@@ -249,8 +255,6 @@ class DownsamplerFFT extends Downsampler {
         }
 
         this.smoothFFT();
-
-        //this.buffer.set(real.subarray(0, N / 2));
     }
 
     computeWindow() {
@@ -270,7 +274,7 @@ class DownsamplerFFT extends Downsampler {
         let real = this.fftReal;
 
         for (let i = 0; i < this.tracked_length / 2; i++) {
-            real[i] = Math.log10(real[i]) * 20;
+            real[i] = Math.log10(real[i] + 1e-40) * 20;
         }
     }
 
@@ -336,10 +340,12 @@ let g = 0;
 
 class MultilayerFFT extends EndingNode {
     constructor(params = {}) {
+        throw new Error("WIP");
+
         super();
 
-        this.size = params.size || 2048;
-        this.layers = params.layers || 5;
+        this.size = params.size || 4096;
+        this.layers = params.layers || 4;
 
         if (this.layers > 8)
             throw new Error("too many layers");
@@ -387,11 +393,12 @@ class MultilayerFFT extends EndingNode {
             let fft = this.ffts[i];
             let buffer = this.arrays[i];
 
-            if ((frequency < fft.nyquist() || i === 0) && (frequency > fft.semitoneBlurred() || i === this.layers - 1)) {
+            if ((frequency < fft.nyquist() / 3 || i === 0)) {
                 let nearest_i = Math.round(frequency / fft.nyquist() * buffer.length);
+                let factor = Math.max((frequency / fft.semitoneBlurred()) - 1, 0.02);
 
-                sum += buffer[nearest_i];
-                count++;
+                sum += buffer[nearest_i] * factor;
+                count += factor;
             }
         }
 
@@ -399,8 +406,6 @@ class MultilayerFFT extends EndingNode {
             return 0;
         }
 
-        if (g++%1280===0)
-            console.log(sum / count, sum, count);
         return sum / count;
     }
 }

@@ -161,7 +161,6 @@ class PitchedInstrument extends Instrument {
 
             if (curr_state.active_node) {
                 if (curr_state.active_node.end < audio.Context.currentTime + 0.05) {
-                    console.log("ian");
                     curr_state.active_node = null;
                 }
             }
@@ -169,7 +168,6 @@ class PitchedInstrument extends Instrument {
     }
 
     schedule(note, createMsBefore = 500, set_cancel_function) {
-        console.log(`Schedule ${noteToName(note.pitch.value)}`);
         // note is KeyboardNote
         if (note.start < audio.Context.currentTime) { // if note is old news, ignore it
             return null;
@@ -184,7 +182,7 @@ class PitchedInstrument extends Instrument {
             if (note.start > audio.Context.currentTime + 8 * createMsBefore / 1e3) {
                 var timeout = new utils.CancellableTimeout(() => {
                     this.schedule(note, createMsBefore, x => {future_timeout = x});
-                }, note.start - 10 * createMsBefore / 1e3 - audio.Context.currentTime);
+                }, note.start - 8 * createMsBefore / 1e3 - audio.Context.currentTime);
             } else {
                 var timeout = audio.setTimeoutAbsolute(() => {
                     this.schedule(note, createMsBefore, x => {
