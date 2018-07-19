@@ -289,7 +289,7 @@ class KeyboardPitch {
         }
     }
 
-    subtract(note) { // or Interval
+    subtract(note) { // subtract note or Interval
         if (_isKeyboardNoteInstance(note) || isNumeric(note)) {
             return new KeyboardInterval(this.value - new KeyboardPitch(note).value);
         } else if (_isKeyboardIntervalInstance(note)) {
@@ -297,15 +297,15 @@ class KeyboardPitch {
         }
     }
 
-    add(interval) {
+    add(interval) { // add interval
         return new KeyboardPitch(this.value + interval.value);
     }
 
-    name() {
+    name() { // name of note
         return noteToName(this.value);
     }
 
-    twelveTETFrequency() {
+    twelveTETFrequency() { // frequency in 12TET
         return Math.pow(2, (this.value - 69) / 12) * 440;
     }
 }
@@ -318,7 +318,7 @@ function makeKeyboardPitch(...args) {
 /* Interval on the piano */
 class KeyboardInterval {
     constructor(arg1, arg2) {
-        if (isNumeric(arg1) && arg2 === undefined) {
+        if (isNumeric(arg1) && arg2 === undefined) { // TODO use utils.isNumeric
             this.value = arg1;
         } else if (arg2 !== undefined) {
             this.value = new KeyboardPitch(arg2).subtract(new KeyboardPitch(arg1)).value;
@@ -329,15 +329,15 @@ class KeyboardInterval {
         }
     }
 
-    add(interval) {
+    add(interval) { // add interval
         return new KeyboardInterval(this.value + (new KeyboardInterval(interval)).value);
     }
 
-    subtract(interval) {
+    subtract(interval) { // subtract interval
         return new KeyboardInterval(this.value - (new KeyboardInterval(interval)).value);
     }
 
-    negate() {
+    negate() { // TODO decide whether to use reverse or negate
         return new KeyboardInterval(-this.value)
     }
 
@@ -345,11 +345,11 @@ class KeyboardInterval {
         return this.value * 100;
     }
 
-    ratio() {
+    ratio() { // interval value in 12 tet
         return Math.pow(2, this.value / 12);
     }
 
-    name() {
+    name() { // name of interval
         return intervalToName(this.value);
     }
 }
@@ -374,5 +374,7 @@ for (let i = 12; i < 128; i++) {
 
     KeyboardPitches[note.name().replace("#", "s")] = note;
 }
+
+Object.freeze(KeyboardPitches);
 
 export {noteToName, nameToNote, KeyboardPitch, KeyboardInterval, KeyboardIntervals, KeyboardPitches, makeKeyboardPitch, makeKeyboardInterval, intervalToName};
