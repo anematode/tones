@@ -96,7 +96,22 @@
             
             let g = new Group(750, 65, 975, 250, 'PLACEHOLDER', svg);
             
-            let b = new Button(770, 270, 20, true, '#903', svg);
+            let wavr = new Radio();
+            
+            let wavb1 = new Button(760, 280, 20, true, '#903', svg);
+            let wavb2 = new Button(760, 320, 20, false, '#903', svg);
+            let wavb3 = new Button(760, 360, 20, false, '#903', svg);
+            let wavb4 = new Button(760, 400, 20, false, '#903', svg);
+            
+            let wavt1 = new Text(805, 285, 'SINE', '#333', svg);
+            let wavt2 = new Text(805, 325, 'SQUARE', '#333', svg);
+            let wavt3 = new Text(805, 365, 'SAW', '#333', svg);
+            let wavt4 = new Text(805, 405, 'TRIANGLE', '#333', svg);
+            
+            wavr.add(wavb1);
+            wavr.add(wavb2);
+            wavr.add(wavb3);
+            wavr.add(wavb4);
             
         </script>
         

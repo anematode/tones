@@ -191,12 +191,17 @@ class Slider extends Widget {
 class Button extends Widget {
     constructor(cx, cy, s, v, c, svg) {
         super(cx, cy, s, v, c, svg);
+        this.radio = null;
     }
     
     update() {
         this.mod[0].style.opacity = this.v ? 1 : 0;
         
         this.change();
+        
+        if (this.radio !== undefined && this.v) {
+            this.radio.update(this);
+        }
     }
     
     add() {
@@ -214,10 +219,32 @@ class Button extends Widget {
         
         let self = this;
         g1.onmousedown = function() {
-            self.v = self.v === 0 ? 1 : 0;
+            self.v = this.radio !== null ? true : self.v === 0 ? 1 : 0;
+            
             self.update();
         };
         this.svg.appendChild(g1);
+        
+        this.update();
+    }
+}
+
+class Radio {
+    constructor() {
+        this.buttons = [];
+    }
+    
+    update(b) {
+        for (let i = 0; i < this.buttons.length; i++) {
+            if (this.buttons[i] !== b) {
+                this.buttons[i].set(false);
+            }
+        }
+    }
+    
+    add(b) {
+        this.buttons.push(b);
+        b.radio = this;
     }
 }
 
