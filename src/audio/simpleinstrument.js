@@ -92,7 +92,7 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
 
         window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
             this._destroy();
-        }, this.parent.params.release_length * 1000 + 500);
+        }, this.parent.params.release_length * 1000 + 1000);
     }
 
     _disconnect() {

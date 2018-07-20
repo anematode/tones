@@ -11,7 +11,7 @@ instrument.connect(lowpass_filter);
 instrument.enableKeyboardPlay();
 
 let reverb = new TONES.Reverb({decay: 4});
-let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.0001});
+let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
 
 lowpass_filter.connect(delay.entry);
 delay.connect(reverb);
@@ -180,7 +180,7 @@ let BASS_3 = "(Eb2{d:e,v:0.5}Bb2Eb3){d:1.3*e}R{d:-0.3*e}";
 let MIDDLE_TUNE = "(A3{d:q,v:0.7}B3D4){d:e}G4R{d:-e}";
 let MIDDLE_TUNE_2 = "(A3{d:q,v:0.7}Bb3D4){d:e}G4R{d:-e}";
 let MIDDLE_TUNE_3 = "(A3{d:q,v:0.7}C4D4){d:e}G4R{d:-e}";
-let HIGH_FOURTH = "[D6G6]{d:e,v:1}R{d:-h}";
+let HIGH_FOURTH = "[D6G6]{d:e,v:0.7}R{d:-h}";
 
 let strn = `
 ${BASS_1}
@@ -225,6 +225,7 @@ function playDDD() {
 
 let visualizer = new TONES.FrequencyVisualizer();
 let canvas = document.getElementById("vis_canvas");
+let g_canvas = document.getElementById("dup_canvas");
 
 visualizer.setCanvas(canvas);
 visualizer.startDrawLoop();

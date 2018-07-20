@@ -37,7 +37,7 @@ class CancellableTimeout {
         this.end_time = Date.now() + secs * 1000;
 
         let f_c = () => {
-            if (Date.now() >= this.end_time - 100) {
+            if (Date.now() >= this.end_time - 10) {
                 this._ended = true;
                 func();
             } else {

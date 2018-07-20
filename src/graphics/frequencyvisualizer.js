@@ -122,17 +122,13 @@ class FrequencyVisualizer extends SimpleFFT {
         ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
     }
 
-    updateBuffer() {
-        this.analyzer.getByteFrequencyData(this.buffer);
-    }
-
     startDrawLoop() {
         this.draw_loop_enabled = true;
         this.drawLoop();
     }
 
     drawLoop() {
-        this.updateBuffer();
+        this.computeAll();
         this.drawScene();
 
         if (this.draw_loop_enabled) {
@@ -144,6 +140,7 @@ class FrequencyVisualizer extends SimpleFFT {
 
     stopDrawLoop() {
         this.draw_loop_enabled = false;
+        this.clearCanvas();
     }
 
     drawScene() {
@@ -194,9 +191,6 @@ class FrequencyVisualizer extends SimpleFFT {
         let texture_size = 64;
         let s_size = texture_size * texture_size;
 
-        let nyquist = audio.Context.sampleRate / 2;
-        let buffer = this.buffer;
-
         let color_array = this._image ? this._image.data : new Uint8ClampedArray(4 * s_size);
         let r = this.color.r / 256.;
         let g = this.color.g / 256.;
@@ -204,12 +198,11 @@ class FrequencyVisualizer extends SimpleFFT {
 
         for (let i = 0; i < s_size; i++) {
             let x = transformUnit(i / s_size);
-            let nearest_i = Math.round(x / nyquist * buffer.length);
 
-            if (nearest_i < 0 || nearest_i > buffer.length)
-                continue;
+            let nearest_i = Math.min(parseInt(x / this.nyquist() * this.buffer.length), this.buffer.length - 1);
 
-            let value = parseInt(buffer[nearest_i]);
+            let value = this.buffer[nearest_i];
+
             value *= value / 256;
 
             color_array[4 * i] = value * r;

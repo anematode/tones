@@ -109,7 +109,7 @@ class PitchedInstrument extends Instrument {
         return !(state.future_nodes.length === 0 && !state.active_node);
     }
 
-    predictNoteState(note_num) { // Return the predicted note state, without old_nodes
+    predictNoteState(note_num) { // Return the predicted note state
         if (!this.hasEventsScheduled(note_num)) {
             return {
                 future_nodes: [],
@@ -161,7 +161,6 @@ class PitchedInstrument extends Instrument {
 
             if (curr_state.active_node) {
                 if (curr_state.active_node.end < audio.Context.currentTime + 0.05) {
-                    console.log("ian");
                     curr_state.active_node = null;
                 }
             }
@@ -169,9 +168,8 @@ class PitchedInstrument extends Instrument {
     }
 
     schedule(note, createMsBefore = 500, set_cancel_function) {
-        console.log(`Schedule ${noteToName(note.pitch.value)}`);
         // note is KeyboardNote
-        if (note.start < audio.Context.currentTime) { // if note is old news, ignore it
+        if (note.end < audio.Context.currentTime) { // if note is old news, ignore it
             return null;
         }
 
@@ -184,7 +182,7 @@ class PitchedInstrument extends Instrument {
             if (note.start > audio.Context.currentTime + 8 * createMsBefore / 1e3) {
                 var timeout = new utils.CancellableTimeout(() => {
                     this.schedule(note, createMsBefore, x => {future_timeout = x});
-                }, note.start - 10 * createMsBefore / 1e3 - audio.Context.currentTime);
+                }, note.start - 8 * createMsBefore / 1e3 - audio.Context.currentTime);
             } else {
                 var timeout = audio.setTimeoutAbsolute(() => {
                     this.schedule(note, createMsBefore, x => {
@@ -208,7 +206,7 @@ class PitchedInstrument extends Instrument {
         let frequency = this.pitch_mapping.transform(note.pitch);
 
         let note_state = this.getNoteState(note.pitch.value);
-        let audio_node = this.createNode(frequency, note.start, note.end, note.vel, note.pan);
+        let audio_node = this.createNode(frequency, Math.max(note.start, audio.Context.currentTime), note.end, note.vel, note.pan);
 
         let node = {
             node: audio_node,

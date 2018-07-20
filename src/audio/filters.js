@@ -2,13 +2,19 @@ import * as audio from "./audio.js";
 import {Node} from "./node.js";
 import * as utils from "../utils.js";
 
+/*
+Base filter class
+*/
 class Filter extends Node {
     constructor() {
         super();
     }
 }
 
-function generateConvolverImpulse(length, decay) {
+/*
+Create convolver impulse for convolver node
+*/
+function generateConvolverImpulse(length, decay) { // TODO make non blocking
     let leftChannel = new Float32Array(length);
     let rightChannel = leftChannel.slice();
 
@@ -24,6 +30,16 @@ function generateConvolverImpulse(length, decay) {
     return buffer;
 }
 
+/*
+Reverb filter
+
+dry -> dry value
+wet -> wet value
+
+wet_filter -> filter to apply to wet side
+length -> size of convolver impulse
+decay -> decay rate of impulse
+*/
 class Reverb extends Filter {
     constructor(params = {}) {
         super();
@@ -53,7 +69,7 @@ class Reverb extends Filter {
         this.setImpulse();
     }
 
-    setImpulse() {
+    setImpulse() { // set convolver node impulse
         this.convolver_node.buffer = generateConvolverImpulse(this._length, this._decay);
     }
 
@@ -84,6 +100,12 @@ class Reverb extends Filter {
     }
 }
 
+/*
+delay filter
+
+delay: length of delay,
+loss: loss at each delay iteration
+*/
 class Delay extends Filter {
     constructor(params = {}) {
         super();
@@ -98,13 +120,12 @@ class Delay extends Filter {
             this.exit
         ]);
 
-        this.delay_node.connect(this.loss_node);
+        this.delay_node.connect(this.loss_node); // forms feedback loop
 
         this.entry.connect(this.exit);
 
         this.delay_node.delayTime.value = params.delay || 0.5;
         this.loss_node.gain.value = params.loss || 0.3;
-
     }
 
     get delay() {
@@ -116,6 +137,9 @@ class Delay extends Filter {
     }
 }
 
+/*
+Wrapper around biquad filter
+*/
 class BiquadWrapper extends Filter {
     constructor(params = {}, type) {
         super();
@@ -144,6 +168,8 @@ class BiquadWrapper extends Filter {
     get gain() {
         return this.biquad_filter.gain;
     }
+    
+    // TODO add set for these getters
 
     getFrequencyResponse(arr) {
         if (!(arr instanceof Float32Array)) {
@@ -162,30 +188,35 @@ class BiquadWrapper extends Filter {
     }
 }
 
+/* lowpass filter */
 class LowpassFilter extends BiquadWrapper {
     constructor(params = {}) {
         super(params, "lowpass");
     }
 }
 
+/* highpass filter */
 class HighpassFilter extends BiquadWrapper {
     constructor(params = {}) {
         super(params, "highpass");
     }
 }
 
+/* peaking filter */
 class FrequencyBumpFilter extends BiquadWrapper {
     constructor(params = {}) {
         super(params, "peaking");
     }
 }
 
+/* bandpass filter */
 class BandpassFilter extends BiquadWrapper {
     constructor(params = {}) {
         super(params, "bandpass");
     }
 }
 
+/* notch filter */
 class NotchFilter extends BiquadWrapper {
     constructor(params = {}) {
         super(params, "notch");
