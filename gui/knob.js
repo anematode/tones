@@ -252,12 +252,8 @@ class Open extends Widget {
         
         let self = this;
         this.dialog.onchange = function() {
-            let file = self.dialog.files.item(0);
-            let fr = new FileReader();
-            fr.readAsText(file);
-            fr.onload = function() {
-                console.log(fr.result);
-            };
+            self.v = self.dialog.files.item(0);
+            self.change();
         };
     }
     

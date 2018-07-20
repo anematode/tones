@@ -2,7 +2,7 @@ let instrument = new TONES.SimpleInstrument({
     unison: 10,
     detune: 60,
     blend: 0.3,
-    waveform: "square"
+    waveform: "sawtooth"
 });
 
 instrument.connect(TONES.masterEntryNode);
@@ -16,11 +16,11 @@ let tParams = {
     unison: 10,
     detune: 60,
     blend: 0.3,
-    waveform: "square",
+    waveform: "sawtooth",
     attack: 0.09,
-    decay: 0,
-    sustain: 0.2,
-    release: 0.1
+    decay: 1.65,
+    sustain: 0.6,
+    release: 0.27
 };
 
 function refreshInst() {
@@ -40,6 +40,34 @@ function refreshInst() {
     instrument.params.attack_envelope = attack_env;
     instrument.params.release_length = tParams.release;
 }
+
+wavb1.change = function() {
+    if (wavb1.v) {
+        tParams.waveform = "sine";
+        refreshInst();
+    }
+};
+
+wavb2.change = function() {
+    if (wavb2.v) {
+        tParams.waveform = "square";
+        refreshInst();
+    }
+};
+
+wavb3.change = function() {
+    if (wavb3.v) {
+        tParams.waveform = "sawtooth";
+        refreshInst();
+    }
+};
+
+wavb4.change = function() {
+    if (wavb4.v) {
+        tParams.waveform = "triangle";
+        refreshInst();
+    }
+};
 
             
 unik.change = function() {
@@ -90,6 +118,18 @@ rels.change = function() {
     tParams.release = val;
     refreshInst();
 };
+
+sclo.change = function() {
+    let val = sclo.v.name.replace('.scl', '');
+    sclt.set(val.substring(0, 8) + (val.length > 8 ? '...' : ''));
+};
+
+let reader = new TONES.ScalaReader(function(scalaFile) {
+    tParams.scale = TONES.sclFileToScale(scalaFile);
+    refreshInst();
+}, {
+    domElement: sclo.dialog
+});
 
 let BASS_1 = "(G2{d:e,v:0.5}D3G3){d:1.3*e}R{d:-0.3*e}";
 let BASS_2 = "(F2{d:e,v:0.5}C3F3){d:1.3*e}R{d:-0.3*e}";
