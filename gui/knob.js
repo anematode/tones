@@ -195,7 +195,7 @@ class Button extends Widget {
     }
     
     update() {
-        this.mod[0].style.opacity = this.v ? 1 : 0;
+        this.mod[0].style.stroke = this.v ? this.c : this.dark;
         
         this.change();
         
@@ -207,15 +207,10 @@ class Button extends Widget {
     add() {
         let g1 = this.g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.dark);
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.light);
+        c1.style.strokeWidth = 2;
         g1.appendChild(c1);
-        
-        let c2 = this.circle(this.cx, this.cy, this.s / 2, this.c);
-        g1.appendChild(c2);
-        this.mod.push(c2);
-        
-        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 2, this.light);
-        g1.appendChild(c3);
+        this.mod.push(c1);
         
         let self = this;
         g1.onmousedown = function() {
@@ -245,6 +240,47 @@ class Radio {
     add(b) {
         this.buttons.push(b);
         b.radio = this;
+    }
+}
+
+class Open extends Widget {
+    constructor(cx, cy, s, c, svg) {
+        super(cx, cy, s, 0, c, svg);
+        
+        this.dialog = document.createElement('input');
+        this.dialog.setAttribute('type', 'file');
+        
+        let self = this;
+        this.dialog.onchange = function() {
+            let file = self.dialog.files.item(0);
+            let fr = new FileReader();
+            fr.readAsText(file);
+            fr.onload = function() {
+                console.log(fr.result);
+            };
+        };
+    }
+    
+    add() {
+        let g1 = this.g();
+        
+        let r1 = this.rect(this.cx - this.s / 2, this.cy - this.s / 2, this.s, this.s, this.light);
+        r1.style.stroke = this.dark;
+        r1.style.strokeWidth = 2;
+        r1.style.rx = 4;
+        g1.appendChild(r1);
+        
+        let r2 = this.rect(this.cx - this.s / 2 + 4, this.cy - this.s / 2 + 4, this.s - 8, this.s - 8, this.c);
+        r2.style.rx = 2;
+        g1.appendChild(r2);
+        
+        let self = this;
+        g1.onmousedown = function() {
+            self.dialog.click();
+        };
+        this.svg.appendChild(g1);
+        
+        this.update();
     }
 }
 
