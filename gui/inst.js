@@ -1,3 +1,5 @@
+let lowpass_filter = new TONES.LowpassFilter();
+
 let instrument = new TONES.SimpleInstrument({
     unison: 10,
     detune: 60,
@@ -5,7 +7,8 @@ let instrument = new TONES.SimpleInstrument({
     waveform: "sawtooth"
 });
 
-instrument.connect(TONES.masterEntryNode);
+instrument.connect(lowpass_filter);
+lowpass_filter.connect(TONES.masterEntryNode);
 
 instrument.enableKeyboardPlay();
 
@@ -89,6 +92,16 @@ blek.change = function() {
     blei.set(Math.round(val * 100));
     tParams.blend = val;
     refreshInst();
+};
+
+resk.change = function() {
+    let val = Math.pow(2, (resk.v * 0.5 + 0.5) * 14.5);
+    resi.set(Math.round(val / 100) / 10);
+    lowpass_filter.frequency.value = val;
+    
+    let graph = [...Array(400).keys()].map(x => 24000/400 * x);
+    let result = lowpass_filter.getMagnitudeResponse(graph);
+    t.set(result);
 };
 
 atts.change = function() {

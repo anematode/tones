@@ -300,6 +300,43 @@ class Text extends Widget {
     }
 }
 
+class Graph extends Widget {
+    constructor(cx, cy, s, v, c, svg) {
+        super(cx, cy, s, v, c, svg);
+    }
+    
+    update() {
+        let path = 'M' + (this.cx - this.s[0] / 2) + ' ' + (this.cy + this.s[1] / 2);
+        let dx = this.cx - this.s[0] / 2;
+        let dy = this.cy - this.s[1] / 2;
+
+        for (let i = 0; i < this.v.length; i++) {
+            path += 'L' + (i + dx) + ' ' + Math.round(-this.v[i] * 50 + 200 + dy);
+        }
+        
+        this.mod[0].setAttribute('d', path);
+    }
+    
+    add() {
+        let g1 = this.g();
+        
+        let r1 = this.rect(this.cx - this.s[0] / 2, this.cy - this.s[1] / 2, this.s[0], this.s[1], '#ddd');
+        r1.style.stroke = '#ccc';
+        g1.appendChild(r1);
+        
+        let arc = document.createElementNS(url, 'path');
+        arc.style.stroke = this.c;
+        arc.style.strokeWidth = 2;
+        arc.style.fillOpacity = 0;
+        arc.style.strokeLinejoin = 'round';
+        arc.style.strokeLinecap = 'round';
+        g1.appendChild(arc);
+        this.mod.push(arc);
+        
+        this.svg.appendChild(g1);
+    }
+}
+
 class Group {
     constructor(x1, y1, x2, y2, t, svg) {
         this.x1 = x1;
