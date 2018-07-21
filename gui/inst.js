@@ -1,11 +1,14 @@
+let lowpass_filter = new TONES.LowpassFilter();
+
 let instrument = new TONES.SimpleInstrument({
-    unison: 5,
-    detune: 20,
-    blend: 0.5,
-    waveform: "square"
+    unison: 10,
+    detune: 60,
+    blend: 0.3,
+    waveform: "sawtooth"
 });
 
-instrument.connect(TONES.masterEntryNode);
+instrument.connect(lowpass_filter);
+lowpass_filter.connect(TONES.masterEntryNode);
 
 instrument.enableKeyboardPlay();
 
@@ -13,14 +16,14 @@ let tParams = {
     scale: TONES.Scales.ET12,
     baseNote: TONES.KeyboardPitches.A4,
     baseFrequency: 440,
-    unison: 8,
-    detune: 20,
-    blend: 0.5,
-    waveform: "square",
-    attack: 0.01,
-    decay: 1,
-    sustain: 0.2,
-    release: 0.1
+    unison: 10,
+    detune: 60,
+    blend: 0.3,
+    waveform: "sawtooth",
+    attack: 0.09,
+    decay: 1.65,
+    sustain: 0.6,
+    release: 0.27
 };
 
 function refreshInst() {
@@ -41,13 +44,105 @@ function refreshInst() {
     instrument.params.release_length = tParams.release;
 }
 
+wavb1.change = function() {
+    if (wavb1.v) {
+        tParams.waveform = "sine";
+        refreshInst();
+    }
+};
+
+wavb2.change = function() {
+    if (wavb2.v) {
+        tParams.waveform = "square";
+        refreshInst();
+    }
+};
+
+wavb3.change = function() {
+    if (wavb3.v) {
+        tParams.waveform = "sawtooth";
+        refreshInst();
+    }
+};
+
+wavb4.change = function() {
+    if (wavb4.v) {
+        tParams.waveform = "triangle";
+        refreshInst();
+    }
+};
+
             
 unik.change = function() {
-    let val = Math.round(unik.v * 15) + 1;
+    let val = Math.floor(unik.v * 15) + 1;
     unii.set(val);
     tParams.unison = val;
     refreshInst();
 }
+
+detk.change = function() {
+    let val = detk.v * 200;
+    deti.set(Math.round(val));
+    tParams.detune = val;
+    refreshInst();
+};
+
+blek.change = function() {
+    let val = blek.v;
+    blei.set(Math.round(val * 100));
+    tParams.blend = val;
+    refreshInst();
+};
+
+resk.change = function() {
+    let val = Math.pow(2, (resk.v * 0.5 + 0.5) * 14.5);
+    resi.set(Math.round(val / 100) / 10);
+    lowpass_filter.frequency.value = val;
+    
+    let graph = [...Array(400).keys()].map(x => 24000/400 * x);
+    let result = lowpass_filter.getMagnitudeResponse(graph);
+    t.set(result);
+};
+
+atts.change = function() {
+    let val = Math.pow(2, 5 * atts.v / 4) - 1;
+    atti.set(Math.round(val * 100));
+    tParams.attack = val;
+    refreshInst();
+};
+
+decs.change = function() {
+    let val = Math.pow(2, 7 * decs.v / 4) - 0.99;
+    deci.set(Math.round(val * 100));
+    tParams.decay = val;
+    refreshInst();
+};
+
+suss.change = function() {
+    let val = suss.v;
+    susi.set(Math.round(val * 100));
+    tParams.sustain = val;
+    refreshInst();
+};
+
+rels.change = function() {
+    let val = Math.pow(2, 7 * rels.v / 4) - 0.99;
+    reli.set(Math.round(val * 100));
+    tParams.release = val;
+    refreshInst();
+};
+
+sclo.change = function() {
+    let val = sclo.v.name.replace('.scl', '');
+    sclt.set(val.substring(0, 8) + (val.length > 8 ? '...' : ''));
+};
+
+let reader = new TONES.ScalaReader(function(scalaFile) {
+    tParams.scale = TONES.sclFileToScale(scalaFile);
+    refreshInst();
+}, {
+    domElement: sclo.dialog
+});
 
 let BASS_1 = "(G2{d:e,v:0.5}D3G3){d:1.3*e}R{d:-0.3*e}";
 let BASS_2 = "(F2{d:e,v:0.5}C3F3){d:1.3*e}R{d:-0.3*e}";

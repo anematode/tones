@@ -36,13 +36,13 @@ class Widget {
         return r1;
     }
     
-    text(x, y, v, c) {
+    text(x, y, a, v, c) {
         let t1 = document.createElementNS(url, 'text');
         t1.setAttribute('x', x);
         t1.setAttribute('y', y);
         t1.style.fill = c;
         t1.innerHTML = v;
-        t1.setAttribute('text-anchor', 'middle');
+        t1.setAttribute('text-anchor', a);
         return t1;
     }
     
@@ -191,39 +191,98 @@ class Slider extends Widget {
 class Button extends Widget {
     constructor(cx, cy, s, v, c, svg) {
         super(cx, cy, s, v, c, svg);
+        this.radio = null;
     }
     
     update() {
-        this.mod[0].style.opacity = this.v ? 1 : 0;
+        this.mod[0].style.stroke = this.v ? this.c : this.dark;
         
         this.change();
+        
+        if (this.radio !== undefined && this.v) {
+            this.radio.update(this);
+        }
     }
     
     add() {
         let g1 = this.g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.dark);
+        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.light);
+        c1.style.strokeWidth = 2;
         g1.appendChild(c1);
-        
-        let c2 = this.circle(this.cx, this.cy, this.s / 2, this.c);
-        g1.appendChild(c2);
-        this.mod.push(c2);
-        
-        let c3 = this.circle(this.cx, this.cy, this.s / 2 - 2, this.light);
-        g1.appendChild(c3);
+        this.mod.push(c1);
         
         let self = this;
         g1.onmousedown = function() {
-            self.v = self.v === 0 ? 1 : 0;
+            self.v = this.radio !== null ? true : self.v === 0 ? 1 : 0;
+            
             self.update();
         };
         this.svg.appendChild(g1);
+        
+        this.update();
+    }
+}
+
+class Radio {
+    constructor() {
+        this.buttons = [];
+    }
+    
+    update(b) {
+        for (let i = 0; i < this.buttons.length; i++) {
+            if (this.buttons[i] !== b) {
+                this.buttons[i].set(false);
+            }
+        }
+    }
+    
+    add(b) {
+        this.buttons.push(b);
+        b.radio = this;
+    }
+}
+
+class Open extends Widget {
+    constructor(cx, cy, s, c, svg) {
+        super(cx, cy, s, 0, c, svg);
+        
+        this.dialog = document.createElement('input');
+        this.dialog.setAttribute('type', 'file');
+        
+        let self = this;
+        this.dialog.onchange = function() {
+            self.v = self.dialog.files.item(0);
+            self.change();
+        };
+    }
+    
+    add() {
+        let g1 = this.g();
+        
+        let r1 = this.rect(this.cx - this.s / 2, this.cy - this.s / 2, this.s, this.s, this.light);
+        r1.style.stroke = this.dark;
+        r1.style.strokeWidth = 2;
+        r1.style.rx = 4;
+        g1.appendChild(r1);
+        
+        let r2 = this.rect(this.cx - this.s / 2 + 4, this.cy - this.s / 2 + 4, this.s - 8, this.s - 8, this.c);
+        r2.style.rx = 2;
+        g1.appendChild(r2);
+        
+        let self = this;
+        g1.onmousedown = function() {
+            self.dialog.click();
+        };
+        this.svg.appendChild(g1);
+        
+        this.update();
     }
 }
 
 class Text extends Widget {
-    constructor(cx, cy, v, c, svg) {
-        super(cx, cy, 0, v, c, svg);
+    constructor(cx, cy, s, v, c, svg) {
+        super(cx, cy, s, v, c, svg);
     }
     
     update() {
@@ -233,9 +292,46 @@ class Text extends Widget {
     add() {
         let g1 = this.g();
         
-        let t1 = this.text(this.cx, this.cy, this.v, this.c);
+        let t1 = this.text(this.cx, this.cy, this.s, this.v, this.c);
         g1.appendChild(t1);
         this.mod.push(t1);
+        
+        this.svg.appendChild(g1);
+    }
+}
+
+class Graph extends Widget {
+    constructor(cx, cy, s, v, c, svg) {
+        super(cx, cy, s, v, c, svg);
+    }
+    
+    update() {
+        let path = 'M' + (this.cx - this.s[0] / 2) + ' ' + (this.cy + this.s[1] / 2);
+        let dx = this.cx - this.s[0] / 2;
+        let dy = this.cy - this.s[1] / 2;
+
+        for (let i = 0; i < this.v.length; i++) {
+            path += 'L' + (i + dx) + ' ' + Math.round(-this.v[i] * 50 + 200 + dy);
+        }
+        
+        this.mod[0].setAttribute('d', path);
+    }
+    
+    add() {
+        let g1 = this.g();
+        
+        let r1 = this.rect(this.cx - this.s[0] / 2, this.cy - this.s[1] / 2, this.s[0], this.s[1], '#ddd');
+        r1.style.stroke = '#ccc';
+        g1.appendChild(r1);
+        
+        let arc = document.createElementNS(url, 'path');
+        arc.style.stroke = this.c;
+        arc.style.strokeWidth = 2;
+        arc.style.fillOpacity = 0;
+        arc.style.strokeLinejoin = 'round';
+        arc.style.strokeLinecap = 'round';
+        g1.appendChild(arc);
+        this.mod.push(arc);
         
         this.svg.appendChild(g1);
     }
