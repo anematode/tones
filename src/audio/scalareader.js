@@ -119,7 +119,7 @@ requireExtension -> require scl extension
 onerror -> function if file reading fails
 */
 class ScalaReader { // TODO include scala parsing in reader
-    constructor(giveScalaFile, params = {}) {
+    constructor(passScalaFile, params = {}) {
         let that = this;
 
         params.domElement = params.domElement || null;
@@ -129,7 +129,7 @@ class ScalaReader { // TODO include scala parsing in reader
 
         this.params = params;
 
-        this.giveScalaFile = giveScalaFile; // arguments of function: arg1 -> content, arg2 -> name of file
+        this.passScalaFile = passScalaFile; // arguments of function: arg1 -> content, arg2 -> name of file
 
         this.onchange = function() { // function when reading in file
             let files = this.files;
@@ -150,9 +150,15 @@ class ScalaReader { // TODO include scala parsing in reader
                 }
 
                 let reader = new FileReader();
-                reader.addEventListener("loadend", function () {
-                    that.giveScalaFile(reader.result, file.name);
+
+                reader.addEventListener("loadend", () => {
+                    try {
+                        that.passScalaFile(parseSclFile(reader.result), file.name);
+                    } catch (e) {
+                        that.params.onerror(e);
+                    }
                 });
+
                 reader.readAsText(file);
             }
         };

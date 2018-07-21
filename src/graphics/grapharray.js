@@ -1,5 +1,15 @@
 import * as utils from "../utils.js";
 
+function stretchToExp(minX, maxX, x) {
+    let MIN_FREQ_LOG2 = Math.log2(minX);
+    let MAX_FREQ_LOG2 = Math.log2(maxX);
+    let FREQ_DIFF = MAX_FREQ_LOG2 - MIN_FREQ_LOG2;
+
+    return Math.pow(2, MIN_FREQ_LOG2 + FREQ_DIFF * x);
+}
+
+window.ian = stretchToExp;
+
 class ArrayGrapher {
     constructor(params = {}) {
         if (params.domElement) {
@@ -88,6 +98,33 @@ class ArrayGrapher {
             let y = arg1[i];
 
             let point = this.transform(x, y);
+
+            if (!drewFirst) {
+                drewFirst = true;
+
+                ctx.moveTo(...point);
+            } else {
+                ctx.lineTo(...point);
+            }
+        }
+
+        ctx.stroke();
+    }
+
+    drawExpRange(arg1, minX, maxX) {
+        this.clearCanvas();
+        let ctx = this.ctx;
+
+        ctx.beginPath();
+
+        let drewFirst = false;
+
+        for (let i = 0; i < arg1.length; i++) {
+            let x = stretchToExp(minX, maxX, i / arg1.length);
+            let y = arg1[i];
+
+            let point = this.transform(x, y);
+
             if (!drewFirst) {
                 drewFirst = true;
 

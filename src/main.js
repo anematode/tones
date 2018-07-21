@@ -1,7 +1,12 @@
+// Polyfills
+
+export * from "./polyfills.js";
+
 // Audio
 
 export * from "./audio/instrument.js";
-export * from "./audio/audio.js";
+import * as audio from "./audio/audio.js";
+export {audio};
 export * from "./audio/envelope.js";
 export * from "./audio/keyboardpitch.js";
 export * from "./audio/keyboardmapping.js";
@@ -27,7 +32,9 @@ export * from "./music/time.js";
 export * from "./graphics/frequencyvisualizer.js";
 export * from "./graphics/grapharray.js";
 export * from "./graphics/score.js";
+export * from "./graphics/svgmanip.js";
 
 // Utils
 
-export * from "./utils.js";
+import * as utils from "./utils.js";
+export {utils};

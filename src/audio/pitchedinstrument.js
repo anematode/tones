@@ -15,22 +15,6 @@ function periodicClearTimeout(list, timeout = 1000) {
     }, timeout);
 }
 
-class PitchedInstrumentNode {
-    constructor(parent) {
-        this.gain = audio.Context.createGain();
-        this.pan = audio.Context.createStereoPanner();
-        this.parent = parent;
-    }
-
-    _connect(x) {
-        this.pan.connect(x);
-    }
-
-    _disconnect() {
-        this.pan.disconnect();
-    }
-}
-
 // Abstract class, Instrument with pitch
 class PitchedInstrument extends Instrument {
     constructor(parameters = {}) {
@@ -79,14 +63,14 @@ class PitchedInstrument extends Instrument {
 
             this.note_states[i] = {
                 future_nodes: [],
-                active_node: null,
+                active_note: null,
             };
         }
 
         this.internal_timeouts = [];
 
         this._timeout_interval = periodicClearTimeout(this.internal_timeouts);
-        this._active_node_remover = setInterval(() => {
+        this._active_note_remover = setInterval(() => {
             this.clearOldActiveNodes();
         }, 500);
     }
@@ -100,20 +84,20 @@ class PitchedInstrument extends Instrument {
     }
 
     getActiveNote(note_num) {
-        return this.note_states[note_num].active_node;
+        return this.note_states[note_num].active_note;
     }
 
     hasEventsScheduled(note_num) {
         let state = this.getNoteState(note_num);
 
-        return !(state.future_nodes.length === 0 && !state.active_node);
+        return !(state.future_nodes.length === 0 && !state.active_note);
     }
 
     predictNoteState(note_num) { // Return the predicted note state
         if (!this.hasEventsScheduled(note_num)) {
             return {
                 future_nodes: [],
-                active_node: null
+                active_note: null
             }
         }
 
@@ -134,24 +118,24 @@ class PitchedInstrument extends Instrument {
     setActiveNodeFromFuture(pitch, node) {
         let note_state = this.getNoteState(pitch);
 
-        if (note_state.active_node)
-            note_state.active_node.node._release();
+        if (note_state.active_note)
+            note_state.active_note.node.release();
 
         let node_index = note_state.future_nodes.indexOf(node);
-        note_state.active_node = note_state.future_nodes.splice(node_index, 1)[0];
+        note_state.active_note = note_state.future_nodes.splice(node_index, 1)[0];
     }
 
     setLongActiveNode(pitch, node) {
         let note_state = this.getNoteState(pitch);
 
-        if (note_state.active_node)
-            note_state.active_node.node._release();
+        if (note_state.active_note)
+            note_state.active_note.node.release();
 
 
-        note_state.active_node = {
+        note_state.active_note = {
             node: node,
             start: audio.Context.currentTime,
-            end: 1e10
+            end: Infinity
         }
     }
 
@@ -159,97 +143,144 @@ class PitchedInstrument extends Instrument {
         for (let i = 0; i < 128; i++) {
             let curr_state = this.getNoteState(i);
 
-            if (curr_state.active_node) {
-                if (curr_state.active_node.end < audio.Context.currentTime + 0.05) {
-                    curr_state.active_node = null;
+            if (curr_state.active_note) {
+                if (curr_state.active_note.end < audio.Context.currentTime + 0.05) {
+                    curr_state.active_note = null;
                 }
             }
         }
     }
 
-    schedule(note, createMsBefore = 500, set_cancel_function) {
+    schedule(note, createMsBefore = 1500, id = 0) {
         // note is KeyboardNote
+
+        // console.log(note, id);
         if (note.end < audio.Context.currentTime) { // if note is old news, ignore it
+            // console.log("Ignored ", note, id, audio.Context.currentTime);
             return null;
+
         }
 
         if (!createMsBefore)
             createMsBefore = 5000;
 
-        if (note.start > audio.Context.currentTime + createMsBefore / 1e3 + 1e-3) {
-            let future_timeout = null;
+        let note_id = id ? id : utils.getID();
 
-            if (note.start > audio.Context.currentTime + 8 * createMsBefore / 1e3) {
-                var timeout = new utils.CancellableTimeout(() => {
-                    this.schedule(note, createMsBefore, x => {future_timeout = x});
-                }, note.start - 8 * createMsBefore / 1e3 - audio.Context.currentTime);
-            } else {
-                var timeout = audio.setTimeoutAbsolute(() => {
-                    this.schedule(note, createMsBefore, x => {
-                        future_timeout = x
-                    });
-                }, note.start - createMsBefore / 1e3);
-            }
+        if (note.start > audio.Context.currentTime + 2 * createMsBefore / 1e3) {
+            // console.log("Make timeout: ", note.pitch.name(), note_id, note);
+
+            let timeout =
+                new utils.CancellableTimeout(() => {
+                    // console.log("Calling timeout: ", note.pitch.name(), note_id, note);
+                    this.schedule(note, createMsBefore, note_id);
+                },
+                note.start - createMsBefore / 1e3, true);
+
+            timeout.id = note_id;
 
             this._addInternalTimeout(timeout);
 
             return {
-                cancel: function() {
-                    timeout.cancel();
-
-                    if (future_timeout)
-                        future_timeout.cancel();
-                }
+                cancel: () => {
+                    this.terminateNote(note_id);
+                },
+                id: note_id
             }
         }
 
+
+        // console.log("Scheduling: ", note.pitch.name(), note.start, audio.Context.currentTime, note_id);
         let frequency = this.pitch_mapping.transform(note.pitch);
 
         let note_state = this.getNoteState(note.pitch.value);
         let audio_node = this.createNode(frequency, Math.max(note.start, audio.Context.currentTime), note.end, note.vel, note.pan);
 
+        audio_node.id = note_id;
+
         let node = {
             node: audio_node,
             start: note.start,
-            end: note.end
+            end: note.end,
+            id: note_id
         };
 
         note_state.future_nodes.push(node);
 
-        this._addInternalTimeout(audio.setTimeoutAbsolute(() => {
+        let setActiveTimeout = new utils.CancellableTimeout(() => {
             this.setActiveNodeFromFuture(note.pitch.value, node);
-        }, note.start));
+        }, note.start, true);
 
-        audio_node._connect(this.entryNode);
+        setActiveTimeout.id = note_id;
 
-        let cancel_play = {
-            cancel: function() {
-                audio_node._destroy();
-            }
+        this._addInternalTimeout(setActiveTimeout);
+
+        audio_node.connect(this.entryNode);
+
+        return {
+            cancel: () => {
+                this.terminateSource(note_id)
+            },
+            id: note_id
         };
+    }
 
-        if (set_cancel_function)
-            set_cancel_function(cancel_play);
+    terminateTimeout(id) {
+        for (let i = 0; i < this.internal_timeouts.length; i++) {
+            let timeout = this.internal_timeouts[i];
 
-        return cancel_play;
+            if (timeout.id === id) {
+                timeout.cancel();
+                this.internal_timeouts.splice(i--, 0);
+            }
+        }
+    }
+
+    terminateSource(id) {
+        for (let i = 0; i < 128; i++) {
+            let state = this.getNoteState(i);
+
+            for (let j = 0; j < state.future_nodes.length; j++) {
+                let note = state.future_nodes[j];
+
+                if (note.id === id) {
+                    note.destroy();
+                    state.future_nodes.splice(j--, 0);
+                }
+            }
+        }
+    }
+
+    terminateNote(id) {
+        this.terminateTimeout(id);
+        this.terminateSource(id);
     }
 
     playPitch(pitch, vel = 1, pan = 0) {
         let node = this.createNode(
             this.pitch_mapping.transform(pitch),
             audio.Context.currentTime,
-            1e10,
+            Infinity,
             vel, pan);
 
-        node._connect(this.entryNode);
+        let note_id = utils.getID();
+        node.id = note_id;
+
+        node.connect(this.entryNode);
 
         this.setLongActiveNode(pitch.value, node);
+
+        return {
+            cancel: () => {
+                this.terminateNote(note_id);
+            },
+            id: note_id
+        };
     }
 
     releasePitch(pitch) {
         let note = this.getActiveNote(pitch.value);
         if (note) {
-            note.node._release();
+            note.node.release();
             note.end = -1;
         }
     }
@@ -263,12 +294,11 @@ class PitchedInstrument extends Instrument {
             let state = this.note_states[i];
 
             if (state.active_note)
-                state.active_note.node._destroy();
+                state.active_note.node.destroy();
             state.active_note = null;
 
-            for (let j = 0; j < state.future_nodes.length; j++) {
-                state.future_nodes[j].node._destroy();
-            }
+            for (let j = 0; j < state.future_nodes.length; j++)
+                state.future_nodes[j].node.destroy();
 
             state.future_nodes = [];
         }
@@ -277,7 +307,7 @@ class PitchedInstrument extends Instrument {
     releaseAll() {
         for (let i = 0; i < 128; i++) {
             try {
-                releasePitch(i);
+                this.releasePitch(i);
             } catch (e) {}
         }
     }
@@ -290,13 +320,7 @@ class PitchedInstrument extends Instrument {
         osc.stop(end);
 
         return {
-            node: osc,
-            _connect: x => osc.connect(x),
-            _disconnect: () => osc.disconnect(),
-            _release: () => osc.stop(),
-            _cancel: () => osc.stop(),
-            _destroy: () => osc.disconnect(),
-            _timeAfterRelease: () => 0
+            node: osc
         };
     }
 
@@ -304,8 +328,8 @@ class PitchedInstrument extends Instrument {
         for (let i = 0; i < this.note_states.length; i++) {
             let state = this.note_states[i];
 
-            if (state.active_node)
-                func(state.active_node);
+            if (state.active_note)
+                func(state.active_note);
             for (let j = 0; j < state.future_nodes.length; j++) {
                 func(state.future_nodes[j]);
             }
@@ -319,10 +343,10 @@ class PitchedInstrument extends Instrument {
     destroy() {
         this.cancelAll();
         clearInterval(this._timeout_interval);
-        clearInterval(this._active_node_remover);
+        clearInterval(this._active_note_remover);
         this.enableKeyboardPlay = false;
     }
 }
 
 
-export {PitchedInstrument, PitchedInstrumentNode};
+export {PitchedInstrument};

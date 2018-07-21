@@ -22,6 +22,10 @@ class Node {
     connect(x) { // connect to node
         this._checkDestroyed();
 
+        if (this._connect) {
+            this._connect(x);
+        }
+
         if (x instanceof Node) {
             this.exit.connect(x.entry);
         } else if (x instanceof EndingNode) {
@@ -32,15 +36,34 @@ class Node {
         return this;
     }
 
-    disconnect() { // disconnect from node
+    disconnect(x) { // disconnect from node
         this._checkDestroyed();
 
-        this.exit.disconnect();
+        if (this._disconnect) {
+            this._disconnect(x);
+        }
+
+        if (!x) {
+            this.exit.disconnect();
+        } else if (x instanceof Node) {
+            this.exit.disconnect(x.entry);
+        } else if (x instanceof EndingNode) {
+            this.exit.disconnect(x.entry);
+        } else {
+            this.exit.disconnect(x);
+        }
+
         return this;
     }
 
     destroy() {
-        this._checkDestroyed();
+        if (this.isDestroyed()) {
+            return;
+        }
+
+        if (this._destroy) {
+            this._destroy();
+        }
 
         try {
             this.stop();
@@ -57,8 +80,6 @@ class Node {
     }
 
     connectToMaster() { // connect the node to master
-        this._checkDestroyed();
-
         this.connect(audio.masterEntryNode);
     }
 }
@@ -84,6 +105,10 @@ class SourceNode {
     connect(x) { // connect to node
         this._checkDestroyed();
 
+        if (this._connect) {
+            this._connect(x);
+        }
+
         if (x instanceof Node) {
             this.exit.connect(x.entry);
         } else if (x instanceof EndingNode) {
@@ -91,11 +116,16 @@ class SourceNode {
         } else {
             this.exit.connect(x);
         }
+
         return this;
     }
 
     disconnect(x) { // disconnect from node
         this._checkDestroyed();
+
+        if (this._disconnect) {
+            this._disconnect(x);
+        }
 
         if (!x) {
             this.exit.disconnect();
@@ -111,7 +141,14 @@ class SourceNode {
     }
 
     destroy() { // destroy the node
-        this._checkDestroyed();
+
+        if (this.isDestroyed()) {
+            return;
+        }
+
+        if (this._destroy) {
+            this._destroy();
+        }
 
         try {
             this.stop();
@@ -128,7 +165,7 @@ class SourceNode {
     }
 
     connectToMaster() { // connect to master
-        this.connect(audio.masterEntryNode);
+        return this.connect(audio.masterEntryNode);
     }
 }
 
