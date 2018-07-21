@@ -5,8 +5,7 @@ export * from "./polyfills.js";
 // Audio
 
 export * from "./audio/instrument.js";
-import * as audio from "./audio/audio.js";
-export {audio};
+export * from "./audio/audio.js";
 export * from "./audio/envelope.js";
 export * from "./audio/keyboardpitch.js";
 export * from "./audio/keyboardmapping.js";
