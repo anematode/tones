@@ -36,13 +36,13 @@ class Widget {
         return r1;
     }
     
-    text(x, y, v, c) {
+    text(x, y, a, v, c) {
         let t1 = document.createElementNS(url, 'text');
         t1.setAttribute('x', x);
         t1.setAttribute('y', y);
         t1.style.fill = c;
         t1.innerHTML = v;
-        t1.setAttribute('text-anchor', 'middle');
+        t1.setAttribute('text-anchor', a);
         return t1;
     }
     
@@ -281,8 +281,8 @@ class Open extends Widget {
 }
 
 class Text extends Widget {
-    constructor(cx, cy, v, c, svg) {
-        super(cx, cy, 0, v, c, svg);
+    constructor(cx, cy, s, v, c, svg) {
+        super(cx, cy, s, v, c, svg);
     }
     
     update() {
@@ -292,7 +292,7 @@ class Text extends Widget {
     add() {
         let g1 = this.g();
         
-        let t1 = this.text(this.cx, this.cy, this.v, this.c);
+        let t1 = this.text(this.cx, this.cy, this.s, this.v, this.c);
         g1.appendChild(t1);
         this.mod.push(t1);
         
