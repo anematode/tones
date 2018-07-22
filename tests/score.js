@@ -1,7 +1,5 @@
-let svg = new TONES.SVG("svg_test");
+let context = new TONES.ScoreContext("svg_test");
 
-let rect = svg.addElement('rect', {
-    "width" : 200,
-    "height" : 100,
-    "fill" : "#adf"
-});
+let stave = new TONES.Stave(context);
+
+stave.getStaff(0).addMeasure();

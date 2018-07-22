@@ -23,7 +23,6 @@ function desmosPrint(pointArray, minX, maxX) {
             out_str += `${pointArray[i * 2]}\t${pointArray[i * 2 + 1]}\n`;
         }
     }
-    console.log(out_str)
 }
 
 function isNumeric(n) {
@@ -68,4 +67,10 @@ class CancellableTimeout {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID};
+function assert(test, message = "Assertion error") {
+    if (!test) {
+        throw new Error(message);
+    }
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert};

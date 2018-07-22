@@ -30,8 +30,9 @@ export * from "./music/time.js";
 
 export * from "./graphics/frequencyvisualizer.js";
 export * from "./graphics/grapharray.js";
-export * from "./graphics/score.js";
+export * from "./graphics/basescore.js";
 export * from "./graphics/svgmanip.js";
+export * from "./graphics/scorecomponents.js";
 
 // Utils
 
