@@ -30,9 +30,17 @@ export * from "./music/time.js";
 
 export * from "./graphics/frequencyvisualizer.js";
 export * from "./graphics/grapharray.js";
-export * from "./graphics/basescore.js";
+export * from "./graphics/score/basescore.js";
 export * from "./graphics/svgmanip.js";
-export * from "./graphics/scorecomponents.js";
+export * from "./graphics/score/scorevalues.js";
+export * from "./graphics/score/score.js";
+export * from "./graphics/score/staff.js";
+export * from "./graphics/score/system.js";
+export * from "./graphics/score/measure.js";
+export * from "./graphics/score/barline.js";
+export * from "./graphics/score/scorenote.js";
+export * from "./graphics/score/elements.js";
+export * from "./graphics/score/optimizer.js";
 
 // Utils
 

@@ -1,6 +1,6 @@
 import {
     SVGContext, SVGElement, SVGGroup
-} from "./svgmanip.js";
+} from "../svgmanip.js";
 
 class ScoreContext extends SVGContext {
     constructor(domElem) {

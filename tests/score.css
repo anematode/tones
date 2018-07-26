@@ -4,8 +4,29 @@
     stroke-width: 1px;
 }
 
-.barline {
+.barline-normal, .barline-double, .barline-dashed {
     fill: #000;
     stroke: #000;
     stroke-width: 2px;
+}
+
+.barline-ending-thick {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 5px;
+}
+
+.barline-ending-thin {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.barline-repeat-circle {
+    r: 2.3px;
+
+}
+
+.barline-dashed {
+    stroke-dasharray: 4,2;
 }

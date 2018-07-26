@@ -40,7 +40,6 @@ class SVGElement {
 
         this.transform = new Transformation();
         this.transform._setModificationPropagation(() => {
-            console.log('ian');
             this.updateTransform();
         }, this._id);
 
@@ -161,6 +160,14 @@ class SVGElement {
         }
 
         this.set("class", classes.join(' '));
+    }
+
+    hide() {
+        this.set("display", "none");
+    }
+
+    show() {
+        this.set("display", "");
     }
 }
 
@@ -290,9 +297,7 @@ class SVGGroup extends SVGElement {
     }
 
     destroy() {
-        console.log(this);
         for (let i = 0; i < this.children.length; i++) {
-            console.log(this.children[i]);
             this.children[i].destroy();
         }
 
