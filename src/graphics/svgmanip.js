@@ -66,6 +66,10 @@ class SVGElement {
         this.updateTransform();
     }
 
+    getBBox() {
+        return this.element.getBBox();
+    }
+
     set(attribute, value) {
         if (attribute instanceof Object) {
             Object.keys(attribute).forEach((key) => {
@@ -442,7 +446,7 @@ class Transformation extends ChildUpdater {
     }
 
     transform(x, y) {
-        for (let i = 0; i < this.transforms.length; i++) {
+        for (let i = this.transforms.length - 1; i >= 0; i--) {
             let result = this.transforms[i].transform(x, y);
 
             x = result[0];
@@ -462,6 +466,14 @@ class Transformation extends ChildUpdater {
 
     addTransform(t) {
         this.transforms.push(t);
+
+        t._setModificationPropagation(() => {
+            this.propagateChange();
+        }, this._id);
+    }
+
+    prependTransform(t) {
+        this.transforms.unshift(t);
 
         t._setModificationPropagation(() => {
             this.propagateChange();

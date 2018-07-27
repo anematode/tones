@@ -30,3 +30,10 @@
 .barline-dashed {
     stroke-dasharray: 4,2;
 }
+
+.sharp-line {
+    stroke-linejoin: miter;
+    stroke-width: 3px;
+    fill: #000;
+    stroke: #000;
+}

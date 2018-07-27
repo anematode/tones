@@ -73,4 +73,24 @@ function assert(test, message = "Assertion error") {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert};
+function compareObjects(object1, object2) {
+    for (let p in object1){
+        if (object1.hasOwnProperty(p)) {
+            if (object1[p] !== object2[p]) {
+                return false;
+            }
+        }
+    }
+
+    for (let p in object2) {
+        if (object2.hasOwnProperty(p)) {
+            if (object1[p] !== object2[p]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects};

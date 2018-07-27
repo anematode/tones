@@ -1,8 +1,8 @@
-import {ScoreContext, ScoreElement, ScoreGroup} from "./basescore.js";
-import * as utils from "../../utils.js";
-import DEFAULTS from "./scorevalues.js";
+import {ScoreContext, ScoreGroup} from "../basescore.js";
+import * as utils from "../../../utils.js";
+import DEFAULTS from "../scorevalues.js";
 
-import {Path, Translation} from "../svgmanip";
+import {Path, Translation} from "../../svgmanip";
 import {Barline} from "./barline.js";
 import {Measure} from "./measure.js";
 

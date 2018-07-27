@@ -1,8 +1,8 @@
-import {ScoreContext, ScoreElement, ScoreGroup} from "./basescore.js";
-import * as utils from "../../utils.js";
-import DEFAULTS from "./scorevalues.js";
+import {ScoreContext, ScoreGroup} from "../basescore.js";
+import * as utils from "../../../utils.js";
+import DEFAULTS from "../scorevalues.js";
 
-import {Circle, Path, Translation} from "../svgmanip";
+import {Circle, Path, Translation} from "../../svgmanip";
 
 /*
 Properties:

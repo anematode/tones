@@ -1,8 +1,8 @@
-import {ScoreContext, ScoreElement, ScoreGroup} from "./basescore.js";
-import * as utils from "../../utils.js";
-import DEFAULTS from "./scorevalues.js";
+import {ScoreContext, ScoreGroup} from "../basescore.js";
+import * as utils from "../../../utils.js";
+import DEFAULTS from "../scorevalues.js";
 
-import {Translation} from "../svgmanip";
+import {Translation} from "../../svgmanip";
 import {Staff} from "./staff.js";
 import {Barline} from "./barline.js";
 import {Measure} from "./measure.js";
@@ -390,6 +390,10 @@ class System extends ScoreGroup {
     set rightMargin(value) {
         this.right_margin_x = value;
         this.recalculate();
+    }
+
+    optimize(optimizer = this.context.score.optimizer) {
+        this.measures.forEach(meas => meas.optimize(optimizer));
     }
 }
 

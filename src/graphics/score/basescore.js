@@ -14,26 +14,6 @@ class ScoreContext extends SVGContext {
     }
 }
 
-class ScoreElement extends SVGElement { // The only annoying part (workaround SVGElement)
-    constructor(parent, tag = "rect") {
-        super(parent, tag);
-    }
-
-    propagateParentsUpdate(execbefore = true) {
-        if (execbefore && this._update) {
-            this._update();
-        }
-
-        if (this.parent) {
-            this.parent.propagateParentsUpdate(execbefore);
-        }
-
-        if (!execbefore && this._update) {
-            this._update();
-        }
-    }
-}
-
 class ScoreGroup extends SVGGroup {
     constructor(parent) {
         super(parent);
@@ -67,4 +47,4 @@ class ScoreGroup extends SVGGroup {
 }
 
 
-export {ScoreContext, ScoreElement, ScoreGroup};
+export {ScoreContext, ScoreGroup};

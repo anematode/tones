@@ -1,10 +1,10 @@
-import {ScoreContext, ScoreElement, ScoreGroup} from "./basescore.js";
-import * as utils from "../../utils.js";
-import DEFAULTS from "./scorevalues.js";
+import {ScoreContext, ScoreGroup} from "../basescore.js";
+import * as utils from "../../../utils.js";
+import DEFAULTS from "../scorevalues.js";
 
 import {Barline} from "./barline.js";
-import {Translation} from "../svgmanip.js";
-import {buildElements, jsonifyElements, constructElement} from "./elements.js";
+import {Translation} from "../../svgmanip.js";
+import {buildElements, jsonifyElements, constructElement} from "../elements.js";
 
 // basic unit of manipulation
 class StaffMeasure extends ScoreGroup {
@@ -33,9 +33,13 @@ class StaffMeasure extends ScoreGroup {
             array = array[0];
         }
 
+        let elements = [];
+
         for (let i = 0; i < array.length; i++) {
-            this.addElement(array[i]);
+            elements.push(this.addElement(array[i]));
         }
+
+        return elements;
     }
 
     getParams() {
@@ -44,6 +48,10 @@ class StaffMeasure extends ScoreGroup {
             offset_y: this.measure_translation.y,
             elements: jsonifyElements(this.elements)
         };
+    }
+
+    optimize(optimizer = this.context.score.optimizer) {
+        optimizer.optimize(this);
     }
 }
 
@@ -164,6 +172,10 @@ class Measure extends ScoreGroup {
 
     get maxY() {
         return this.height;
+    }
+
+    optimize(optimizer = this.context.score.optimizer) {
+        this.staff_measures.forEach(meas => meas.optimize(optimizer));
     }
 }
 
