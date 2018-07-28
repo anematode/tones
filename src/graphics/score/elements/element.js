@@ -15,11 +15,12 @@ class ScoreElement extends ScoreGroup {
         this.translation = new Translation();
         this.addTransform(this.translation);
 
+        this.bounding_box = {x: 0, y: 0, width: 0, height: 0};
+
         this.offset_x = (params.offset_x !== undefined) ? params.offset_x : 0;
         this.offset_y = (params.offset_y !== undefined) ? params.offset_y : 0;
 
         this.duration = (params.duration !== undefined) ? params.duration : 0;
-        this.bboxCalc();
     }
 
     remove() {
@@ -39,8 +40,12 @@ class ScoreElement extends ScoreGroup {
     }
 
     set offset_x(value) {
+        let delta = value - this.offset_x;
         this.translation.x = value;
-        this.bboxCalc();
+
+        if (this.bounding_box) {
+            this.bounding_box.x += delta;
+        }
     }
 
     get offset_y() {
@@ -48,8 +53,12 @@ class ScoreElement extends ScoreGroup {
     }
 
     set offset_y(value) {
+        let delta = value - this.offset_y;
         this.translation.y = value;
-        this.bboxCalc();
+
+        if (this.bounding_box) {
+            this.bounding_box.y += delta;
+        }
     }
 
     get minX() {

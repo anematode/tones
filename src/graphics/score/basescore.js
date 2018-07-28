@@ -6,21 +6,6 @@ import {SHAPES} from "./elements/scoreshapes.js"
 class ScoreContext extends SVGContext {
     constructor(domElem) {
         super(domElem);
-
-        this.defs = this.addElement("defs");
-
-        for (let key in SHAPES) {
-            let symbol = document.createElementNS(SVGNS, "symbol");
-
-            this.defs.element.appendChild(symbol);
-
-            symbol.setAttributeNS(SVGNS, "id", "SYM" + key);
-
-            let path = document.createElementNS(SVGNS, "path");
-
-            symbol.appendChild(path);
-            path.setAttributeNS(SVGNS, "d", SHAPES[key].path);
-        }
     }
 
     propagateParentsUpdate() {

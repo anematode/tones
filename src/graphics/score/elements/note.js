@@ -110,6 +110,10 @@ class ElementAugmentationDot extends ScoreElement {
         this.recalculate();
     }
 
+    bboxCalc() {
+        this.bounding_box = {x: this.offset_x, y: this.offset_y - 2, width: 4, height: 4};
+    }
+
     recalculate() {
         this.bboxCalc();
     }
@@ -381,11 +385,11 @@ class ElementChord extends ScoreElement {
         if (this.flag_object)
             this.flag_object.destroy();
 
-        this.dots.forEach(x => x.destroy());
-        this.dots = [];
-
         this.lines.forEach(x => x.destroy());
         this.lines = [];
+
+        this.dots.forEach(x => x.destroy());
+        this.dots = [];
 
         this.sortNotes();
 
@@ -489,10 +493,11 @@ class ElementChord extends ScoreElement {
             for (let i = 0; i < this._dot_count; i++) {
                 offset_x += 3.3;
 
-                this.dots.push(new ElementAugmentationDot(this, {
-                    offset_x: offset_x,
-                    offset_y: dot_y
-                }));
+                    this.dots.push(new ElementAugmentationDot(this, {
+                        offset_x: offset_x,
+                        offset_y: dot_y
+                    }));
+
                 offset_x += 2.2;
             }
         }
@@ -549,12 +554,10 @@ class ElementChord extends ScoreElement {
                     let rect = prevBoundingRects[j];
 
                     if (rect.y <= bottom_height && top_height <= rect.y + rect.height) {
-                            if (rect.x + rect.width + 2 < prev_intersect - box.width) { // enough space, maybe?
-                                pos = prev_intersect - box.width;
-                            }
+                        if (rect.x + rect.width + 2 < prev_intersect - box.width) { // enough space, maybe?
+                            pos = prev_intersect - box.width - 2;
+                        }
                         prev_intersect = rect.x;
-                    } else {
-                        break;
                     }
                 }
 

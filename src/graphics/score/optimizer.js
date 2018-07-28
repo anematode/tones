@@ -65,8 +65,6 @@ class Optimizer {
             } else {
                 element.minX = lastSpacingX;
                 lastSpacingX = element.maxX + 5;
-
-                console.log(element, element.minX, element.maxX, lastSpacingX);
             }
         }
     }
