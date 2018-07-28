@@ -10,6 +10,8 @@ class ScoreElement extends ScoreGroup {
 
         this.offset_x = (params.offset_x !== undefined) ? params.offset_x : 0;
         this.offset_y = (params.offset_y !== undefined) ? params.offset_y : 0;
+
+        this.duration = (params.duration !== undefined) ? params.duration : 0;
     }
 
     get offset_x() {

@@ -1,4 +1,6 @@
 import {ElementClef, ElementTimeSig} from "./elements.js";
+import {StaffMeasure, Measure} from "./elements/measure.js";
+import {System} from "./elements/system.js";
 
 function getExpression(x) {
     if (x instanceof Function) {
@@ -28,9 +30,21 @@ class Optimizer {
     constructor(params = {}) {
         this.left_margin = params.left_margin ? getExpression(params.left_margin) : getExpression(15);
         this.right_margin = params.right_margin ? getExpression(params.right_margin) : getExpression(15);
+
+        this.move_barlines = (params.move_barlines !== undefined) ? params.move_barlines : false;
     }
 
-    optimize(staff_measure) {
+    optimize(elem) {
+        if (elem instanceof StaffMeasure) {
+            this.optimizeStaffMeasure(elem);
+        } else if (elem instanceof Measure) {
+            this.optimizeMeasure(elem);
+        } else if (elem instanceof System) {
+            this.optimizeSystem(elem);
+        }
+    }
+
+    optimizeStaffMeasure(staff_measure) {
         let elements = staff_measure.elements;
         let width = staff_measure.width;
 
@@ -51,6 +65,24 @@ class Optimizer {
             } else {
                 element.minX = lastSpacingX;
                 lastSpacingX = element.maxX + 5;
+            }
+        }
+    }
+
+    optimizeMeasure(measure) {
+        for (let i = 0; i < measure.staff_measures.length; i++) {
+            this.optimizeStaffMeasure(measure.staff_measures[i]);
+        }
+    }
+
+    optimizeSystem(system) {
+        if (!this.move_barlines) {
+            for (let i = 0; i < system.measures.length; i++) {
+                this.optimizeMeasure(system.measures[i]);
+            }
+        } else {
+            for (let i = 0; i < system.measures.length; i++) {
+
             }
         }
     }

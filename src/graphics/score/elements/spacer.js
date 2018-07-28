@@ -19,11 +19,11 @@ class ElementSpacer extends ScoreElement {
     }
 
     get maxX() {
-        return this.offset_x + width;
+        return this.offset_x + this.width;
     }
 
     set maxX(value) {
-        this.offset_x = value - width;
+        this.offset_x = value - this.width;
     }
 }
 

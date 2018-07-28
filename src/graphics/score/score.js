@@ -64,7 +64,7 @@ class Score {
     }
 
     optimize() {
-        this.systems.forEach(sys => sys.optimize(this.optimizer));
+        this.systems.forEach(sys => this.optimizer.optimize(sys));
     }
 }
 

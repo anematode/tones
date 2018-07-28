@@ -7,7 +7,7 @@ import {ElementClef} from "./elements/clef.js";
 import {ElementTimeSig} from "./elements/timesig";
 import {ElementKeySig} from "./elements/keysig";
 import {ElementSpacer, ElementPositioner} from "./elements/spacer.js";
-import {ElementNote} from "./elements/note.js";
+import {ElementNote, ElementChord, ElementFlag} from "./elements/note.js";
 
 function get_class(params = {}) {
     utils.assert(params.class, `Invalid element ${params}`);
@@ -23,7 +23,8 @@ function get_class(params = {}) {
             return ElementSpacer;
         case "position":
             return ElementPositioner;
-
+        case "chord":
+            return ElementChord;
     }
 }
 
@@ -46,5 +47,5 @@ function jsonifyElements(elements) { // Major TODO: implement getParams on all e
 
 export {
     buildElements, jsonifyElements, constructElement,
-    ElementClef, ElementTimeSig, ElementKeySig, ElementSpacer, ElementPositioner, ElementNote
+    ElementClef, ElementTimeSig, ElementKeySig, ElementSpacer, ElementPositioner, ElementNote, ElementChord, ElementFlag
 };
