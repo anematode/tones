@@ -278,7 +278,9 @@ class ElementChord extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this.notes = params.notes ? params.notes.map(x => new ElementNote(this, x)) : [];
+        this.chord_group = new ScoreGroup(this);
+
+        this.notes = params.notes ? params.notes.map(x => new ElementNote(this.chord_group, x)) : [];
         this._articulation = params.articulation || ""; // Values: falsy is none, "." is staccato, ">" is accent
         this._stem = (params.stem !== undefined) ? params.stem : "up"; // Values: falsy is none, "up" is upward facing stem, "down" is downward facing stem
         this._flag = (params.flag !== undefined) ? params.flag : 0; // Values: falsy is none (0 is natural here), 1 is eighth, 2 is sixteenth, etc. to 8 is 1024th
@@ -292,14 +294,13 @@ class ElementChord extends ScoreElement {
         this.lines = []; // extra lines when notes go beyond staff
 
         this.centering_translation = new Translation();
-
-        this.addTransform(this.centering_translation);
+        this.chord_group.addTransform(this.centering_translation);
 
         this.recalculate();
     }
 
     addNote(params = {}) {
-        let note = new ElementNote(this, params);
+        let note = new ElementNote(this.chord_group, params);
         this.notes.push(note);
 
         this.recalculate(true);
@@ -409,6 +410,9 @@ class ElementChord extends ScoreElement {
         let minrLineY = 5;
         let maxrLineY = -1;
 
+        let maxlLineX = -Infinity;
+        let maxrLineX = -Infinity;
+
         let dot_positions = [];
 
         for (let i = this.notes.length - 1; i >= 0; i--) {
@@ -427,6 +431,9 @@ class ElementChord extends ScoreElement {
                     minlLineY = Math.floor(note._line + 0.5);
                 if (note._line > maxlLineY)
                     maxlLineY = Math.ceil(note._line - 0.5);
+                let n_x = note.notehead.maxX + note.offset_x;
+                if (n_x > maxlLineX)
+                    maxlLineX = n_x;
             } else {
                 if (note._line < minrLineY)
                     minrLineY = Math.floor(note._line + 0.5);
@@ -476,9 +483,9 @@ class ElementChord extends ScoreElement {
 
         if (this._stem) { // If stem is not falsy then draw a stem
             if (this._flag)
-                this.flag_object = new ElementFlag(this, {degree: this._flag, orientation: this._stem});
+                this.flag_object = new ElementFlag(this.chord_group, {degree: this._flag, orientation: this._stem});
 
-            this.stem_object = new ElementStem(this, {y1: minConnectionY, y2: maxConnectionY});
+            this.stem_object = new ElementStem(this.chord_group, {y1: minConnectionY, y2: maxConnectionY});
 
             if (this._flag) {
                 this.flag_object.offset_y = (this._stem === "up") ? this.stem_object.y1 : this.stem_object.y2;
@@ -493,7 +500,7 @@ class ElementChord extends ScoreElement {
             for (let i = 0; i < this._dot_count; i++) {
                 offset_x += 3.3;
 
-                    this.dots.push(new ElementAugmentationDot(this, {
+                    this.dots.push(new ElementAugmentationDot(this.chord_group, {
                         offset_x: offset_x,
                         offset_y: dot_y
                     }));
@@ -504,28 +511,28 @@ class ElementChord extends ScoreElement {
 
         for (let i = minlLineY; i < 0; i++) {
             let y = 10 * i;
-            let p = new Path(this, `M ${minX - 3} ${y} L 3 ${y}`);
+            let p = new Path(this.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
             p.addClass("stave-line");
             this.lines.push(p);
         }
 
         for (let i = 5; i <= maxlLineY; i++) {
             let y = 10 * i;
-            let p = new Path(this, `M ${minX - 3} ${y} L 3 ${y}`);
+            let p = new Path(this.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
             p.addClass("stave-line");
             this.lines.push(p);
         }
 
         for (let i = minrLineY; i < 0; i++) {
             let y = 10 * i;
-            let p = new Path(this, `M -3 ${y} L ${maxX + 3} ${y}`);
+            let p = new Path(this.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
             p.addClass("stave-line");
             this.lines.push(p);
         }
 
         for (let i = 5; i <= maxrLineY; i++) {
             let y = 10 * i;
-            let p = new Path(this, `M -3 ${y} L ${maxX + 3} ${y}`);
+            let p = new Path(this.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
             p.addClass("stave-line");
             this.lines.push(p);
         }
@@ -575,11 +582,8 @@ class ElementChord extends ScoreElement {
         }
 
         this.centering_translation.x = ((this._stem === "up") ? 1 : -1) * (11.8 - STEM_THICKNESS / 2) / 2;
-
         this.bboxCalc();
     }
-
-
 }
 
 export {ElementNote, ElementAugmentationDot, ElementNoteHead, ElementStem, ElementFlag, ElementChord};
