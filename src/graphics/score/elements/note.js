@@ -25,14 +25,6 @@ class ElementNoteHead extends ScoreElement {
         this.recalculate();
     }
 
-    get minX() {
-        return this.leftConnectionX();
-    }
-
-    get maxX() {
-        return this.rightConnectionX();
-    }
-
     rightConnectionX() {
         switch (this._type) {
             case "normal":
@@ -88,21 +80,23 @@ class ElementNoteHead extends ScoreElement {
         switch (this._type) {
             case "normal":
                 this.shape = makeShape(this, "NOTEHEAD_NORMAL");
-                return;
+                break;
             case "half":
                 this.shape = makeShape(this, "NOTEHEAD_HALF");
-                return;
+                break;
             case "whole":
                 this.shape = makeShape(this, "NOTEHEAD_WHOLE");
-                return;
+                break;
             case "double":
                 this.shape = makeShape(this, "NOTEHEAD_DOUBLE_WHOLE");
-                return;
+                break;
             case "none":
-                return;
+                break;
             default:
                 throw new Error(`Unrecognized notehead type ${this._type}`);
         }
+
+        this.bboxCalc();
     }
 
 }
@@ -112,27 +106,12 @@ class ElementAugmentationDot extends ScoreElement {
         super(parent, params);
 
         this.path = makeShape(this, "AUGMENTATION_DOT");
-        this.width = 100 * 0.04;
-    }
 
-    get minX() {
-        return this.offset_x;
-    }
-
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
+        this.recalculate();
     }
 
     recalculate() {
-
+        this.bboxCalc();
     }
 }
 
@@ -141,12 +120,10 @@ class ElementNote extends ScoreElement {
         super(parent, params);
 
         this._line = (params.line !== undefined) ? params.line : 0;
-        this._dot_count = (params.dot_count !== undefined) ? params.dot_count : 0;
         this._type = (params.type !== undefined) ? params.type : "normal";
 
         this._accidental = (params.accidental) ? params.accidental : ""; // falsy value for no accidental, will be calculated by parent
 
-        this.dots = [];
         this.notehead = null;
         this.accidental_object = null;
 
@@ -171,15 +148,6 @@ class ElementNote extends ScoreElement {
         this.parent.recalculate();
     }
 
-    get dot_count() {
-        return this._dot_count;
-    }
-
-    set dot_count(value) {
-        this._dot_count = value;
-        this.recalculate();
-    }
-
     get type() {
         return this._type;
     }
@@ -189,46 +157,14 @@ class ElementNote extends ScoreElement {
         this.recalculate();
     }
 
-    get minX() {
-        if (this.accidental) {
-            return this.accidental_object.minX + this.offset_x;
-        } else {
-            return this.offset_x;
-        }
-    }
-
-    set minX(value) {
-        this.offset_x += value - this.minX;
-    }
-
-    get maxX() {
-        if (this.dots.length > 0) {
-            return this.dots[this.dots.length - 1].maxX;
-        } else {
-            return this.offset_x + 11.8;
-        }
-    }
-
-    set maxX(value) {
-        this.offset_x += value - this.maxX;
-    }
-
-    _recalculateWidth() {
-        this.width = this.maxX - this.minX;
-    }
-
     recalculate(force = false) {
-        if (!force && this._last_dot_count === this._dot_count && this._last_accidental === this._accidental && this._last_line === this._line && this._last_type === this._type) {
+        if (!force && this._last_accidental === this._accidental && this._last_line === this._line && this._last_type === this._type) {
             return;
         }
 
-        this._last_dot_count = this._dot_count;
         this._last_accidental = this._accidental;
         this._last_line = this._line;
         this._last_type = this._type;
-
-        this.dots.forEach(x => x.destroy());
-        this.dots = [];
 
         if (this.notehead)
             this.notehead.destroy();
@@ -241,7 +177,7 @@ class ElementNote extends ScoreElement {
         if (this.accidental)
             this.accidental_object = new ElementAccidental(this, {type: this.accidental, offset_x: -12});
 
-        this._recalculateWidth();
+        this.bboxCalc();
     }
 }
 
@@ -278,7 +214,8 @@ class ElementStem extends ScoreElement {
 
     recalculate(force = false) {
         this.path.d = `M 0 ${this._y1} L 0 ${this._y2}`;
-        console.log(this);
+
+        this.bboxCalc();
     }
 }
 
@@ -326,6 +263,8 @@ class ElementFlag extends ScoreElement {
         let SHAPE_ID = "FLAG_" + (this._orientation.toUpperCase()) + "_" + this._degree;
 
         this.shape = makeShape(this, SHAPE_ID);
+
+        this.bboxCalc();
     }
 }
 
@@ -347,6 +286,10 @@ class ElementChord extends ScoreElement {
         this.flag_object = null;
         this.dots = [];
         this.lines = []; // extra lines when notes go beyond staff
+
+        this.centering_translation = new Translation();
+
+        this.addTransform(this.centering_translation);
 
         this.recalculate();
     }
@@ -449,7 +392,7 @@ class ElementChord extends ScoreElement {
         let prev_line = Infinity;
         let prev_connect = 1;
 
-        let default_connect = (!this._stem) ? 1 : ((this._stem === "up") ? 0 : 1);
+        let default_connect = (!this._stem) ? 0 : ((this._stem === "up") ? 0 : 1);
 
         let minConnectionY = Infinity;
         let maxConnectionY = -Infinity;
@@ -496,23 +439,25 @@ class ElementChord extends ScoreElement {
                 dot_positions.push(dot_y);
             }
 
-            let connectionY = (note.connectOn ? note.notehead.leftConnectionY() : note.notehead.rightConnectionY()) + note.offset_y;
+            if (this._stem) {
+                let connectionY = (note.connectOn ? note.notehead.leftConnectionY() : note.notehead.rightConnectionY()) + note.offset_y;
 
-            if (connectionY < minConnectionY)
-                minConnectionY = connectionY;
-            if (connectionY > maxConnectionY)
-                maxConnectionY = connectionY;
+                if (connectionY < minConnectionY)
+                    minConnectionY = connectionY;
+                if (connectionY > maxConnectionY)
+                    maxConnectionY = connectionY;
+            }
 
-            let pminX = note.notehead.minX + note.offset_x;
-            let pmaxX = note.notehead.maxX + note.offset_x;
+                let pminX = note.notehead.minX + note.offset_x;
+                let pmaxX = note.notehead.maxX + note.offset_x;
 
-            if (pminX < minX)
-                minX = pminX;
-            if (pmaxX > maxX)
-                maxX = pmaxX;
+                if (pminX < minX)
+                    minX = pminX;
+                if (pmaxX > maxX)
+                    maxX = pmaxX;
 
-            prev_line = note._line;
-            prev_connect = note.connectOn;
+                prev_line = note._line;
+                prev_connect = note.connectOn;
         }
 
         if (this._stem === "up")
@@ -535,8 +480,6 @@ class ElementChord extends ScoreElement {
                 this.flag_object.offset_y = (this._stem === "up") ? this.stem_object.y1 : this.stem_object.y2;
                 this.flag_object.offset_x = - STEM_THICKNESS / 2;
             }
-        } else {
-
         }
 
         for (let j = 0; j < dot_positions.length; j++) {
@@ -586,27 +529,13 @@ class ElementChord extends ScoreElement {
 
         this._minXOffset = boundingBox.x;
         this._maxXOffset = boundingBox.x + boundingBox.width;
+
+        this.centering_translation.x = ((this._stem === "up") ? 1 : -1) * (11.8 - STEM_THICKNESS / 2) / 2;
+
+        this.bboxCalc();
     }
 
-    get minX() {
-        return this.offset_x + this._minXOffset;
-    }
 
-    set minX(value) {
-        this.offset_x = value - this.minX;
-    }
-
-    get maxX() {
-        return this.offset_x + this._maxXOffset;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.maxX;
-    }
-
-    get width() {
-        return this.maxX - this.minX;
-    }
 }
 
 export {ElementNote, ElementAugmentationDot, ElementNoteHead, ElementStem, ElementFlag, ElementChord};

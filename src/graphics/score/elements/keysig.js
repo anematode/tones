@@ -25,22 +25,6 @@ class ElementKeySig extends ScoreElement {
         this.recalculate();
     }
 
-    get minX() {
-        return this.offset_x;
-    }
-
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
-    }
-
     recalculate(force = false) {
         try {
             if (!force && this.accidentals.every((x,i) => utils.compareObjects(x, this._last_accidentals[i]))) { // Is everything the same?
@@ -68,7 +52,7 @@ class ElementKeySig extends ScoreElement {
             this.accidental_objects.push(accidental);
         }
 
-        this.width = offset_x + 5;
+        this.bboxCalc();
     }
 }
 

@@ -45,22 +45,6 @@ class ElementClef extends ScoreElement {
         this.recalculate();
     }
 
-    get minX() {
-        return this.offset_x;
-    }
-
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
-    }
-
     set change(value) {
         this._change = value;
         this.recalculate();
@@ -127,7 +111,7 @@ class ElementClef extends ScoreElement {
                 throw new Error(`Unrecognized clef type ${this._type}`);
         }
 
-        this.width = this.path.element.getBBox().width * 0.04;
+        this.bboxCalc();
     }
 }
 

@@ -1,29 +1,22 @@
 
 import {ScoreElement} from "./element.js";
 import * as utils from "../../../utils.js";
-import {Translation} from "../../svgmanip.js";
+import {Translation, Path} from "../../svgmanip.js";
 
 class ElementSpacer extends ScoreElement {
     constructor(parent, params) {
         super(parent);
 
-        this.width = params.width;
+        this.width_value = params.width;
+        this.path = new Path(this, "");
+
+        this.recalculate();
     }
 
-    get minX() {
-        return this.offset_x;
-    }
+    recalculate() {
+        this.path.d = `M 0 0 L ${this.width_value} 0`;
 
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
+        this.bboxCalc();
     }
 }
 
@@ -48,6 +41,22 @@ class ElementPositioner extends ScoreElement {
     }
 
     set maxX(value) {
+
+    }
+
+    get minY() {
+        return 0;
+    }
+
+    set minY(value) {
+
+    }
+
+    get maxY() {
+        return 0;
+    }
+
+    set maxY(value) {
 
     }
 }

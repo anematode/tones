@@ -56,22 +56,6 @@ class ElementAccidental extends ScoreElement {
         this.recalculate();
     }
 
-    get minX() {
-        return this.offset_x;
-    }
-
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
-    }
-
     recalculate(force = false) {
         if (!force && (this._last_type === this._type))
             return;
@@ -82,7 +66,6 @@ class ElementAccidental extends ScoreElement {
             this.shape.destroy();
 
         this.shape = makeShape(this, accidentalToShapeName(this._type));
-        this.width = this.shape.adv_x;
     }
 }
 

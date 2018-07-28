@@ -93,4 +93,16 @@ function compareObjects(object1, object2) {
     return true;
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects};
+function select(s1, ...args) {
+    if (s1 !== undefined) {
+        return s1;
+    } else {
+        if (args.length === 0) {
+            return undefined;
+        }
+
+        return select(...args);
+    }
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select};

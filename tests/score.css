@@ -43,3 +43,7 @@
     stroke-width: 2px;
     stroke: #000;
 }
+
+.highlight {
+    fill: rgba(255, 255, 123, 0.4);
+}

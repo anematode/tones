@@ -41,22 +41,6 @@ class ElementTimeSig extends ScoreElement {
         this._den = value;
     }
 
-    get minX() {
-        return this.offset_x;
-    }
-
-    set minX(value) {
-        this.offset_x = value;
-    }
-
-    get maxX() {
-        return this.offset_x + this.width;
-    }
-
-    set maxX(value) {
-        this.offset_x = value - this.width;
-    }
-
     get type() {
         return this._type;
     }
@@ -86,18 +70,16 @@ class ElementTimeSig extends ScoreElement {
                 let common_time = makeShape(this.num_group, "COMMON_TIME");
 
                 this.num_group.addTransform(new Translation(0, 20));
-                this.width = common_time.adv_x;
 
-                return;
+                break;
             case "cut":
                 this.num_group = new ScoreGroup(this);
 
                 let cut_time = makeShape(this.num_group, "CUT_TIME");
 
                 this.num_group.addTransform(new Translation(0, 20));
-                this.width = cut_time.adv_x;
 
-                return;
+                break;
             case "number":
                 this.num_group = new ScoreGroup(this);
                 this.den_group = new ScoreGroup(this);
@@ -141,8 +123,12 @@ class ElementTimeSig extends ScoreElement {
                 this.num_group.addTransform(new Translation((width - num_width) / 2, 10));
                 this.den_group.addTransform(new Translation((width - offset_x) / 2, 30));
 
-                this.width = width;
+                break;
+            default:
+                throw new Error(`Unrecognized time signature type ${this._type}`);
         }
+
+        this.bboxCalc();
     }
 }
 

@@ -49,21 +49,28 @@ class SVGElement {
 
     updateTransform() {
         this.set("transform", this.transform.toSVGValue());
+        return this;
     }
 
     addTransform(...args) {
         this.transform.addTransform(...args);
         this.updateTransform();
+
+        return this;
     }
 
     removeTransform(...args) {
-        this.transform.addTransform(...args);
+        this.transform.removeTransform(...args);
         this.updateTransform();
+
+        return this;
     }
 
     resetTransform() {
         this.transform.removeAll();
         this.updateTransform();
+
+        return this;
     }
 
     getBBox() {
@@ -102,6 +109,18 @@ class SVGElement {
 
     has(attribute) {
         return !!this.element.getAttributeNS(null, attribute);
+    }
+
+    highlightBox() {
+        this._highlight_box = new TONES.Rectangle(this.parent, this.getBBox()).addClass("highlight");
+        return this;
+    }
+
+    unhighlightBox() {
+        this._highlight_box.destroy();
+        this._highlight_box = undefined;
+
+        return this;
     }
 
     getAll() {
@@ -147,6 +166,7 @@ class SVGElement {
         }
 
         this.set("class", this.get("class") + x);
+        return this;
     }
 
     removeClass(x) {
@@ -164,6 +184,7 @@ class SVGElement {
         }
 
         this.set("class", classes.join(' '));
+        return this;
     }
 
     hide() {
@@ -307,66 +328,6 @@ class SVGGroup extends SVGElement {
 
         this.remove();
         this._id = -1;
-    }
-
-    makeCircle(cx = 0, cy = 0, r = 0) {
-        return svgClassFactory(this, Circle, cx, cy, r);
-    }
-
-    addCircle(...args) {
-        let circle = this.makeCircle(...args);
-        this.element.appendChild(circle.element);
-        return circle;
-    }
-
-    makeRect(x = 0, y = 0, width = 100, height = 100, rx = 0, ry = 0) {
-        return svgClassFactory(this, Rectangle, x, y, width, height, rx, ry);
-    }
-
-    addRect(...args) {
-        let rect = this.makeRect(...args);
-        this.element.appendChild(rect.element);
-        return rect;
-    }
-
-    makeEllipse(cx = 0, cy = 0, rx = 0, ry = 0) {
-        return svgClassFactory(this, Ellipse, cx, cy, rx, ry);
-    }
-
-    addEllipse(...args) {
-        let rect = this.makeEllipse(...args);
-        this.element.appendChild(ellipse.element);
-        return ellipse;
-    }
-
-    makeText(text = "lorem ipsum", x = 0, y = 0, dx = 0, dy = 0) {
-        return svgClassFactory(this, Text, text, x, y, dx, dy);
-    }
-
-    addText(...args) {
-        let text = this.makeText(...args);
-        this.element.appendChild(text.element);
-        return text;
-    }
-
-    makePath(d = "") {
-        return svgClassFactory(this, Path, d);
-    }
-
-    addPath(...args) {
-        let path = this.makePath(...args);
-        this.element.appendChild(path.element);
-        return path;
-    }
-
-    makePolygon(points = []) {
-        return svgClassFactory(this, Polygon, points);
-    }
-
-    addPolygon(...args) {
-        let poly = this.makePolygon(...args);
-        this.element.appendChild(poly.element);
-        return path;
     }
 }
 
@@ -783,15 +744,17 @@ class Circle extends SVGElement {
 }
 
 class Rectangle extends SVGElement {
-    constructor(parent, x = 0, y = 0, width = 100, height = 100, rx = 0, ry = 0) {
+    constructor(parent, params = {}) {
         super(parent, 'rect');
 
-        this._width = width;
-        this._height = height;
-        this._x = x;
-        this._y = y;
-        this._rx = rx;
-        this._ry = ry;
+        this._width = utils.select(params.width, 100);
+        this._height = utils.select(params.height, 100);
+        this._x = utils.select(params.x, 0);
+        this._y = utils.select(params.y, 0);
+        this._rx = utils.select(params.rx, 0);
+        this._ry = utils.select(params.ry, 0);
+
+        this.updateSVG();
     }
 
     updateSVG() {
