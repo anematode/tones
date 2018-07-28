@@ -384,10 +384,13 @@ const SHAPES = {
     AUGMENTATION_DOT: {path: "M100 0q0 -21 -14.5 -35.5t-35.5 -14.5t-35.5 14.5t-14.5 35.5t14.5 35.5t35.5 14.5t35.5 -14.5t14.5 -35.5z", adv_x: 100}
 };
 
-function makeShape(parent, shape_name, offset = true) {
+function makeShape(parent, shape_name, offset = true) { // TODO optimize
     let shape_props = SHAPES[shape_name];
 
     let shape = new Path(parent, shape_props.path);
+
+    /*let shape = parent.addElement("use", {}, true, "http://www.w3.org/1999/xlink");
+    shape.element.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#SYM" + shape_name);*/
 
     let offset_x = (offset && shape_props.offset_x !== undefined) ? shape_props.offset_x : 0;
     let offset_y = (offset && shape_props.offset_y !== undefined) ? shape_props.offset_y : 0;
@@ -449,4 +452,4 @@ function makeAccidental(parent, params) {
     }
 }
 
-export {makeSharp, makeAccidental, makeShape};
+export {makeSharp, makeAccidental, makeShape, SHAPES};

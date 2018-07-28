@@ -44,11 +44,16 @@ class SVGElement {
         }, this._id);
 
         this.updateTransform();
-        this.set("class", "");
+        this.set("class", ""); // TODO stop this
     }
 
     updateTransform() {
-        this.set("transform", this.transform.toSVGValue());
+        let value = this.transform.toSVGValue();
+
+        if (value) {
+            this.set("transform", value);
+        }
+
         return this;
     }
 
@@ -153,7 +158,13 @@ class SVGElement {
     }
 
     getClasses() {
-        return this.get("class").split('\n');
+        let classes = this.get("class");
+
+        if (!classes) {
+            return [];
+        }
+
+        return classes.split('\n');
     }
 
     addClass(x) {
@@ -216,8 +227,8 @@ class SVGGroup extends SVGElement {
         }
     }
 
-    createElement(name, attribs = {}, append = false) {
-        let elem = this.createRawElement(name, attribs, append);
+    createElement(name, attribs = {}, append = false, namespace = SVGNS) {
+        let elem = this.createRawElement(name, attribs, append, namespace);
 
         let svgElement = new SVGElement(this, elem);
         this.children.push(svgElement);
@@ -225,8 +236,8 @@ class SVGGroup extends SVGElement {
         return svgElement;
     }
 
-    createRawElement(name, attribs = {}, append = false) {
-        let elem = document.createElementNS(SVGNS, name);
+    createRawElement(name, attribs = {}, append = false, namespace = SVGNS) {
+        let elem = document.createElementNS(namespace, name);
 
         Object.keys(attribs).forEach((key) => {
             elem.setAttributeNS(null, key, attribs[key]);
@@ -238,8 +249,8 @@ class SVGGroup extends SVGElement {
         return elem;
     }
 
-    addElement(name, attribs = {}) {
-        return this.createElement(name, attribs, true);
+    addElement(name, attribs = {}, namespace = SVGNS) {
+        return this.createElement(name, attribs, true, namespace);
     }
 
     makeGroup(attribs = {}, append = false) {
@@ -1017,5 +1028,6 @@ export {
     MatrixTransform,
     ScaleTransform,
     Rotation,
-    ChildUpdater
+    ChildUpdater,
+    SVGNS
 };

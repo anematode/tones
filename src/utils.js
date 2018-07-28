@@ -105,4 +105,13 @@ function select(s1, ...args) {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select};
+function time(func, times = 1) {
+    let time = performance.now();
+
+    for (let i = 0; i < times; i++)
+        func();
+
+    return (performance.now() - time) / times;
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select, time};

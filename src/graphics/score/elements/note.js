@@ -525,10 +525,51 @@ class ElementChord extends ScoreElement {
             this.lines.push(p);
         }
 
-        let boundingBox = this.getBBox();
 
-        this._minXOffset = boundingBox.x;
-        this._maxXOffset = boundingBox.x + boundingBox.width;
+        let prevBoundingRects = [];
+
+        for (let i = 0; i < this.notes.length; i++) {
+            let note = this.notes[i];
+
+            if (note.accidental_object) {
+                let box = note.accidental_object.getBBox();
+
+                box.x += note.offset_x;
+                box.y += note.offset_y;
+
+                let top_height = box.y - 2;
+                let bottom_height = box.y + box.height + 2;
+
+                let prev_intersect = minX;
+                let pos = Infinity;
+
+                prevBoundingRects.sort((x, y) => (x.x - y.x));
+
+                for (let j = prevBoundingRects.length - 1; j >= 0; j--) {
+                    let rect = prevBoundingRects[j];
+
+                    if (rect.y <= bottom_height && top_height <= rect.y + rect.height) {
+                            if (rect.x + rect.width + 2 < prev_intersect - box.width) { // enough space, maybe?
+                                pos = prev_intersect - box.width;
+                            }
+                        prev_intersect = rect.x;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (pos === Infinity)
+                    pos = prev_intersect - box.width - 2;
+
+                note.accidental_object.offset_x = pos - note.offset_x;
+                box = note.accidental_object.getBBox();
+
+                box.x += note.offset_x;
+                box.y += note.offset_y;
+
+                prevBoundingRects.push(box);
+            }
+        }
 
         this.centering_translation.x = ((this._stem === "up") ? 1 : -1) * (11.8 - STEM_THICKNESS / 2) / 2;
 

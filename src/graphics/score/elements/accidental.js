@@ -66,6 +66,7 @@ class ElementAccidental extends ScoreElement {
             this.shape.destroy();
 
         this.shape = makeShape(this, accidentalToShapeName(this._type));
+        this.bboxCalc();
     }
 }
 
