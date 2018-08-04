@@ -1,3 +1,5 @@
+import * as audio from "./audio/audio.js";
+
 function clamp(value, min, max, name) {
     if (value > max) {
         console.warn(`Value ${name} outside nominal range [${min}, ${max}]; value will be clamped.`);
@@ -21,7 +23,6 @@ function desmosPrint(pointArray, minX, maxX) {
             out_str += `${pointArray[i * 2]}\t${pointArray[i * 2 + 1]}\n`;
         }
     }
-    console.log(out_str)
 }
 
 function isNumeric(n) {
@@ -32,20 +33,26 @@ function isString(s) {
     return (typeof s === 'string' || s instanceof String);
 }
 
+let ID_INDEX = 0;
+
+function getID() {
+    return ++ID_INDEX;
+}
+
 class CancellableTimeout {
-    constructor(func, secs) {
-        this.end_time = Date.now() + secs * 1000;
+    constructor(func, secs, absoluteAudioCtxTime = false) {
+        this.end_time = (absoluteAudioCtxTime ? 0 : audio.Context.currentTime) + secs;
 
         let f_c = () => {
-            if (Date.now() >= this.end_time - 10) {
+            if (audio.Context.currentTime >= this.end_time) {
                 this._ended = true;
                 func();
             } else {
-                this.timeout = setTimeout(f_c, 2/3 * (this.end_time - Date.now()));
+                this.timeout = setTimeout(f_c, 2000/3 * (this.end_time - audio.Context.currentTime));
             }
         };
 
-        this.timeout = setTimeout(f_c, secs * 1000 * 2/3);
+        this.timeout = setTimeout(f_c, 2000 / 3 * (this.end_time - audio.Context.currentTime));
 
         this._ended = false;
     }
@@ -60,4 +67,51 @@ class CancellableTimeout {
     }
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint};
+function assert(test, message = "Assertion error") {
+    if (!test) {
+        throw new Error(message);
+    }
+}
+
+function compareObjects(object1, object2) {
+    for (let p in object1){
+        if (object1.hasOwnProperty(p)) {
+            if (object1[p] !== object2[p]) {
+                return false;
+            }
+        }
+    }
+
+    for (let p in object2) {
+        if (object2.hasOwnProperty(p)) {
+            if (object1[p] !== object2[p]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function select(s1, ...args) {
+    if (s1 !== undefined) {
+        return s1;
+    } else {
+        if (args.length === 0) {
+            return undefined;
+        }
+
+        return select(...args);
+    }
+}
+
+function time(func, times = 1) {
+    let time = performance.now();
+
+    for (let i = 0; i < times; i++)
+        func();
+
+    return (performance.now() - time) / times;
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select, time};

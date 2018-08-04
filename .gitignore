@@ -1,3 +1,6 @@
+.DS_Store
+src/graphics/score/processing/Bravura.svg
+src/graphics/score/processing/bravura.out
 node_modules/**
 build/**
 .idea/**

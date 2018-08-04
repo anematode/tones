@@ -1,4 +1,6 @@
 import {KeyboardPitch, KeyboardInterval} from "./keyboardpitch.js";
+import * as utils from "../utils.js";
+
 // Hz is associated with Frequencies
 // ratio is associated with Intervals
 
@@ -43,10 +45,6 @@ class Pitch {
             return new Interval(note.value / this.value);
         }
     }
-}
-
-function isNumber(n) { // TODO use utils
-    return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 /*
@@ -95,7 +93,7 @@ class Interval {
 
             this.value = arg2.Hz() / arg1.Hz();
         } else if (arg1) {
-            if (isNumber(arg1)) {
+            if (utils.isNumeric(arg1)) {
                 this.value = arg1;
             } else if (_isInterval(arg1)) { // duplicate Interval
                 this.value = arg1.value;

@@ -37,8 +37,6 @@
             <input type="text" id="base_note_input" value="A4">
             <p>Base Frequency:</p>
             <input type="number" id="base_frequency_input" value="440">
-            <p>Lowpass Filter Value:</p>
-            <input type="range" id="lowpass_input" value="1100" min="500" max="1442">
             <p>Attack</p>
             <input type="range" id="attack_input" value="50" min="0" max="500">
             <p>Decay</p>
@@ -51,11 +49,16 @@
             <input type="range" id="dry_input" value="50" min="0" max="100">
             <p>Wet</p>
             <input type="range" id="wet_input" value="50" min="0" max="100">
+            <p>Lowpass Filter Frequency:</p>
+            <input type="range" id="lowpass_input" value="50" min="0" max="100">
+            <p>Lowpass Filter Value:</p>
+            <input type="range" id="lowpass_input_value" value="50" min="0" max="100">
             <br>
         </div>
 
         <div class="col">
             <canvas width="1024" height="400" id="vis_canvas"></canvas>
+            <canvas width="1024" height="400" id="dup_canvas"></canvas>
         </div>
 
     </div>

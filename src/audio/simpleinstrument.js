@@ -1,5 +1,5 @@
 import {KeyboardInstrument} from "./keyboardinstrument.js";
-import {PitchedInstrumentNode} from "./pitchedinstrument.js";
+import {SourceNode} from "./node.js";
 import * as audio from "./audio.js";
 import {LinearEnvelopeSegment, Envelope, EnvelopeHorizontal} from "./envelope.js";
 import {UnisonOscillator} from "./unisonoscillator.js";
@@ -21,7 +21,7 @@ function periodicClearTimeout(list, timeout = 1000) {
     }, timeout);
 }
 
-class SimpleInstrumentNode extends PitchedInstrumentNode {
+class SimpleInstrumentNode extends SourceNode {
     constructor(parent, frequency, start, end, velocity, panValue) {
         super(parent);
 
@@ -31,16 +31,16 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
             var tone = new UnisonOscillator(parent.params);
         }
 
-        let gain = this.gain;
+        let gain = audio.Context.createGain();
         let vel = audio.Context.createGain();
-        let pan = this.pan;
+        let pan = audio.Context.createStereoPanner();
 
         audio.chainNodes([
             tone,
             gain,
             vel,
             pan,
-            parent.entryNode
+            parent._getEntry()
         ]);
 
         tone.type = parent.waveform;
@@ -55,24 +55,32 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
         parent.params.attack_envelope.apply(gain.gain,
             EnvelopeHorizontal.absoluteOffset(start));
 
-        gain.gain.cancelScheduledValues(end);
-
         // Make a release envelope and then apply it to tone_gain.gain
-        parent.createReleaseEnvelope(
-            parent.params.attack_envelope.valueAt(end - start)
-        ).apply(gain.gain,
-            EnvelopeHorizontal.absoluteOffset(end));
+        if (end !== Infinity) {
+            gain.gain.cancelScheduledValues(end);
+
+            parent.createReleaseEnvelope(
+                parent.params.attack_envelope.valueAt(end - start)
+            ).apply(gain.gain,
+                EnvelopeHorizontal.absoluteOffset(end));
+        }
 
         this.node = tone;
+        this.gain = gain;
+        this.pan = pan;
         this.vel = vel;
+        this.start = start;
         this.end = end;
+        this.parent = parent;
 
-        window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
-            this._destroy();
-        }, (end - audio.Context.currentTime + parent.params.release_length) * 1000 + 1000);
+        if (end !== Infinity) {
+            window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
+                this.destroy();
+            }, (end - audio.Context.currentTime + parent.params.release_length) * 1000);
+        }
     }
 
-    _release() {
+    release() {
         /*
         When releasing the note, cancel all future values of gain and then apply the release envelope.
         After some time, destroy the note.
@@ -91,24 +99,16 @@ class SimpleInstrumentNode extends PitchedInstrumentNode {
             EnvelopeHorizontal.absoluteOffset(currTime));
 
         window.setTimeout(() => { // Note that precision isn't necessary here, so we'll use setTimeout
-            this._destroy();
-        }, this.parent.params.release_length * 1000 + 1000);
+            this.destroy();
+        }, this.parent.params.release_length * 1000);
     }
 
     _disconnect() {
         this.node.stop();
-
-        setTimeout(() => {
-            this.pan.disconnect();
-        }, 150);
-    }
-
-    _cancel() {
-        this._disconnect();
     }
 
     _destroy() {
-        this._disconnect();
+        this.node.stop();
     }
 }
 
@@ -125,14 +125,22 @@ class SimpleInstrument extends KeyboardInstrument {
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
         this.params.waveform = parameters.waveform || "square";
 
-        this.oscillators = {};
-        for (let i = 0; i < 128; i++) {
-            this.oscillators[i] = null;
+        this.entries = [];
+
+        for (let i = 0; i < 4; i++) {
+            let entry = audio.Context.createGain();
+            entry.connect(this.entryNode);
+
+            this.entries.push(entry);
         }
 
         this.createReleaseEnvelope = (gain_value) => {
             return new Envelope([new LinearEnvelopeSegment([0, gain_value], [this.params.release_length, 0])]);
         };
+    }
+
+    _getEntry() {
+        return this.entries[~~(Math.random() * this.entries.length)];
     }
 
     createNode(frequency, start, end, vel, pan) {
@@ -145,9 +153,11 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set detune(value) {
         this.params.detune = value;
-        this.oscillatorApply(function (x) {
-            x.detune.value = value;
-        });
+        if (this.params.unison !== 1) {
+            this.oscillatorApply(function (x) {
+                x.detune.value = value;
+            });
+        }
     }
 
     get detune() {
@@ -156,9 +166,11 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set blend(value) {
         this.params.blend = value;
-        this.oscillatorApply(function (x) {
-            x.blend.value = value;
-        });
+        if (this.params.unison !== 1) {
+            this.oscillatorApply(function (x) {
+                x.blend.value = value;
+            });
+        }
     }
 
     get blend() {
@@ -167,9 +179,9 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set waveform(value) {
         this.params.waveform = value;
-        this.oscillatorApply(function (x) {
-            x.type = value;
-        })
+            this.oscillatorApply(function (x) {
+                x.type = value;
+            });
     }
 
     get waveform() {

@@ -1,4 +1,4 @@
-let lowpass_filter = new TONES.LowpassFilter();
+let eq = new TONES.ParametricEQ();
 
 let instrument = new TONES.SimpleInstrument({
     unison: 8,
@@ -7,13 +7,13 @@ let instrument = new TONES.SimpleInstrument({
     waveform: "square"
 });
 
-instrument.connect(lowpass_filter);
+instrument.connect(eq);
 instrument.enableKeyboardPlay();
 
 let reverb = new TONES.Reverb({decay: 4});
 let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
 
-lowpass_filter.connect(delay.entry);
+eq.connect(delay.entry);
 delay.connect(reverb);
 reverb.connect(TONES.masterEntryNode);
 
@@ -129,9 +129,16 @@ baseFrequencyInput.onfocus = baseNoteInput.onfocus = unisonInput.onfocus = funct
 };
 
 document.getElementById("lowpass_input").oninput = function() {
-    let value = Math.pow(2, this.value / 100);
+    let value = Math.pow(2, this.value / 10);
 
-    lowpass_filter.frequency.value = value;
+    eq.F0.frequency.value = value;
+};
+
+document.getElementById("lowpass_input_value").oninput = function() {
+    let value = 5 * (this.value / 50 - 1);
+    console.log(value);
+
+    eq.F0.gain.value = value;
 };
 
 document.getElementById("attack_input").oninput = function() {
@@ -168,51 +175,20 @@ document.getElementById("wet_input").oninput = function() {
     reverb.wet.value = value;
 };
 
-let reader = new TONES.ScalaReader(function(scalaFile) {
-    scale = TONES.sclFileToScale(scalaFile);
-    tParams.scale = scale;
+let reader = new TONES.ScalaReader(function(scale) {
+    tParams.scale = scale.scale;
     refreshInst();
 }, {domElement: document.getElementById("scala_file_input")});
 
-let BASS_1 = "(G2{d:e,v:0.5}D3G3){d:1.3*e}R{d:-0.3*e}";
-let BASS_2 = "(F2{d:e,v:0.5}C3F3){d:1.3*e}R{d:-0.3*e}";
-let BASS_3 = "(Eb2{d:e,v:0.5}Bb2Eb3){d:1.3*e}R{d:-0.3*e}";
-let MIDDLE_TUNE = "(A3{d:q,v:0.7}B3D4){d:e}G4R{d:-e}";
-let MIDDLE_TUNE_2 = "(A3{d:q,v:0.7}Bb3D4){d:e}G4R{d:-e}";
-let MIDDLE_TUNE_3 = "(A3{d:q,v:0.7}C4D4){d:e}G4R{d:-e}";
-let HIGH_FOURTH = "[D6G6]{d:e,v:0.7}R{d:-h}";
+let BASS_1 = "Fs3{d:s,v:1}Cs4{v:0.5}Cs4Cs4Cs4Cs4";
 
 let strn = `
 ${BASS_1}
-${MIDDLE_TUNE}
 ${BASS_1}
-${HIGH_FOURTH}
-R{d:w}
-${BASS_2}
-${MIDDLE_TUNE}
-${BASS_2}
-${HIGH_FOURTH}
-R{d:h+q}
-D3{d:q,v:0.5}
 ${BASS_1}
-${MIDDLE_TUNE}
 ${BASS_1}
-${HIGH_FOURTH}
-R{d:w}
-${BASS_2}
-${MIDDLE_TUNE}
-${BASS_2}
-${HIGH_FOURTH}
-R{d:w}
-${BASS_3}
-${MIDDLE_TUNE_2}
-${BASS_3}
-${HIGH_FOURTH}
-R{d:w}
-${BASS_2}
-${MIDDLE_TUNE_3}
-${BASS_2}
-${HIGH_FOURTH}
+${BASS_1}
+${BASS_1}
 `;
 
 let note_group = TONES.parseAbbreviatedGroup(strn);
@@ -228,10 +204,24 @@ let canvas = document.getElementById("vis_canvas");
 let g_canvas = document.getElementById("dup_canvas");
 
 visualizer.setCanvas(canvas);
-visualizer.startDrawLoop();
+//visualizer.startDrawLoop();
 
 visualizer.connectFrom(TONES.masterEntryNode);
 
-let downsampler = new TONES.Downsampler();
+let transformation = TONES.stretchToCanvas(g_canvas, 0, 1000, 3, 0);
 
-downsampler.connectFrom(TONES.masterEntryNode);
+let grapher = new TONES.ArrayGrapher({
+    domElement: g_canvas,
+    transformation: transformation
+});
+
+let x_before = [...Array(1000).keys()];
+let x = x_before.map(x => Math.pow(2, x * 15 / 1000 + 1));
+
+function drawEQ() {
+    let resp = eq.getMagnitudeResponse(x);
+    grapher.drawLineSegments(x_before, resp);
+    requestAnimationFrame(drawEQ);
+}
+
+drawEQ();

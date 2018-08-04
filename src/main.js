@@ -1,3 +1,7 @@
+// Polyfills
+
+export * from "./polyfills.js";
+
 // Audio
 
 export * from "./audio/instrument.js";
@@ -26,8 +30,19 @@ export * from "./music/time.js";
 
 export * from "./graphics/frequencyvisualizer.js";
 export * from "./graphics/grapharray.js";
-export * from "./graphics/score.js";
+export * from "./graphics/score/basescore.js";
+export * from "./graphics/svgmanip.js";
+export * from "./graphics/score/scorevalues.js";
+export * from "./graphics/score/score.js";
+export * from "./graphics/score/elements/staff.js";
+export * from "./graphics/score/elements/system.js";
+export * from "./graphics/score/elements/measure.js";
+export * from "./graphics/score/elements/barline.js";
+export * from "./graphics/score/elements.js";
+export * from "./graphics/score/optimizer.js";
+export * from "./graphics/score/elements/scoreshapes.js";
 
 // Utils
 
-export * from "./utils.js";
+import * as utils from "./utils.js";
+export {utils};

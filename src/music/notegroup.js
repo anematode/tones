@@ -21,7 +21,7 @@ class NoteGroup {
     }
 
     sort() {
-        this.notes.sort((x, y) => x.start < y.start );
+        this.notes.sort((x, y) => x.start - y.start);
     }
 
     apply(func) {
@@ -339,7 +339,7 @@ function unionNoteGroups(group1, group2, unionStrategy = UNION_TYPE.trim()) {
 
 function trimComments(line) {
     for (let i = 0; i < line.length; i++) {
-        if (line[i] === "#") {
+        if (line[i] === "!") {
             return line.slice(0, i);
         }
     }

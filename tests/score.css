@@ -1,0 +1,49 @@
+.stave-line {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 1px;
+}
+
+.barline-normal, .barline-double, .barline-dashed {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.barline-ending-thick {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 5px;
+}
+
+.barline-ending-thin {
+    fill: #000;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.barline-repeat-circle {
+    r: 2.3px;
+
+}
+
+.barline-dashed {
+    stroke-dasharray: 4,2;
+}
+
+.sharp-line {
+    stroke-linejoin: miter;
+    stroke-width: 3px;
+    fill: #000;
+    stroke: #000;
+}
+
+.note-stem {
+    fill: #000;
+    stroke-width: 2px;
+    stroke: #000;
+}
+
+.highlight {
+    fill: rgba(255, 255, 123, 0.4);
+}

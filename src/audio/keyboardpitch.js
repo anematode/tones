@@ -41,7 +41,9 @@ const accidental_offsets = {
     "b" : -1,
     "bb": -2,
     "s": 1,
-    "ss" : 2
+    "ss" : 2,
+    "S": 1,
+    "SS": 2
 };
 
 /* Convert a note name to a numerical note */
@@ -318,7 +320,7 @@ function makeKeyboardPitch(...args) {
 /* Interval on the piano */
 class KeyboardInterval {
     constructor(arg1, arg2) {
-        if (isNumeric(arg1) && arg2 === undefined) { // TODO use utils.isNumeric
+        if (utils.isNumeric(arg1) && arg2 === undefined) {
             this.value = arg1;
         } else if (arg2 !== undefined) {
             this.value = new KeyboardPitch(arg2).subtract(new KeyboardPitch(arg1)).value;
@@ -337,8 +339,8 @@ class KeyboardInterval {
         return new KeyboardInterval(this.value - (new KeyboardInterval(interval)).value);
     }
 
-    negate() { // TODO decide whether to use reverse or negate
-        return new KeyboardInterval(-this.value)
+    negate() {
+        return new KeyboardInterval(-this.value);
     }
 
     cents() { // 12-TET
