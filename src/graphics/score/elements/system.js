@@ -1,4 +1,5 @@
 import {ScoreContext, ScoreGroup} from "../basescore.js";
+import {ScoreElement} from "./element.js";
 import * as utils from "../../../utils.js";
 import DEFAULTS from "../scorevalues.js";
 
@@ -15,36 +16,38 @@ width -> width of stave
 staff_count -> number of staffs at initialization
 barline
  */
-class System extends ScoreGroup {
+class System extends ScoreElement {
     constructor(parent, params = {}) {
-        super(parent);
+        super(parent, Object.assign({offset_x: DEFAULTS.STAVE_MARGIN_X, offset_y: DEFAULTS.STAVE_MARGIN_Y}, params));
 
-        let staff_count = (params.staff_count !== undefined) ? params.staff_count : 0;
+        let width = 0;
 
-        // Internal
+        this.makeSimpleParam("width", {
+            obj: width,
+            allow: [
+                utils.isNumeric
+            ]
+        });
+
+        this.makeParam("right_margin_x", () => parent.width - this.offset_x - this.width, (x) => {
+            this.width = parent.width - this.offset_x - x;
+        });
+
+        this.width = params.width || parent.width - 2 * this.offset_x;
+
+        if (params.right_margin_x)
+            this.right_margin_x = params.right_margin_x;
+
+        let staff_count = utils.select(params.staff_count, 0);
         this.staffs = (params.staffs !== undefined) ? params.staffs.map(staff => new Staff(this, staff)) : [];
 
-        let offset_x = params.offset_x || DEFAULTS.STAVE_MARGIN_X;
-        let offset_y = params.offset_y || DEFAULTS.STAVE_MARGIN_Y;
-
-        this.offset_x = offset_x;
-        this.offset_y = offset_y;
-
-        this.right_margin_x = offset_x;
-
-        this.width = params.width || (parent.width - 2 * offset_x);
-
-        this._margin_translation = new Translation(offset_x, offset_y);
-        this.addTransform(this._margin_translation);
-
-        this.translation = new Translation();
-        this.addTransform(this.translation);
-
+        let measure_count = utils.select(params.measure_count, 0);
         this.measures = (params.measures !== undefined) ? params.measures.map(measure => new Measure(this, measure)) : []; // Measures
 
-        for (let i = 0; i < staff_count; i++) {
+        for (let i = 0; i < staff_count; i++)
             this.addStaff();
-        }
+        for (let i = 0; i < measure_count; i++)
+            this.addMeasure();
 
         this.recalculate();
     }
@@ -176,11 +179,6 @@ class System extends ScoreGroup {
     }
 
     recalculate() {
-        this._margin_translation.x = this.offset_x;
-        this._margin_translation.y = this.offset_y;
-
-        this.width = this.parent.width - this.offset_x - this.right_margin_x;
-
         for (let i = 0; i < this.staffs.length; i++) {
             this.staffs[i].width = this.width;
             this.staffs[i].recalculate();

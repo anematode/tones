@@ -13,10 +13,8 @@ class ElementSpacer extends ScoreElement {
         this.recalculate();
     }
 
-    recalculate() {
+    _recalculate() {
         this.path.d = `M 0 0 L ${this.width_value} 0`;
-
-        this.bboxCalc();
     }
 }
 

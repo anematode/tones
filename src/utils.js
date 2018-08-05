@@ -26,7 +26,7 @@ function desmosPrint(pointArray, minX, maxX) {
 }
 
 function isNumeric(n) {
-    return !!n.toFixed;
+    return (n !== null) && (n !== undefined) && !!n.toFixed;
 }
 
 function isString(s) {
@@ -114,4 +114,16 @@ function time(func, times = 1) {
     return (performance.now() - time) / times;
 }
 
-export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select, time};
+function isInteger(x) {
+    return isNumeric(x) && (x % 1 === 0);
+}
+
+function inRange(x, min, max) {
+    return (min <= x) && (x <= max);
+}
+
+function inStrictRange(x, min, max) {
+    return (min < x) && (x < max);
+}
+
+export {clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select, time, isInteger, inRange, inStrictRange};

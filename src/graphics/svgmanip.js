@@ -5,6 +5,7 @@ let ID_INDEX = 0;
 let ID_INTERNAL = new Uint32Array(1);
 ID_INTERNAL[0] = 0xCF39ACE1;
 
+/* Linear shift register to generate unique IDs for elements */
 function getID(prefix = "S") {
     let lsb = ID_INTERNAL[0] & 1;
     ID_INTERNAL[0] >>= 1;
@@ -20,8 +21,31 @@ function svgClassFactory(group, class_, ...args) {
     return new class_(group, ...args);
 }
 
-class SVGElement {
+// Class which allows modification of parents by setting "propagators"
+class ChildUpdater {
+    constructor() {
+        this.propagators = {};
+    }
+
+    _setModificationPropagation(func, id) {
+        this.propagators[id] = func;
+    }
+
+    _removeModificationPropagation(id) {
+        delete this.propagators[id];
+    }
+
+    propagateChange(...args) {
+        Object.keys(this.propagators).forEach(key => {
+            this.propagators[key](...args);
+        });
+    }
+}
+
+class SVGElement extends ChildUpdater {
     constructor(parent, tag) {
+        super();
+
         if (!parent) { // used in construction of SVGContext, which has no parent
             this.context = this;
             this.element = tag;
@@ -380,26 +404,6 @@ class SVGContext extends SVGGroup {
 
     makeCircle(cx = 0, cy = 0, r = 0) {
         return svgClassFactory(this, Circle, 'circle', cx, cy, r);
-    }
-}
-
-class ChildUpdater {
-    constructor() {
-        this.propagators = {};
-    }
-
-    _setModificationPropagation(func, id) {
-        this.propagators[id] = func;
-    }
-
-    _removeModificationPropagation(id) {
-        delete this.propagators[id];
-    }
-
-    propagateChange() {
-        Object.keys(this.propagators).forEach(key => {
-            this.propagators[key]();
-        });
     }
 }
 

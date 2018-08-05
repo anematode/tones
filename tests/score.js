@@ -77,6 +77,6 @@ score.optimize();
 //let staff = score.staff(0);
 //staff.addMeasure()
 
-function high(rect) {
-    new TONES.Rectangle(chord, rect).addClass('highlight')
+function high(chord) {
+    new TONES.Rectangle(chord.parent, chord.getBBox()).addClass('highlight')
 }

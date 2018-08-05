@@ -29,89 +29,80 @@ class ElementClef extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this._type = params.type || "g";
-        this.path = null;
-        this._change = (params.change !== undefined) ? params.change : false; // is it a clef change
+        let type, change;
+
+        this.makeSimpleParam("type", {
+            obj: type,
+            allow: [
+                ...Object.values(CLEFS)
+            ]
+        });
+        
+        this.makeSimpleParam("change", {
+            obj: change,
+            allow: [
+                true, false
+            ]
+        });
+
+        this.type = utils.select(params.type, "g");
+        this.change = utils.select(params.change, false); // is it a clef change
+        
+        this.impl.path = null;
 
         this.recalculate();
     }
 
-    get type() {
-        return this._type;
-    }
-
-    set type(value) {
-        this._type = value;
-        this.recalculate();
-    }
-
-    set change(value) {
-        this._change = value;
-        this.recalculate();
-    }
-
-    get change() {
-        return this._change;
-    }
-
-    recalculate(force = false) {
-        if (!force && (this._last_type === this._type && this._last_change === this._change)) // So that it isn't recalculated more than necessary
-            return;
-
-        this._last_type = this._type;
-        this._last_change = this._change;
-
-        if (this.path)
-            this.path.destroy(); // Destroy the old path
+    _recalculate() {
+        if (this.impl.path)
+            this.impl.path.destroy(); // Destroy the old path
 
         let addition = this.change ? "_CHANGE" : "";
 
-        switch (this._type) {
+        switch (this.type) {
             case "g":
             case "treble":
-                this.path = makeShape(this, "G_CLEF" + addition);
-                this.path.translation.y = 30;
+                this.impl.path = makeShape(this, "G_CLEF" + addition);
+                this.impl.path.translation.y = 30;
                 break;
             case "f":
             case "bass":
-                this.path = makeShape(this, "F_CLEF" + addition);
-                this.path.translation.y = 10;
+                this.impl.path = makeShape(this, "F_CLEF" + addition);
+                this.impl.path.translation.y = 10;
                 break;
             case "alto":
-                this.path = makeShape(this, "C_CLEF" + addition);
-                this.path.translation.y = 20;
+                this.impl.path = makeShape(this, "C_CLEF" + addition);
+                this.impl.path.translation.y = 20;
                 break;
             case "tenor":
-                this.path = makeShape(this, "C_CLEF" + addition);
-                this.path.translation.y = 10;
+                this.impl.path = makeShape(this, "C_CLEF" + addition);
+                this.impl.path.translation.y = 10;
                 break;
             case "french violin":
-                this.path = makeShape(this, "G_CLEF" + addition);
-                this.path.translation.y = 40;
+                this.impl.path = makeShape(this, "G_CLEF" + addition);
+                this.impl.path.translation.y = 40;
                 break;
             case "baritone":
-                this.path = makeShape(this, "F_CLEF" + addition);
-                this.path.translation.y = 20;
+                this.impl.path = makeShape(this, "F_CLEF" + addition);
+                this.impl.path.translation.y = 20;
                 break;
             case "subbass":
-                this.path = makeShape(this, "F_CLEF" + addition);
+                this.impl.path = makeShape(this, "F_CLEF" + addition);
                 break;
             case "baritoneC":
-                this.path = makeShape(this, "C_CLEF" + addition);
+                this.impl.path = makeShape(this, "C_CLEF" + addition);
                 break;
             case "mezzosoprano":
-                this.path = makeShape(this, "C_CLEF" + addition);
-                this.path.translation.y = 30;
+                this.impl.path = makeShape(this, "C_CLEF" + addition);
+                this.impl.path.translation.y = 30;
                 break;
             case "soprano":
-                this.path = makeShape(this, "C_CLEF");
-                this.path.translation.y = 40;
+                this.impl.path = makeShape(this, "C_CLEF");
+                this.impl.path.translation.y = 40;
                 break;
             default:
-                throw new Error(`Unrecognized clef type ${this._type}`);
+                throw new Error(`Unrecognized clef type ${this.type}`);
         }
-
-        this.bboxCalc();
     }
 }
 

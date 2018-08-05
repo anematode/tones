@@ -10,93 +10,88 @@ class ElementNoteHead extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this._type = params.type || "normal"; // normal, half, whole, double, none
-        this.shape = null;
+        let type;
 
-        this.recalculate();
-    }
+        this.makeSimpleParam("type", {
+            obj: type,
+            allow: [
+                "normal", "half", "whole", "double", "none"
+            ]
+        });
 
-    get type() {
-        return this._type;
-    }
+        this.type = utils.select(params.type, "normal");
 
-    set type(value) {
-        this._type = value;
+        this.impl.shape = null;
+
         this.recalculate();
     }
 
     rightConnectionX() {
-        switch (this._type) {
+        switch (this.type) {
             case "normal":
             case "none":
             case "half":
                 return this.offset_x + 1.18 * 10;
             default:
-                throw new Error(`Note of type ${this._type} cannot have a connection`);
+                throw new Error(`Note of type ${this.type} cannot have a connection`);
         }
     }
 
     leftConnectionX() {
-        switch (this._type) {
+        switch (this.type) {
             case "normal":
             case "none":
             case "half":
                 return this.offset_x;
             default:
-                throw new Error(`Note of type ${this._type} cannot have a connection`);
+                throw new Error(`Note of type ${this.type} cannot have a connection`);
         }
     }
 
     rightConnectionY() {
-        switch (this._type) {
+        switch (this.type) {
             case "normal":
             case "none":
             case "half":
                 return this.offset_y - 0.168 * 10;
             default:
-                throw new Error(`Note of type ${this._type} cannot have a connection`);
+                throw new Error(`Note of type ${this.type} cannot have a connection`);
         }
     }
 
     leftConnectionY() {
-        switch (this._type) {
+        switch (this.type) {
             case "normal":
             case "none":
             case "half":
                 return this.offset_y + 0.168 * 10;
             default:
-                throw new Error(`Note of type ${this._type} cannot have a connection`);
+                throw new Error(`Note of type ${this.type} cannot have a connection`);
         }
     }
 
-    recalculate(force = false) {
-        if (!force && this._last_type === this._type)
-            return;
+    recalculate() {
+        if (this.impl.shape)
+            this.impl.shape.destroy();
 
-        this._last_type = this._type;
-        if (this.shape)
-            this.shape.destroy();
-
-        switch (this._type) {
+        switch (this.type) {
             case "normal":
-                this.shape = makeShape(this, "NOTEHEAD_NORMAL");
+                this.impl.shape = makeShape(this, "NOTEHEAD_NORMAL");
                 break;
             case "half":
-                this.shape = makeShape(this, "NOTEHEAD_HALF");
+                this.impl.shape = makeShape(this, "NOTEHEAD_HALF");
                 break;
             case "whole":
-                this.shape = makeShape(this, "NOTEHEAD_WHOLE");
+                this.impl.shape = makeShape(this, "NOTEHEAD_WHOLE");
                 break;
             case "double":
-                this.shape = makeShape(this, "NOTEHEAD_DOUBLE_WHOLE");
+                this.impl.shape = makeShape(this, "NOTEHEAD_DOUBLE_WHOLE");
                 break;
             case "none":
                 break;
             default:
-                throw new Error(`Unrecognized notehead type ${this._type}`);
+                throw new Error(`Unrecognized notehead type ${this.type}`);
         }
-
-        this.bboxCalc();
     }
 
 }
@@ -110,12 +105,12 @@ class ElementAugmentationDot extends ScoreElement {
         this.recalculate();
     }
 
-    bboxCalc() {
-        this.bounding_box = {x: this.offset_x, y: this.offset_y - 2, width: 4, height: 4};
+    getBBox() {
+        return {x: this.offset_x, y: this.offset_y - 2, width: 4, height: 4};
     }
 
-    recalculate() {
-        this.bboxCalc();
+    _recalculate() {
+
     }
 }
 
@@ -123,65 +118,47 @@ class ElementNote extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this._line = (params.line !== undefined) ? params.line : 0;
-        this._type = (params.type !== undefined) ? params.type : "normal";
+        let accidental, line, type;
 
-        this._accidental = (params.accidental) ? params.accidental : ""; // falsy value for no accidental, will be calculated by parent
+        this.makeSimpleParam("line", {
+            obj: line,
+            allow: [
+                utils.isNumeric
+            ]
+        });
 
-        this.notehead = null;
-        this.accidental_object = null;
+        this.makeSimpleParam("type", {
+            obj: type,
+            allow: [
+                "normal", "half", "whole"
+            ]
+        });
+
+        this.makeSimpleParam("accidental", {
+            obj: accidental
+        });
+
+        this.line = utils.select(params.line, 0);
+        this.type = utils.select(params.type, "normal");
+        this.accidental = utils.select(params.accidental, params.acc, "");
+
+        this.impl.notehead = null;
+        this.impl.accidental_object = null;
 
         this.recalculate();
     }
 
-    get accidental() {
-        return this._accidental;
-    }
+    _recalculate() {
+        if (this.impl.notehead)
+            this.impl.notehead.destroy();
+        if (this.impl.accidental_object)
+            this.impl.accidental_object.destroy();
 
-    set accidental(value) {
-        this._accidental = value;
-        this.parent.recalculate();
-    }
-
-    get line() {
-        return this._line;
-    }
-
-    set line(value) {
-        this._line = value;
-        this.parent.recalculate();
-    }
-
-    get type() {
-        return this._type;
-    }
-
-    set type(value) {
-        this._type = value;
-        this.recalculate();
-    }
-
-    recalculate(force = false) {
-        if (!force && this._last_accidental === this._accidental && this._last_line === this._line && this._last_type === this._type) {
-            return;
-        }
-
-        this._last_accidental = this._accidental;
-        this._last_line = this._line;
-        this._last_type = this._type;
-
-        if (this.notehead)
-            this.notehead.destroy();
-        if (this.accidental_object)
-            this.accidental_object.destroy();
-
-        this.notehead = new ElementNoteHead(this, {type: this._type});
-        this.offset_y = this._line * 10;
+        this.impl.notehead = new ElementNoteHead(this, {type: this.type});
+        this.offset_y = this.line * 10;
 
         if (this.accidental)
-            this.accidental_object = new ElementAccidental(this, {type: this.accidental, offset_x: -12});
-
-        this.bboxCalc();
+            this.impl.accidental_object = new ElementAccidental(this, {type: this.accidental, offset_x: -12});
     }
 }
 
@@ -189,37 +166,33 @@ class ElementStem extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this._y1 = (params.y1 !== undefined) ? params.y1 : 0;
-        this._y2 = (params.y2 !== undefined) ? params.y2 : 0;
+        let y1, y2;
 
-        this.path = new Path(this, "");
-        this.path.addClass("note-stem");
+        this.makeSimpleParam("y1", {
+            obj: y1,
+            allow: [
+                utils.isNumeric
+            ]
+        });
+
+        this.makeSimpleParam("y2", {
+            obj: y2,
+            allow: [
+                utils.isNumeric
+            ]
+        });
+
+        this.y1 = utils.select(params.y1, 0);
+        this.y2 = utils.select(params.y2, 0);
+
+        this.impl.path = new Path(this, "");
+        this.impl.path.addClass("note-stem");
 
         this.recalculate();
     }
 
-    get y1() {
-        return this._y1;
-    }
-
-    set y1(value) {
-        this._y1 = value;
-        this.recalculate();
-    }
-
-    get y2() {
-        return this._y2;
-    }
-
-    set y2(value) {
-        this._y2 = value;
-        this.recalculate();
-    }
-
-    recalculate(force = false) {
-        this.path.d = `M 0 ${this._y1} L 0 ${this._y2}`;
-
-        this.bboxCalc();
+    _recalculate() {
+        this.impl.path.d = `M 0 ${this.y1} L 0 ${this.y2}`;
     }
 }
 
@@ -227,48 +200,37 @@ class ElementFlag extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this._degree = (params.degree !== undefined) ? params.degree : 1; // how many curls there are
-        this._orientation = (params.orientation !== undefined) ? params.orientation : "up"; // "up" or "down" is flag's position
+        let degree = 1;
 
-        this.shape = null;
+        this.makeSimpleParam("degree", {
+            obj: degree,
+            allow: [
+                (x) => (utils.isInteger(x) && utils.inRange(x, 1, 8))
+            ]
+        });
+
+        this.makeSimpleParam("orientation", {
+            obj: degree,
+            allow: [
+                "up", "down"
+            ]
+        });
+
+        this.degree = utils.select(params.degree, 1);
+        this.orientation = utils.select(params.orientation, "up");
+
+        this.impl.shape = null;
 
         this.recalculate();
     }
 
-    get degree() {
-        return this._degree;
-    }
+    _recalculate() {
+        if (this.impl.shape)
+            this.impl.shape.destroy();
 
-    set degree(value) {
-        this._degree = value;
-        this.recalculate();
-    }
+        let SHAPE_ID = "FLAG_" + (this.orientation.toUpperCase()) + "_" + this.degree;
 
-    get orientation() {
-        return this._orientation;
-    }
-
-    set orientation(value) {
-        this._orientation = value;
-        this.recalculate();
-    }
-
-    recalculate(force = false) {
-        if (!force && this._last_degree === this._degree && this._last_orientation === this._orientation) {
-            return;
-        }
-
-        this._last_degree = this._degree;
-        this._last_orientation = this._orientation;
-
-        if (this.shape)
-            this.shape.destroy();
-
-        let SHAPE_ID = "FLAG_" + (this._orientation.toUpperCase()) + "_" + this._degree;
-
-        this.shape = makeShape(this, SHAPE_ID);
-
-        this.bboxCalc();
+        this.impl.shape = makeShape(this, SHAPE_ID);
     }
 }
 
@@ -278,32 +240,72 @@ class ElementChord extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
 
-        this.chord_group = new ScoreGroup(this);
+        this.impl.chord_group = new ScoreGroup(this);
 
-        this.notes = params.notes ? params.notes.map(x => new ElementNote(this.chord_group, x)) : [];
-        this._articulation = params.articulation || ""; // Values: falsy is none, "." is staccato, ">" is accent
-        this._stem = (params.stem !== undefined) ? params.stem : "up"; // Values: falsy is none, "up" is upward facing stem, "down" is downward facing stem
-        this._flag = (params.flag !== undefined) ? params.flag : 0; // Values: falsy is none (0 is natural here), 1 is eighth, 2 is sixteenth, etc. to 8 is 1024th
-        this._stem_y = (params.stem_y !== undefined) ? params.stem_y : 35; // Extra amount stem from last note
-        this._dot_count = (params.dot_count !== undefined) ? params.dot_count : 0;
+        this.notes = params.notes ? params.notes.map(x => new ElementNote(this.impl.chord_group, x)) : [];
 
-        this.articulation_object = null;
-        this.stem_object = null;
-        this.flag_object = null;
-        this.dots = [];
-        this.lines = []; // extra lines when notes go beyond staff
+        let articulation = "";
+        this.makeSimpleParam("articulation", {obj: articulation});
 
-        this.centering_translation = new Translation();
-        this.chord_group.addTransform(this.centering_translation);
+        this.articulation = utils.select(params.articulation, ".");
+
+        let stem = "";
+        this.makeSimpleParam("stem", {obj: stem, allow: [
+                (x) => !x, "up", "down"
+            ]
+        });
+
+        this.stem = utils.select(params.stem, "up"); // Values: falsy is none, "up" is upward facing stem, "down" is downward facing stem
+
+        let flag = "";
+        this.makeSimpleParam("flag", {obj: flag, allow: [
+                (x) => !x, (x) => (utils.isInteger(x) && utils.inRange(x, 0, 8))
+            ]
+        });
+
+        this.flag = utils.select(params.flag, 0); // Values: falsy is none (0 is natural here), 1 is eighth, 2 is sixteenth, etc. to 8 is 1024th
+
+        let stem_y = 0;
+        this.makeSimpleParam("stem_y", {obj: stem_y, allow: [
+                utils.isNumeric
+            ]
+        });
+
+        this.stem_y = utils.select(params.stem_y, 35); // Extra amount stem from last note
+        
+        let dot_count = 0;
+        this.makeSimpleParam("dot_count", {obj: dot_count, allow: [
+                (x) => (utils.isInteger(x) && utils.inRange(x, 0, 5))
+            ]
+        });
+        
+        this.dot_count = utils.select(params.dot_count, 0);
+        
+        let force_y = 0;
+        this.makeSimpleParam("force_y", {obj: force_y, allow: [
+                utils.isNumeric, (x) => (x === null)
+            ]
+        });
+        
+        this.force_y = utils.select(params.force_y, null); // Force the stem to go here and stop displaying the flag, for use in beaming
+
+        this.impl.articulation_object = null;
+        this.impl.stem_object = null;
+        this.impl.flag_object = null;
+        this.impl.dots = [];
+        this.impl.lines = []; // extra lines when notes go beyond staff
+
+        this.impl.centering_translation = new Translation();
+        this.impl.chord_group.addTransform(this.impl.centering_translation);
 
         this.recalculate();
     }
 
     addNote(params = {}) {
-        let note = new ElementNote(this.chord_group, params);
+        let note = new ElementNote(this.impl.chord_group, params);
         this.notes.push(note);
 
-        this.recalculate(true);
+        this.needs_recalculate = true;
 
         return note;
     }
@@ -312,92 +314,33 @@ class ElementChord extends ScoreElement {
         this.notes[index].destroy();
         this.notes.splice(index, 1);
 
-        this.recalculate(true);
-    }
-
-    get articulation() {
-        return this._articulation;
-    }
-
-    set articulation(value) {
-        this._articulation = value;
-        this.recalculate();
-    }
-
-    get stem() {
-        return this._stem;
-    }
-
-    set stem(value) {
-        this._stem = value;
-        this.recalculate();
-    }
-
-    get flag() {
-        return this._flag;
-    }
-
-    set flag(value) {
-        this._flag = value;
-        this.recalculate();
-    }
-
-    get stem_y() {
-        return this._stem_y;
-    }
-
-    set stem_y(value) {
-        this._stem_y = value;
-        this.recalculate();
-    }
-
-    get dot_count() {
-        return this._dot_count;
-    }
-
-    set dot_count(value) {
-        this._dot_count = value;
-        this.recalculate();
+        this.needs_recalculate = true;
     }
 
     sortNotes() {
-        this.notes.sort((n1, n2) => (n1._line - n2._line));
+        this.notes.sort((n1, n2) => (n1.line - n2.line));
     }
 
-    recalculate(force = false) { // If it's just the notes that have changed, you'll have to force recalculate it
-        if (!force && this._last_flag === this._flag
-            && this._last_stem === this._stem
-            && this._last_articulation === this._articulation
-            && this._last_stem_y === this._stem_y
-            && this._last_dot_count === this._dot_count) {
-            return;
-        }
+    _recalculate() {
+        if (this.impl.stem_object)
+            this.impl.stem_object.destroy();
+        if (this.impl.articulation_object)
+            this.impl.articulation_object.destroy();
+        if (this.impl.flag_object)
+            this.impl.flag_object.destroy();
 
-        this._last_flag = this._flag;
-        this._last_stem = this._stem;
-        this._last_articulation = this._articulation;
-        this._last_stem_y = this._stem_y;
-        this._last_dot_count = this._dot_count;
+        this.impl.lines.forEach(x => x.destroy());
+        this.impl.lines = [];
 
-        if (this.stem_object)
-            this.stem_object.destroy();
-        if (this.articulation_object)
-            this.articulation_object.destroy();
-        if (this.flag_object)
-            this.flag_object.destroy();
-
-        this.lines.forEach(x => x.destroy());
-        this.lines = [];
-
-        this.dots.forEach(x => x.destroy());
-        this.dots = [];
+        this.impl.dots.forEach(x => x.destroy());
+        this.impl.dots = [];
 
         this.sortNotes();
 
-        let prev_line = Infinity;
+        let prevline = Infinity;
         let prev_connect = 1;
 
-        let default_connect = (!this._stem) ? 0 : ((this._stem === "up") ? 0 : 1);
+        let default_connect = (!this.stem) ? 0 : ((this.stem === "up") ? 0 : 1);
 
         let minConnectionY = Infinity;
         let maxConnectionY = -Infinity;
@@ -418,7 +361,7 @@ class ElementChord extends ScoreElement {
         for (let i = this.notes.length - 1; i >= 0; i--) {
             let note = this.notes[i];
 
-            if (note._line < prev_line - 0.6) {
+            if (note.line < prevline - 0.6) {
                 note.connectOn = default_connect; // 1 is right, 0 is left
                 note.offset_x = note.connectOn * (11.8 - STEM_THICKNESS / 2) - 11.8;
             } else {
@@ -427,18 +370,18 @@ class ElementChord extends ScoreElement {
             }
 
             if (note.connectOn === 0) {
-                if (note._line < minlLineY)
-                    minlLineY = Math.floor(note._line + 0.5);
-                if (note._line > maxlLineY)
-                    maxlLineY = Math.ceil(note._line - 0.5);
-                let n_x = note.notehead.maxX + note.offset_x;
+                if (note.line < minlLineY)
+                    minlLineY = Math.floor(note.line + 0.5);
+                if (note.line > maxlLineY)
+                    maxlLineY = Math.ceil(note.line - 0.5);
+                let n_x = note.impl.notehead.maxX + note.offset_x;
                 if (n_x > maxlLineX)
                     maxlLineX = n_x;
             } else {
-                if (note._line < minrLineY)
-                    minrLineY = Math.floor(note._line + 0.5);
-                if (note._line > maxrLineY)
-                    maxrLineY = Math.ceil(note._line - 0.5);
+                if (note.line < minrLineY)
+                    minrLineY = Math.floor(note.line + 0.5);
+                if (note.line > maxrLineY)
+                    maxrLineY = Math.ceil(note.line - 0.5);
             }
 
             let dot_y = Math.floor((note.offset_y + 5) / 10) * 10 - 5;
@@ -450,8 +393,8 @@ class ElementChord extends ScoreElement {
                 dot_positions.push(dot_y);
             }
 
-            if (this._stem) {
-                let connectionY = (note.connectOn ? note.notehead.leftConnectionY() : note.notehead.rightConnectionY()) + note.offset_y;
+            if (this.stem) {
+                let connectionY = (note.connectOn ? note.impl.notehead.leftConnectionY() : note.impl.notehead.rightConnectionY()) + note.offset_y;
 
                 if (connectionY < minConnectionY)
                     minConnectionY = connectionY;
@@ -459,37 +402,47 @@ class ElementChord extends ScoreElement {
                     maxConnectionY = connectionY;
             }
 
-                let pminX = note.notehead.minX + note.offset_x;
-                let pmaxX = note.notehead.maxX + note.offset_x;
+                let pminX = note.impl.notehead.minX + note.offset_x;
+                let pmaxX = note.impl.notehead.maxX + note.offset_x;
 
                 if (pminX < minX)
                     minX = pminX;
                 if (pmaxX > maxX)
                     maxX = pmaxX;
 
-                prev_line = note._line;
+                prevline = note.line;
                 prev_connect = note.connectOn;
         }
 
-        if (this._stem === "up")
-            minConnectionY -= this._stem_y;
-        else
-            maxConnectionY += this._stem_y;
+        if (!(this.force_y === null)) { // if there's a stem y value to be forced, use it
+            if (minConnectionY > this.force_y) {
+                minConnectionY = this.force_y;
+            } else if (maxConnectionY < this.force_y) {
+                maxConnectionY = this.force_y;
+            } else { // welp the stem will connect in the middle of the chord
+
+            }
+        } else {
+            if (this.stem === "up")
+                minConnectionY -= this.stem_y;
+            else
+                maxConnectionY += this.stem_y;
+        }
 
         if (this.notes.length === 0) {
             minConnectionY = 0;
             maxConnectionY = 0;
         }
 
-        if (this._stem) { // If stem is not falsy then draw a stem
-            if (this._flag)
-                this.flag_object = new ElementFlag(this.chord_group, {degree: this._flag, orientation: this._stem});
+        if (this.stem) { // If stem is not falsy then draw a stem
+            if (this.flag && this.force_y === null) // Only draw when there's no stem y
+                this.impl.flag_object = new ElementFlag(this.impl.chord_group, {degree: this.flag, orientation: this.stem});
 
-            this.stem_object = new ElementStem(this.chord_group, {y1: minConnectionY, y2: maxConnectionY});
+            this.impl.stem_object = new ElementStem(this.impl.chord_group, {y1: minConnectionY, y2: maxConnectionY});
 
-            if (this._flag) {
-                this.flag_object.offset_y = (this._stem === "up") ? this.stem_object.y1 : this.stem_object.y2;
-                this.flag_object.offset_x = - STEM_THICKNESS / 2;
+            if (this.flag && this.force_y === null) {
+                this.impl.flag_object.offset_y = (this.stem === "up") ? this.impl.stem_object.y1 : this.impl.stem_object.y2;
+                this.impl.flag_object.offset_x = - STEM_THICKNESS / 2;
             }
         }
 
@@ -497,10 +450,10 @@ class ElementChord extends ScoreElement {
             let offset_x = maxX + 1.5;
             let dot_y = dot_positions[j];
 
-            for (let i = 0; i < this._dot_count; i++) {
+            for (let i = 0; i < this.dot_count; i++) {
                 offset_x += 3.3;
 
-                    this.dots.push(new ElementAugmentationDot(this.chord_group, {
+                    this.impl.dots.push(new ElementAugmentationDot(this.impl.chord_group, {
                         offset_x: offset_x,
                         offset_y: dot_y
                     }));
@@ -511,40 +464,39 @@ class ElementChord extends ScoreElement {
 
         for (let i = minlLineY; i < 0; i++) {
             let y = 10 * i;
-            let p = new Path(this.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
+            let p = new Path(this.impl.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
             p.addClass("stave-line");
-            this.lines.push(p);
+            this.impl.lines.push(p);
         }
 
         for (let i = 5; i <= maxlLineY; i++) {
             let y = 10 * i;
-            let p = new Path(this.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
+            let p = new Path(this.impl.chord_group, `M ${minX - 3} ${y} L ${maxlLineX + 3} ${y}`);
             p.addClass("stave-line");
-            this.lines.push(p);
+            this.impl.lines.push(p);
         }
 
         for (let i = minrLineY; i < 0; i++) {
             let y = 10 * i;
-            let p = new Path(this.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
+            let p = new Path(this.impl.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
             p.addClass("stave-line");
-            this.lines.push(p);
+            this.impl.lines.push(p);
         }
 
         for (let i = 5; i <= maxrLineY; i++) {
             let y = 10 * i;
-            let p = new Path(this.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
+            let p = new Path(this.impl.chord_group, `M -3 ${y} L ${maxX + 3} ${y}`);
             p.addClass("stave-line");
-            this.lines.push(p);
+            this.impl.lines.push(p);
         }
-
 
         let prevBoundingRects = [];
 
         for (let i = 0; i < this.notes.length; i++) {
             let note = this.notes[i];
 
-            if (note.accidental_object) {
-                let box = note.accidental_object.getBBox();
+            if (note.impl.accidental_object) {
+                let box = note.impl.accidental_object.getBBox();
 
                 box.x += note.offset_x;
                 box.y += note.offset_y;
@@ -571,8 +523,8 @@ class ElementChord extends ScoreElement {
                 if (pos === Infinity)
                     pos = prev_intersect - box.width - 2;
 
-                note.accidental_object.offset_x = pos - note.offset_x;
-                box = note.accidental_object.getBBox();
+                note.impl.accidental_object.offset_x = pos - note.offset_x;
+                box = note.impl.accidental_object.getBBox();
 
                 box.x += note.offset_x;
                 box.y += note.offset_y;
@@ -581,8 +533,13 @@ class ElementChord extends ScoreElement {
             }
         }
 
-        this.centering_translation.x = ((this._stem === "up") ? 1 : -1) * (11.8 - STEM_THICKNESS / 2) / 2;
-        this.bboxCalc();
+        this.impl.centering_translation.x = ((this.stem === "up") ? 1 : -1) * (11.8 - STEM_THICKNESS / 2) / 2;
+    }
+
+    _getOtherParams() {
+        return {
+            notes: this.notes.map(note => note.getParams())
+        }
     }
 }
 
