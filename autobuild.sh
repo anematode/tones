@@ -5,7 +5,9 @@ COMPARATOR=""
 PLATFORM="$(uname)"
 echo "$PLATFORM"
 
-
+if [ "$PLATFORM" = "MINGW64_NT-10.0" ]; then
+	PLATFORM="Linux"
+fi
 while true; do
 	if [ "$PLATFORM" = "Linux" ]; then
 		COMPARATOR="$(find ./src -type f -exec stat -c %Y \{} \; | sort -n -r | sed 1q)"
