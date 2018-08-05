@@ -53,40 +53,31 @@ sss (triple sharp), bbb (triple flat), nb (natural flat), ns (natural sharp)
 class ElementAccidental extends ScoreElement {
     constructor(parent, params = {}) {
         super(parent, params);
+        
+        let type = null;
 
-        this._type = params.type || "s";
-        this.shape = null;
+        this.makeSimpleParam("type", {obj: type,
+            allow: [
+                ...Object.keys(boundingBoxes)
+            ]
+        });
+
+        this.type = utils.select(params.type, "s");
+        
+        this.impl.shape = null;
 
         this.recalculate();
     }
 
-    get type() {
-        return this._type;
+    _getBBox() {
+        return Object.assign({}, boundingBoxes[this.type]);
     }
 
-    set type(value) {
-        this._type = value;
-        this.recalculate();
-    }
+    _recalculate() {
+        if (this.impl.shape)
+            this.impl.shape.destroy();
 
-    bboxCalc() {
-        this.bounding_box = boundingBoxes[this.type];
-
-        this.bounding_box.x += this.offset_x;
-        this.bounding_box.y += this.offset_y;
-    }
-
-    recalculate(force = false) {
-        if (!force && (this._last_type === this._type))
-            return;
-
-        this._last_type = this._type;
-
-        if (this.shape)
-            this.shape.destroy();
-
-        this.shape = makeShape(this, accidentalToShapeName(this._type));
-        this.bboxCalc();
+        this.impl.shape = makeShape(this, accidentalToShapeName(this.type));
     }
 }
 

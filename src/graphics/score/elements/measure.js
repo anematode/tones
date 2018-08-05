@@ -20,6 +20,9 @@ class StaffMeasure extends ScoreGroup {
         this.elements = (params.elements) ? buildElements(params.elements) : [];
     }
 
+    /*
+    Useful internally and for editing things purely graphically (or doing things that are sneaky like with note positions)
+     */
     addElement(params = {}) {
         let element = constructElement(this, params);
 
@@ -28,6 +31,9 @@ class StaffMeasure extends ScoreGroup {
         return element;
     }
 
+    /*
+    Calls addElement internally
+     */
     addElements(...array) {
         if (array.length > 0 && Array.isArray(array[0])) {
             array = array[0];
@@ -40,6 +46,40 @@ class StaffMeasure extends ScoreGroup {
         }
 
         return elements;
+    }
+
+    /*
+    Params:
+
+    duration, the length of the note: default is "4"
+
+    "1." gives dotted whole note
+    "2.." gives double dotted half note
+    8 gives eighth note
+
+    line, the line position of the note: interchangeable with next, where 0 is first line and 0.5 is first space, default is undefined
+    note, the actual note value:
+
+    if this is used, the note will not actually graph properly until a Processor has gone through the score, and will default to line 0, unless clef is passed
+    default is "C4", is effectively an argument to KeyboardNote
+
+    clef, the clef used to calculate the line of the note, one of clef.js -> CLEFS, default is undefined
+    acc, the accidental on the note, default is ""
+     */
+    addNote(params = {}) { // Friendly :)
+
+    }
+
+    addChord(params = {}) { // Friendly :)
+
+    }
+
+    addClef(params = {}) { // Friendly :)
+
+    }
+
+    addTime(params = {}) { // Friendly :)
+
     }
 
     getParams() {

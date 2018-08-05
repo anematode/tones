@@ -44,7 +44,32 @@ let chord = score.system(0).measure(0).staff(1).addElement({
             line: 2.5,
             type: "whole",
             accidental: "ns"
-        }], dot_count: 3, flag: 4, stem: ""
+        }, {line: -5, type: "whole", accidental: "b"}], dot_count: 3, flag: 4, stem: ""
+});
+
+let chord9 = score.system(0).measure(1).staff(1).addElement({
+    class: "chord", notes: [
+        {line: 3, type: "normal", accidental: "s"}, {line: 5, type: "normal", accidental: "n"}, {
+            line: 4.5,
+            type: "normal",
+            accidental: "b"
+        }, {line: 6.5, type: "normal", accidental: "ss"}, {line: 6, type: "normal", accidental: "bb"}, {
+            line: 5.5,
+            type: "normal",
+            accidental: "sss"
+        }, {
+            line: 1,
+            type: "normal",
+            accidental: "bbb"
+        }, {
+            line: 2,
+            type: "normal",
+            accidental: "nb"
+        }, {
+            line: 2.5,
+            type: "normal",
+            accidental: "ns"
+        }, {line: -5, type: "normal", accidental: "b"}], dot_count: 3, flag: 4, stem: "down"
 });
 
 score.optimize();
@@ -52,6 +77,6 @@ score.optimize();
 //let staff = score.staff(0);
 //staff.addMeasure()
 
-function high(rect) {
-    new TONES.Rectangle(chord, rect).addClass('highlight')
+function high(chord) {
+    new TONES.Rectangle(chord.parent, chord.getBBox()).addClass('highlight')
 }
