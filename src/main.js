@@ -19,6 +19,7 @@ export * from "./audio/keyboardnote.js";
 export * from "./audio/pitchedinstrument.js";
 export * from "./audio/filters.js";
 export * from "./audio/analyzers.js";
+export * from "./audio/node.js";
 
 // Music
 

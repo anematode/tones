@@ -2,6 +2,9 @@ let Context;
 
 try {
     Context = new (window.AudioContext || window.webkitAudioContext)(); // Create Web Audio Context
+
+    Context.createStereoPanner(); // we need these
+    Context.createConstantSource();
 } catch (e) {
     alert("Your browser doesn't support the Web Audio API; audio functionality will be impaired.");
     console.warn("The browser does not support the Web Audio API; audio functionality will be impaired.");

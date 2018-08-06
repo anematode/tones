@@ -46,14 +46,17 @@ class SimpleInstrumentNode extends SourceNode {
         tone.type = parent.waveform;
 
         tone.frequency.value = frequency;
+
+        window.ian = tone;
         gain.gain.value = 0;
         vel.gain.value = velocity;
         pan.pan.value = panValue;
 
         tone.start(start);
+        gain.gain.value = 1;
 
         parent.params.attack_envelope.apply(gain.gain,
-            EnvelopeHorizontal.absoluteOffset(start));
+            EnvelopeHorizontal.absoluteOffset((end !== Infinity) ? start : audio.Context.currentTime));
 
         // Make a release envelope and then apply it to tone_gain.gain
         if (end !== Infinity) {
@@ -127,7 +130,7 @@ class SimpleInstrument extends KeyboardInstrument {
 
         this.entries = [];
 
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 10; i++) {
             let entry = audio.Context.createGain();
             entry.connect(this.entryNode);
 
