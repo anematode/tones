@@ -1,4 +1,37 @@
 const url = 'http://www.w3.org/2000/svg';
+    
+function circle(cx, cy, r, c) {
+    let c1 = document.createElementNS(url, 'circle');
+    c1.style.cx = cx;
+    c1.style.cy = cy;
+    c1.style.r = r;
+    c1.style.fill = c;
+    return c1;
+}
+
+function rect(x, y, w, h, c) {
+    let r1 = document.createElementNS(url, 'rect');
+    r1.style.x = x;
+    r1.style.y = y;
+    r1.style.width = w;
+    r1.style.height = h;
+    r1.style.fill = c;
+    return r1;
+}
+
+function text(x, y, a, v, c) {
+    let t1 = document.createElementNS(url, 'text');
+    t1.setAttribute('x', x);
+    t1.setAttribute('y', y);
+    t1.style.fill = c;
+    t1.innerHTML = v;
+    t1.setAttribute('text-anchor', a);
+    return t1;
+}
+
+function g() {
+    return document.createElementNS(url, 'g');
+}
 
 class Widget {
     constructor(cx, cy, s, v, c, svg) {
@@ -12,42 +45,7 @@ class Widget {
         this.sx = 0;
         this.sy = 0;
         this.old = 0;
-        this.dark = '#ccc';
-        this.light = '#ddd';
         this.add();
-    }
-    
-    circle(cx, cy, r, c) {
-        let c1 = document.createElementNS(url, 'circle');
-        c1.style.cx = cx;
-        c1.style.cy = cy;
-        c1.style.r = r;
-        c1.style.fill = c;
-        return c1;
-    }
-    
-    rect(x, y, w, h, c) {
-        let r1 = document.createElementNS(url, 'rect');
-        r1.style.x = x;
-        r1.style.y = y;
-        r1.style.width = w;
-        r1.style.height = h;
-        r1.style.fill = c;
-        return r1;
-    }
-    
-    text(x, y, a, v, c) {
-        let t1 = document.createElementNS(url, 'text');
-        t1.setAttribute('x', x);
-        t1.setAttribute('y', y);
-        t1.style.fill = c;
-        t1.innerHTML = v;
-        t1.setAttribute('text-anchor', a);
-        return t1;
-    }
-    
-    g() {
-        return document.createElementNS(url, 'g');
     }
     
     set(v) {
@@ -84,12 +82,12 @@ class Knob extends Widget {
     }
 
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.dark);
+        let c1 = circle(this.cx, this.cy, this.s / 2, '#eee');
         g1.appendChild(c1);
         
-        let c3 = this.circle(this.cx, this.cy, this.s / 2, this.c);
+        let c3 = circle(this.cx, this.cy, this.s / 2, this.c);
         g1.appendChild(c3);
         this.mod.push(c3);
 
@@ -98,11 +96,11 @@ class Knob extends Widget {
         g1.appendChild(arc);
         this.mod.push(arc);
 
-        let c2 = this.circle(this.cx, this.cy, this.s / 2 - 2, this.light);
+        let c2 = circle(this.cx, this.cy, this.s / 2 - 2, '#fff');
         g1.appendChild(c2);
         
-        let r1 = this.rect(this.cx - 1, this.cy + this.s / 4, 2, this.s / 4, this.c);
-        g1.appendChild(r1);
+        let r1 = rect(this.cx - 1, this.cy + this.s / 4, 2, this.s / 4, this.c);
+        //g1.appendChild(r1);
         this.mod.push(r1);
         
         let self = this;
@@ -146,16 +144,16 @@ class Slider extends Widget {
     }
     
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let r1 = this.rect(this.cx - 1, this.cy - this.s / 2, 2, this.s, this.dark);
+        let r1 = rect(this.cx - 1, this.cy - this.s / 2, 2, this.s, '#eee');
         g1.appendChild(r1);
         
-        let r2 = this.rect(this.cx - 1, 0, 2, 0, this.c);
+        let r2 = rect(this.cx - 1, 0, 2, 0, this.c);
         g1.appendChild(r2);
         this.mod.push(r2);
         
-        let c1 = this.circle(this.cx, 0, 5, this.light);
+        let c1 = circle(this.cx, 0, 5, '#fff');
         c1.style.stroke = this.c;
         c1.style.strokeWidth = 2;
         g1.appendChild(c1);
@@ -195,7 +193,7 @@ class Button extends Widget {
     }
     
     update() {
-        this.mod[0].style.stroke = this.v ? this.c : this.dark;
+        this.mod[0].style.stroke = this.v ? this.c : '#eee';
         
         this.change();
         
@@ -205,9 +203,9 @@ class Button extends Widget {
     }
     
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let c1 = this.circle(this.cx, this.cy, this.s / 2, this.light);
+        let c1 = circle(this.cx, this.cy, this.s / 2, '#fff');
         c1.style.strokeWidth = 2;
         g1.appendChild(c1);
         this.mod.push(c1);
@@ -258,17 +256,13 @@ class Open extends Widget {
     }
     
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let r1 = this.rect(this.cx - this.s / 2, this.cy - this.s / 2, this.s, this.s, this.light);
-        r1.style.stroke = this.dark;
+        let r1 = rect(this.cx - this.s / 2, this.cy - this.s / 2, this.s, this.s, '#fff');
+        r1.style.stroke = this.c;
         r1.style.strokeWidth = 2;
         r1.style.rx = 4;
         g1.appendChild(r1);
-        
-        let r2 = this.rect(this.cx - this.s / 2 + 4, this.cy - this.s / 2 + 4, this.s - 8, this.s - 8, this.c);
-        r2.style.rx = 2;
-        g1.appendChild(r2);
         
         let self = this;
         g1.onmousedown = function() {
@@ -290,9 +284,9 @@ class Text extends Widget {
     }
     
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let t1 = this.text(this.cx, this.cy, this.s, this.v, this.c);
+        let t1 = text(this.cx, this.cy, this.s, this.v, this.c);
         g1.appendChild(t1);
         this.mod.push(t1);
         
@@ -318,9 +312,9 @@ class Graph extends Widget {
     }
     
     add() {
-        let g1 = this.g();
+        let g1 = g();
         
-        let r1 = this.rect(this.cx - this.s[0] / 2, this.cy - this.s[1] / 2, this.s[0], this.s[1], '#ddd');
+        let r1 = rect(this.cx - this.s[0] / 2, this.cy - this.s[1] / 2, this.s[0], this.s[1], '#ddd');
         r1.style.stroke = '#ccc';
         g1.appendChild(r1);
         
@@ -362,7 +356,7 @@ class Group {
         
         let t1 = document.createElementNS(url, 'text');
         t1.setAttribute('x', this.x1 + 5);
-        t1.setAttribute('y', this.y1 + 15);
+        t1.setAttribute('y', this.y1 + 20);
         t1.style.fill = '#666';
         t1.innerHTML = this.t;
         g1.appendChild(t1);

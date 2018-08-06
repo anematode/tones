@@ -4,12 +4,12 @@
         <meta charset="utf-8">
         <title>GUI Sandbox</title>
         <style>
-            @import url('https://fonts.googleapis.com/css?family=Unica+One');
+            @import url('https://fonts.googleapis.com/css?family=Abel');
             svg {
                 width: 75%;
             }
             text {
-                font-family: "Unica One";
+                font-family: "Abel";
                 font-size: 15px;
                 pointer-events: none;
             }
@@ -18,6 +18,11 @@
             }
             .title {
                 font-size: 30px;
+            }
+            
+            .thing:hover {
+                opacity: 0;
+                transition: 0.1s;
             }
         </style>
         
@@ -38,7 +43,7 @@
         <script>
             
             function addOsc(l, x, y, n) {
-                l.osc = new Group(10 + x, 60 + y, 210 + x, 260 + y, 'OSC ' + n, svg);
+                l.osc = new Group(10 + x, 60 + y, 210 + x, 260 + y, 'Osc ' + n, svg);
                 
                 l.uni = {};
                 l.det = {};
@@ -46,25 +51,25 @@
                 l.pan = {};
                 l.lev = {};
 
-                l.uni.k = new Knob(60 + x, 110 + y, 25, 0.6, '#096', svg);
-                l.uni.t = new Text(80 + x, 115 + y, 'start', 'VCS', '#333', svg);
-                l.uni.i = new Text(40 + x, 115 + y, 'end', '10', '#096', svg);
+                l.uni.k = new Knob(60 + x, 115 + y, 25, 0.6, '#096', svg);
+                l.uni.t = new Text(80 + x, 120 + y, 'start', 'Vcs', '#333', svg);
+                l.uni.i = new Text(40 + x, 120 + y, 'end', '10', '#096', svg);
 
-                l.det.k = new Knob(60 + x, 160 + y, 25, 0.3, '#096', svg);
-                l.det.t = new Text(80 + x, 165 + y, 'start', 'DTN', '#333', svg);
-                l.det.i = new Text(40 + x, 165 + y, 'end', '60', '#096', svg);
+                l.det.k = new Knob(60 + x, 165 + y, 25, 0.3, '#096', svg);
+                l.det.t = new Text(80 + x, 170 + y, 'start', 'Det', '#333', svg);
+                l.det.i = new Text(40 + x, 170 + y, 'end', '60', '#096', svg);
 
-                l.ble.k = new Knob(60 + x, 210 + y, 25, 0.3, '#096', svg);
-                l.ble.t = new Text(80 + x, 215 + y, 'start', 'BLD', '#333', svg);
-                l.ble.i = new Text(40 + x, 215 + y, 'end', '30', '#096', svg);
+                l.ble.k = new Knob(60 + x, 215 + y, 25, 0.3, '#096', svg);
+                l.ble.t = new Text(80 + x, 220 + y, 'start', 'Bld', '#333', svg);
+                l.ble.i = new Text(40 + x, 220 + y, 'end', '30', '#096', svg);
 
-                l.pan.k = new Knob(160 + x, 110 + y, 25, 0.6, '#c90', svg);
-                l.pan.t = new Text(140 + x, 115 + y, 'end', 'PAN', '#333', svg);
-                l.pan.i = new Text(180 + x, 115 + y, 'start', '10', '#c90', svg);
+                l.pan.k = new Knob(160 + x, 115 + y, 25, 0.6, '#c90', svg);
+                l.pan.t = new Text(140 + x, 120 + y, 'end', 'Pan', '#333', svg);
+                l.pan.i = new Text(180 + x, 120 + y, 'start', '10', '#c90', svg);
 
-                l.lev.k = new Knob(160 + x, 160 + y, 25, 0.6, '#c90', svg);
-                l.lev.t = new Text(140 + x, 165 + y, 'end', 'LVL', '#333', svg);
-                l.lev.i = new Text(180 + x, 165 + y, 'start', '10', '#c90', svg);
+                l.lev.k = new Knob(160 + x, 165 + y, 25, 0.6, '#c90', svg);
+                l.lev.t = new Text(140 + x, 170 + y, 'end', 'Lev', '#333', svg);
+                l.lev.i = new Text(180 + x, 170 + y, 'start', '10', '#c90', svg);
             }
             
             const svg = document.getElementById('svg');
@@ -78,23 +83,23 @@
             
             //adsr
             
-            let adsr = new Group(210, 260, 410, 460, 'ENVELOPE', svg);
+            let adsr = new Group(210, 260, 410, 460, 'Envelope', svg);
             
-            let atts = new Slider(250, 360, 100, 0.1, '#069', svg);
-            let attt = new Text(250, 435, 'middle', 'A', '#333', svg);
-            let atti = new Text(250, 300, 'middle', '9', '#333', svg);
+            let atts = new Slider(250, 365, 100, 0.1, '#069', svg);
+            let attt = new Text(250, 440, 'middle', 'A', '#333', svg);
+            let atti = new Text(250, 305, 'middle', '9', '#333', svg);
             
-            let decs = new Slider(290, 360, 100, 0.8, '#069', svg);
-            let dect = new Text(290, 435, 'middle', 'D', '#333', svg);
-            let deci = new Text(290, 300, 'middle', '165', '#333', svg);
+            let decs = new Slider(290, 365, 100, 0.8, '#069', svg);
+            let dect = new Text(290, 440, 'middle', 'D', '#333', svg);
+            let deci = new Text(290, 305, 'middle', '165', '#333', svg);
             
-            let suss = new Slider(330, 360, 100, 0.6, '#069', svg);
-            let sust = new Text(330, 435, 'middle', 'S', '#333', svg);
-            let susi = new Text(330, 300, 'middle', '60', '#333', svg);
+            let suss = new Slider(330, 365, 100, 0.6, '#069', svg);
+            let sust = new Text(330, 440, 'middle', 'S', '#333', svg);
+            let susi = new Text(330, 305, 'middle', '60', '#333', svg);
             
-            let rels = new Slider(370, 360, 100, 0.2, '#069', svg);
-            let relt = new Text(370, 435, 'middle', 'R', '#333', svg);
-            let reli = new Text(370, 300, 'middle', '27', '#333', svg);
+            let rels = new Slider(370, 365, 100, 0.2, '#069', svg);
+            let relt = new Text(370, 440, 'middle', 'R', '#333', svg);
+            let reli = new Text(370, 305, 'middle', '27', '#333', svg);
             
             //ehh
             
