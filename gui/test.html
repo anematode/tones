@@ -39,55 +39,91 @@
             
             const svg = document.getElementById('svg');
             
-            let unik = new Knob(50, 100, 50, 0.6, '#c90', svg);
-            let unit = new Text(50, 150, 'middle', 'VOICES', '#333', svg);
-            let unii = new Text(50, 105, 'middle', '10', '#c90', svg);
+            let osc1 = new Group(10, 50, 210, 225, 'OSC 1', svg);
             
-            let detk = new Knob(125, 100, 50, 0.3, '#096', svg);
-            let dett = new Text(125, 150, 'middle', 'DETUNE', '#333', svg);
-            let deti = new Text(125, 105, 'middle', '60', '#096', svg);
+            let unik1 = new Knob(60, 100, 25, 0.6, '#096', svg);
+            let unit1 = new Text(80, 105, 'start', 'VCS', '#333', svg);
+            let unii1 = new Text(40, 105, 'end', '10', '#096', svg);
             
-            let blek = new Knob(200, 100, 50, 0.3, '#096', svg);
-            let blet = new Text(200, 150, 'middle', 'BLEND', '#333', svg);
-            let blei = new Text(200, 105, 'middle', '30', '#096', svg);
+            let detk1 = new Knob(60, 150, 25, 0.3, '#096', svg);
+            let dett1 = new Text(80, 155, 'start', 'DTN', '#333', svg);
+            let deti1 = new Text(40, 155, 'end', '60', '#096', svg);
+            
+            let blek1 = new Knob(60, 200, 25, 0.3, '#096', svg);
+            let blet1 = new Text(80, 205, 'start', 'BLD', '#333', svg);
+            let blei1 = new Text(40, 205, 'end', '30', '#096', svg);
+            
+            let pank1 = new Knob(160, 100, 25, 0.6, '#c90', svg);
+            let pant1 = new Text(140, 105, 'end', 'PAN', '#333', svg);
+            let pani1 = new Text(180, 105, 'start', '10', '#c90', svg);
+            
+            let levk1 = new Knob(160, 150, 25, 0.6, '#c90', svg);
+            let levt1 = new Text(140, 155, 'end', 'LVL', '#333', svg);
+            let levi1 = new Text(180, 155, 'start', '10', '#c90', svg);
+            
+            //--//--//--//--//
+            
+            let osc2 = new Group(10, 250, 210, 425, 'OSC 2', svg);
+            
+            let unik2 = new Knob(60, 300, 25, 0.6, '#096', svg);
+            let unit2 = new Text(80, 305, 'start', 'VCS', '#333', svg);
+            let unii2 = new Text(40, 305, 'end', '10', '#096', svg);
+            
+            let detk2 = new Knob(60, 350, 25, 0.3, '#096', svg);
+            let dett2 = new Text(80, 355, 'start', 'DTN', '#333', svg);
+            let deti2 = new Text(40, 355, 'end', '60', '#096', svg);
+            
+            let blek2 = new Knob(60, 400, 25, 0.3, '#096', svg);
+            let blet2 = new Text(80, 405, 'start', 'BLD', '#333', svg);
+            let blei2 = new Text(40, 405, 'end', '30', '#096', svg);
+            
+            let pank2 = new Knob(160, 300, 25, 0.6, '#c90', svg);
+            let pant2 = new Text(140, 305, 'end', 'PAN', '#333', svg);
+            let pani2 = new Text(180, 305, 'start', '10', '#c90', svg);
+            
+            let levk2 = new Knob(160, 350, 25, 0.6, '#c90', svg);
+            let levt2 = new Text(140, 355, 'end', 'LVL', '#333', svg);
+            let levi2 = new Text(180, 355, 'start', '10', '#c90', svg);
             
             //adsr
             
-            let atts = new Slider(50, 250, 100, 0.1, '#069', svg);
-            let attt = new Text(50, 325, 'middle', 'A', '#333', svg);
-            let atti = new Text(50, 190, 'middle', '9', '#333', svg);
+            let atts = new Slider(350, 350, 100, 0.1, '#069', svg);
+            let attt = new Text(350, 425, 'middle', 'A', '#333', svg);
+            let atti = new Text(350, 290, 'middle', '9', '#333', svg);
             
-            let decs = new Slider(100, 250, 100, 0.8, '#069', svg);
-            let dect = new Text(100, 325, 'middle', 'D', '#333', svg);
-            let deci = new Text(100, 190, 'middle', '165', '#333', svg);
+            let decs = new Slider(400, 350, 100, 0.8, '#069', svg);
+            let dect = new Text(400, 425, 'middle', 'D', '#333', svg);
+            let deci = new Text(400, 290, 'middle', '165', '#333', svg);
             
-            let suss = new Slider(150, 250, 100, 0.6, '#069', svg);
-            let sust = new Text(150, 325, 'middle', 'S', '#333', svg);
-            let susi = new Text(150, 190, 'middle', '60', '#333', svg);
+            let suss = new Slider(450, 350, 100, 0.6, '#069', svg);
+            let sust = new Text(450, 425, 'middle', 'S', '#333', svg);
+            let susi = new Text(450, 290, 'middle', '60', '#333', svg);
             
-            let rels = new Slider(200, 250, 100, 0.2, '#069', svg);
-            let relt = new Text(200, 325, 'middle', 'R', '#333', svg);
-            let reli = new Text(200, 190, 'middle', '27', '#333', svg);
+            let rels = new Slider(500, 350, 100, 0.2, '#069', svg);
+            let relt = new Text(500, 425, 'middle', 'R', '#333', svg);
+            let reli = new Text(500, 290, 'middle', '27', '#333', svg);
+            
+            //ehh
             
             let wavr = new Radio();
             
-            let wavb1 = new Button(260, 280, 20, false, '#903', svg);
-            let wavb2 = new Button(260, 320, 20, false, '#903', svg);
-            let wavb3 = new Button(260, 360, 20, true, '#903', svg);
-            let wavb4 = new Button(260, 400, 20, false, '#903', svg);
+            let wavb1 = new Button(370, 200, 20, false, '#903', svg);
+            let wavb2 = new Button(370, 250, 20, false, '#903', svg);
+            let wavb3 = new Button(370, 300, 20, true, '#903', svg);
+            let wavb4 = new Button(370, 350, 20, false, '#903', svg);
             
-            let wavt1 = new Text(280, 285, 'left', 'SINE', '#333', svg);
-            let wavt2 = new Text(280, 325, 'left', 'SQUARE', '#333', svg);
-            let wavt3 = new Text(280, 365, 'left', 'SAW', '#333', svg);
-            let wavt4 = new Text(280, 405, 'left', 'TRIANGLE', '#333', svg);
+            let wavt1 = new Text(390, 205, 'left', 'SINE', '#333', svg);
+            let wavt2 = new Text(390, 255, 'left', 'SQUARE', '#333', svg);
+            let wavt3 = new Text(390, 305, 'left', 'SAW', '#333', svg);
+            let wavt4 = new Text(390, 355, 'left', 'TRIANGLE', '#333', svg);
             
             wavr.add(wavb1);
             wavr.add(wavb2);
             wavr.add(wavb3);
             wavr.add(wavb4);
             
-            let sclo = new Open(380, 280, 20, '#903', svg);
-            let sclt = new Text(400, 285, 'left', 'LOAD .SCL', '#333', svg);
+            let sclo = new Open(50, 450, 20, '#903', svg);
+            let sclt = new Text(70, 455, 'left', 'LOAD .SCL', '#333', svg);
             
             let resk = new Knob(650, 100, 50, 0.6, '#c90', svg);
             let rest = new Text(650, 150, 'middle', 'FREQ', '#333', svg);
@@ -95,7 +131,6 @@
             
             //stuff
             
-            let g = new Group(250, 65, 475, 250, 'PLACEHOLDER', svg);
             
             let t = new Graph(700, 300, [400, 200], [], '#333', svg);
             

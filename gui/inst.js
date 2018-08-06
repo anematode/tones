@@ -73,23 +73,23 @@ wavb4.change = function() {
 };
 
             
-unik.change = function() {
-    let val = Math.floor(unik.v * 15) + 1;
-    unii.set(val);
+unik1.change = function() {
+    let val = Math.floor(unik1.v * 15) + 1;
+    unii1.set(val);
     tParams.unison = val;
     refreshInst();
 }
 
-detk.change = function() {
-    let val = detk.v * 200;
-    deti.set(Math.round(val));
+detk1.change = function() {
+    let val = detk1.v * 200;
+    deti1.set(Math.round(val));
     tParams.detune = val;
     refreshInst();
 };
 
-blek.change = function() {
-    let val = blek.v;
-    blei.set(Math.round(val * 100));
+blek1.change = function() {
+    let val = blek1.v;
+    blei1.set(Math.round(val * 100));
     tParams.blend = val;
     refreshInst();
 };
