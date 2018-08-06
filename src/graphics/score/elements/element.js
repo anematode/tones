@@ -16,8 +16,12 @@ class ScoreElement extends ScoreGroup {
         let bounding_box = {x: 0, y: 0, width: 0, height: 0};
 
         this.makeParam("bounding_box", () => {
+            if (this.needs_bb_recalculate || this.needs_recalculate)
+                bounding_box = this.getBBox();
+            
+            return bounding_box;
         }, () => {
-            throw new Error("Cannot set bounding box")
+            throw new Error("Cannot set bounding box");
         });
 
         this.makeParam("offset_x", () => translation.x, (value) => {
@@ -55,12 +59,6 @@ class ScoreElement extends ScoreGroup {
 
         this.needs_recalculate = true;
         this.needs_bb_recalculate = true;
-    }
-
-    get bounding_box() {
-        if (this.needs_bb_recalculate || this.needs_recalculate)
-            let bounding_box = this.getBBox();
-        return bounding_box;
     }
 
     setParams(object) {

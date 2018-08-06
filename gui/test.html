@@ -5,6 +5,9 @@
         <title>GUI Sandbox</title>
         <style>
             @import url('https://fonts.googleapis.com/css?family=Unica+One');
+            svg {
+                width: 75%;
+            }
             text {
                 font-family: "Unica One";
                 font-size: 15px;
@@ -22,36 +25,11 @@
     </head>
 
     <body>
-        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" id="svg" draggable="true" ondragstart="stop(event)">
+        <svg viewBox="0 0 750 500" xmlns="http://www.w3.org/2000/svg" id="svg" draggable="true" ondragstart="stop(event)">
             <g>
-                <rect x="0" y="0" width="1000" height="500" fill="#333"></rect>
+                <rect x="0" y="0" width="750" height="500" fill="#333"></rect>
                 <text x="10" y="30" fill="#fff" class="title">TONES</text>
-                <text x="90" y="30" fill="#fff" class="caption">by anematode</text>
-                <rect x="0" y="40" width="1000" height="450" fill="#eee"></rect>
-
-                <text x="5" y="70">COMPRESSOR</text>
-                <text x="5" y="105">DELAY</text>
-                <text x="5" y="140">DISTORTION</text>
-                <text x="5" y="175">EQUALIZER</text>
-                <text x="5" y="210">FILTER</text>
-                <text x="5" y="245">CHORUS</text>
-                <text x="5" y="280">REVERB</text>
-
-                <rect x="5" y="75" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="110" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="145" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="180" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="215" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="250" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="285" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="320" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="355" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="390" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="425" width="95" height="1" fill="#999"></rect>
-                <rect x="5" y="460" width="95" height="1" fill="#999"></rect>
-
-                <rect x="99" y="40" width="1" height="450" fill="#333"></rect>
-                <rect x="499" y="40" width="1" height="450" fill="#333"></rect>
+                <rect x="0" y="40" width="750" height="450" fill="#eee"></rect>
             </g>
         </svg>
         
@@ -61,65 +39,65 @@
             
             const svg = document.getElementById('svg');
             
-            let unik = new Knob(550, 100, 50, 0.6, '#c90', svg);
-            let unit = new Text(550, 150, 'middle', 'VOICES', '#333', svg);
-            let unii = new Text(550, 105, 'middle', '10', '#c90', svg);
+            let unik = new Knob(50, 100, 50, 0.6, '#c90', svg);
+            let unit = new Text(50, 150, 'middle', 'VOICES', '#333', svg);
+            let unii = new Text(50, 105, 'middle', '10', '#c90', svg);
             
-            let detk = new Knob(625, 100, 50, 0.3, '#096', svg);
-            let dett = new Text(625, 150, 'middle', 'DETUNE', '#333', svg);
-            let deti = new Text(625, 105, 'middle', '60', '#096', svg);
+            let detk = new Knob(125, 100, 50, 0.3, '#096', svg);
+            let dett = new Text(125, 150, 'middle', 'DETUNE', '#333', svg);
+            let deti = new Text(125, 105, 'middle', '60', '#096', svg);
             
-            let blek = new Knob(700, 100, 50, 0.3, '#096', svg);
-            let blet = new Text(700, 150, 'middle', 'BLEND', '#333', svg);
-            let blei = new Text(700, 105, 'middle', '30', '#096', svg);
+            let blek = new Knob(200, 100, 50, 0.3, '#096', svg);
+            let blet = new Text(200, 150, 'middle', 'BLEND', '#333', svg);
+            let blei = new Text(200, 105, 'middle', '30', '#096', svg);
             
             //adsr
             
-            let atts = new Slider(550, 250, 100, 0.1, '#069', svg);
-            let attt = new Text(550, 325, 'middle', 'A', '#333', svg);
-            let atti = new Text(550, 190, 'middle', '9', '#333', svg);
+            let atts = new Slider(50, 250, 100, 0.1, '#069', svg);
+            let attt = new Text(50, 325, 'middle', 'A', '#333', svg);
+            let atti = new Text(50, 190, 'middle', '9', '#333', svg);
             
-            let decs = new Slider(600, 250, 100, 0.8, '#069', svg);
-            let dect = new Text(600, 325, 'middle', 'D', '#333', svg);
-            let deci = new Text(600, 190, 'middle', '165', '#333', svg);
+            let decs = new Slider(100, 250, 100, 0.8, '#069', svg);
+            let dect = new Text(100, 325, 'middle', 'D', '#333', svg);
+            let deci = new Text(100, 190, 'middle', '165', '#333', svg);
             
-            let suss = new Slider(650, 250, 100, 0.6, '#069', svg);
-            let sust = new Text(650, 325, 'middle', 'S', '#333', svg);
-            let susi = new Text(650, 190, 'middle', '60', '#333', svg);
+            let suss = new Slider(150, 250, 100, 0.6, '#069', svg);
+            let sust = new Text(150, 325, 'middle', 'S', '#333', svg);
+            let susi = new Text(150, 190, 'middle', '60', '#333', svg);
             
-            let rels = new Slider(700, 250, 100, 0.2, '#069', svg);
-            let relt = new Text(700, 325, 'middle', 'R', '#333', svg);
-            let reli = new Text(700, 190, 'middle', '27', '#333', svg);
+            let rels = new Slider(200, 250, 100, 0.2, '#069', svg);
+            let relt = new Text(200, 325, 'middle', 'R', '#333', svg);
+            let reli = new Text(200, 190, 'middle', '27', '#333', svg);
             
             let wavr = new Radio();
             
-            let wavb1 = new Button(760, 280, 20, false, '#903', svg);
-            let wavb2 = new Button(760, 320, 20, false, '#903', svg);
-            let wavb3 = new Button(760, 360, 20, true, '#903', svg);
-            let wavb4 = new Button(760, 400, 20, false, '#903', svg);
+            let wavb1 = new Button(260, 280, 20, false, '#903', svg);
+            let wavb2 = new Button(260, 320, 20, false, '#903', svg);
+            let wavb3 = new Button(260, 360, 20, true, '#903', svg);
+            let wavb4 = new Button(260, 400, 20, false, '#903', svg);
             
-            let wavt1 = new Text(780, 285, 'left', 'SINE', '#333', svg);
-            let wavt2 = new Text(780, 325, 'left', 'SQUARE', '#333', svg);
-            let wavt3 = new Text(780, 365, 'left', 'SAW', '#333', svg);
-            let wavt4 = new Text(780, 405, 'left', 'TRIANGLE', '#333', svg);
+            let wavt1 = new Text(280, 285, 'left', 'SINE', '#333', svg);
+            let wavt2 = new Text(280, 325, 'left', 'SQUARE', '#333', svg);
+            let wavt3 = new Text(280, 365, 'left', 'SAW', '#333', svg);
+            let wavt4 = new Text(280, 405, 'left', 'TRIANGLE', '#333', svg);
             
             wavr.add(wavb1);
             wavr.add(wavb2);
             wavr.add(wavb3);
             wavr.add(wavb4);
             
-            let sclo = new Open(880, 280, 20, '#903', svg);
-            let sclt = new Text(900, 285, 'left', 'LOAD .SCL', '#333', svg);
+            let sclo = new Open(380, 280, 20, '#903', svg);
+            let sclt = new Text(400, 285, 'left', 'LOAD .SCL', '#333', svg);
             
-            let resk = new Knob(150, 100, 50, 0.6, '#c90', svg);
-            let rest = new Text(150, 150, 'middle', 'FREQ', '#333', svg);
-            let resi = new Text(150, 105, 'middle', '3.1', '#c90', svg);
+            let resk = new Knob(650, 100, 50, 0.6, '#c90', svg);
+            let rest = new Text(650, 150, 'middle', 'FREQ', '#333', svg);
+            let resi = new Text(650, 105, 'middle', '3.1', '#c90', svg);
             
             //stuff
             
-            let g = new Group(750, 65, 975, 250, 'PLACEHOLDER', svg);
+            let g = new Group(250, 65, 475, 250, 'PLACEHOLDER', svg);
             
-            let t = new Graph(300, 300, [400, 200], [], '#333', svg);
+            let t = new Graph(700, 300, [400, 200], [], '#333', svg);
             
         </script>
         

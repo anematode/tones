@@ -138,7 +138,8 @@ sclo.change = function() {
 };
 
 let reader = new TONES.ScalaReader(function(scalaFile) {
-    tParams.scale = TONES.sclFileToScale(scalaFile);
+    tParams.scale = scalaFile.scale;
+    
     refreshInst();
 }, {
     domElement: sclo.dialog
