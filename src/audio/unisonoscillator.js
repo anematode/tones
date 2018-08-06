@@ -1,6 +1,6 @@
 import * as audio from "./audio.js";
 import * as utils from "../utils.js";
-import {SourceNode} from "./node.js";
+import {SourceNode, ParameterValue, LinearParameterTransform, ParameterAdd, ParameterMultiply} from "./node.js";
 
 const MAX_DETUNE_CENTS = 200;
 const MIN_FREQUENCY = -22050;
@@ -19,337 +19,108 @@ function blendMapping(x) {
     }
 }
 
+function redirectChain(...args) {
+    return audio.chainNodes(...args);
+}
+
+function make1(...args) {
+    return new ParameterMultiply(...args);
+}
+
+function make2(...args) {
+    return new ParameterMultiply(...args);
+}
+
+function make3(...args) {
+    return new ParameterMultiply(...args);
+}
+
 class UnisonOscillator extends SourceNode {
     constructor(parameters = {}) {
         super(parameters.context);
 
-        this._frequency = utils.clamp(parameters.frequency || 440, MIN_FREQUENCY, MAX_FREQUENCY, "frequency"); // frequency of average oscillation
-        this._detune = utils.clamp((parameters.detune === 0) ? 0 : (parameters.detune || 20), 0, MAX_DETUNE_CENTS, "detune"); // spread width of oscillators (symmetric)
-        this._unison_obj = {value : utils.clamp((parameters.unison || 4), 2, MAX_UNISON)}; // Number of oscillators
+        let frequency = utils.select(parameters.frequency, 440);
+        let detune = utils.select(parameters.detune, 20);
+        let unison = utils.select(parameters.unison, 4);
+        let blend = utils.select(parameters.blend, 1);
+        let stereo = utils.select(parameters.stereo, 1);
 
-        Object.freeze(this._unison_obj);
-        this._blend = utils.clamp((parameters.blend === 0) ? 0 : (parameters.blend || 0.5), MIN_BLEND, MAX_BLEND, "blend"); // ratio (gain of centermost oscillators) / (gain of peripheral oscillators)
-        this._type = parameters.type || "triangle"; // type of waveform
+        let freq_c = new ParameterValue(frequency, "freq");
+        let det_c = new ParameterValue(detune, "det");
+        let stereo_c = new ParameterValue(stereo, "width");
+        let blend_c = new ParameterValue(blend, "blend");
 
-        this._context = audio.Context;
+        this.frequency = freq_c.value;
+        this.detune = det_c.value;
+        this.stereo = stereo_c.value;
+        this.blend = blend_c.value;
+
+        this.stop_at_destruction = [];
+
+        Object.defineProperty(this, "unison", {
+            value: unison,
+            writable: false
+        });
+
         this.oscillators = [];
 
-        let unison = this.unison;
+        let peripheral = new LinearParameterTransform(blend_c, -1, 1);
+        let center = blend_c;
 
-        if (unison % 2 === 0) {
-            let centerBlend = this._blend;
-            let peripheralBlend = 1 - this._blend;
-            let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
+        for (let i = 0; i < unison; i++) {
+            let series = {
+                o: audio.Context.createOscillator(),
+                g: audio.Context.createGain(),
+                p: audio.Context.createStereoPanner()
+            };
 
-            this.exit.gain.value = 1 / loudness;
+            series.o.frequency.value = 0;
+            freq_c.connect(series.o.frequency); // Connect the frequency controller to the oscillator's frequency
 
-            for (let i = 0; i < unison; i++) {
-                let series = {d: (i - unison / 2 + 1 / 2) / (unison - 1),
-                    o: audio.Context.createOscillator(),
-                    g: audio.Context.createGain(),
-                    delay: audio.Context.createDelay(),
-                    pan: audio.Context.createStereoPanner()
-                };
+            let range = (2 * i - unison + 1) / (2 * unison - 2);
 
-                series.o.frequency.setValueAtTime(this._frequency, 0);
-                series.o.detune.setValueAtTime(series.d * this._detune, 0);
-                series.o.type = this._type;
-                series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
+            let detune_multiplier = new ParameterMultiply(det_c, range);
+            detune_multiplier.connect(series.o.detune);
 
-                if (unison === 2) {
-                    series.pan.pan.setValueAtTime(series.d * 2, 0);
+            let stereo_multiplier = new ParameterMultiply(stereo_c, blendMapping(2 * range));
+            stereo_multiplier.connect(series.p.pan);
+
+            let blend_multiplier;
+
+            if (unison % 2 === 0) {
+                if (i === unison / 2 || i === unison / 2 - 1) {
+                    blend_multiplier = new ParameterMultiply(center, 0.5);
                 } else {
-                    series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
+                    blend_multiplier = new ParameterMultiply(peripheral, 1 / (unison - 2));
                 }
-
-                if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
-                    series.g.gain.setValueAtTime(centerBlend, 0);
-                } else {
-                    series.g.gain.setValueAtTime(peripheralBlend, 0);
-                }
-
-                audio.chainNodes([
-                    series.o,
-                    series.delay,
-                    series.g,
-                    series.pan,
-                    this.exit
-                ]);
-
-                this.oscillators.push(series);
-            }
-        } else {
-            let centerBlend = this._blend;
-            let peripheralBlend = 1 - this._blend;
-            let loudness = centerBlend + (unison - 1) * peripheralBlend;
-
-            this.exit.gain.value = 1 / loudness;
-
-            for (let i = 0; i < unison; i++) {
-                let series = {d: (i - unison / 2 + 1 / 2) / (unison - 1),
-                    o: audio.Context.createOscillator(),
-                    g: audio.Context.createGain(),
-                    delay: audio.Context.createDelay(),
-                    pan: audio.Context.createStereoPanner()
-                };
-
-                series.o.frequency.setValueAtTime(this._frequency, 0);
-                series.o.detune.setValueAtTime(series.d * this._detune, 0);
-                series.o.type = this._type;
-                series.delay.delayTime.setValueAtTime(1 / this._frequency * Math.random(), 0);
-
-                if (unison === 3) {
-                    series.pan.pan.setValueAtTime(series.d * 2, 0);
-                } else {
-                    series.pan.pan.setValueAtTime(blendMapping(series.d * 2), 0);
-                }
-
+            } else {
                 if (i === (unison - 1) / 2) {
-                    series.g.gain.setValueAtTime(centerBlend, 0);
+                    blend_multiplier = center;
                 } else {
-                    series.g.gain.setValueAtTime(peripheralBlend, 0);
+                    blend_multiplier = new ParameterMultiply(peripheral, 1 / (unison - 1));
                 }
-
-                audio.chainNodes([
-                    series.o,
-                    //series.delay,
-                    series.g,
-                    series.pan,
-                    this.exit
-                ]);
-
-                this.oscillators.push(series);
             }
+
+            series.g.gain.value = 0;
+
+            blend_multiplier.connect(series.g.gain);
+
+            redirectChain([
+                ...Object.values(series), this.exit
+            ]);
+
+            this.oscillators.push(series);
+            this.stop_at_destruction.push(stereo_multiplier, blend_multiplier, detune_multiplier);
         }
 
-        this.channelCount = 2;
-        this.channelCountMode = "max";
-        this.channelInterpretation = "speakers";
-
-        let that = this;
-
-        this.frequency = {
-            setValueAtTime: (value, time) => {
-                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.setValueAtTime(value, time);
-                }
-            },
-            linearRampToValueAtTime: (value, time) => {
-                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.linearRampToValueAtTime(value, time);
-                }
-            },
-            exponentialRampToValueAtTime: (value, time) => {
-                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.exponentialRampToValueAtTime(value, time);
-                }
-            },
-            setTargetAtTime: (value, startTime, constantTime) => {
-                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.setTargetAtTime(value, startTime, constantTime);
-                }
-            },
-            setValueCurveAtTime: (table, startTime, endTime) => {
-                for (let i = 0; i < table.length; i++) {
-                    table[i] = utils.clamp(table[i], MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                }
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.setValueCurveAtTime(table, startTime, endTime);
-                }
-            },
-            cancelScheduledValues: () => {
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.frequency.cancelScheduledValues();
-                }
-            },
-            get value() {
-                return that.oscillators[0].o.frequency.value;
-            },
-            set value(value) {
-                value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
-                for (let i = 0; i < that.unison; i++) {
-                    that.oscillators[i].o.frequency.value = value;
-                }
-            }
-        };
-
-        Object.defineProperties(this.frequency, {
-            minValue: {
-                value: MIN_FREQUENCY,
-                writable: false
-            },
-            maxValue: {
-                value: MAX_FREQUENCY,
-                writable: false
-            },
-            defaultValue: {
-                value: 440,
-                writable: false
-            }
-        });
-
-        this.detune = {
-            setValueAtTime: (value, time) => {
-                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
-
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
-                    series.o.detune.setValueAtTime(series.d * value, time);
-                }
-            },
-            linearRampToValueAtTime: (value, time) => {
-                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
-
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
-                    series.o.detune.linearRampToValueAtTime(series.d * value, time);
-                }
-            },
-            exponentialRampToValueAtTime: (value, time) => {
-                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
-
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
-                    series.o.detune.exponentialRampToValueAtTime(series.d * value, time);
-                }
-            },
-            setTargetAtTime: (value, startTime, constantTime) => {
-                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
-
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
-                    series.o.detune.setTargetAtTime(series.d * value, startTime, constantTime);
-                }
-            },
-            setValueCurveAtTime: (table, startTime, endTime) => {
-                for (let i = 0; i < table.length; i++) {
-                    table[i] = utils.clamp(table[i], 0, that.detune.maxValue, "detune");
-                }
-                for (let i = 0; i < this.unison; i++) {
-                    let series = this.oscillators[i];
-                    let newTable = table.slice();
-
-                    for (let j = 0; j < newTable.length; j++) {
-                        newTable[j] = series.d * newTable[j];
-                    }
-
-                    series.o.detune.setValueCurveAtTime(newTable, startTime, endTime);
-                }
-            },
-            cancelScheduledValues: () => {
-                for (let i = 0; i < this.unison; i++) {
-                    this.oscillators[i].o.detune.cancelScheduledValues();
-                }
-            },
-            get value() {
-                return that.oscillators[0].o.detune.value / that.oscillators[0].d;
-            },
-            set value(value) {
-                value = utils.clamp(value, 0, that.detune.maxValue, "detune");
-
-                for (let i = 0; i < that.unison; i++) {
-                    let series = that.oscillators[i];
-                    series.o.detune.value = series.d * value;
-                }
-            }
-        };
-
-        Object.defineProperties(this.detune, {
-            minValue: {
-                value: 0,
-                writable: false
-            },
-            maxValue: {
-                value: MAX_DETUNE_CENTS,
-                writable: false
-            },
-            defaultValue: {
-                value: 50,
-                writable: false
-            }
-        });
-
-        // TODO: Allow blend enveloping and such, not trivial, might not actually do it
-        this.blend = {
-            get value() {
-                if (that.unison % 2 === 0) {
-                    return that.oscillators[that.unison / 2].g.gain.value;
-                } else {
-                    return that.oscillators[(that.unison - 1) / 2].g.gain.value;
-                }
-            },
-            set value(value) {
-                value = utils.clamp(value, MIN_BLEND, MAX_BLEND, "blend");
-                if (that.unison % 2 === 0) {
-                    let centerBlend = value;
-                    let peripheralBlend = 1 - value;
-                    let loudness = 2 * centerBlend + (unison - 2) * peripheralBlend;
-
-                    that.exit.gain.value = 1 / loudness;
-
-                    for (let i = 0; i < that.unison; i++) {
-                        let series = that.oscillators[i];
-
-                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
-                            series.g.gain.value = centerBlend;
-                        } else {
-                            series.g.gain.value = peripheralBlend;
-                        }
-                    }
-                } else {
-                    let centerBlend = value;
-                    let peripheralBlend = 1 - value;
-                    let loudness = centerBlend + (unison - 1) * peripheralBlend;
-
-                    that.exit.gain.value = 1 / loudness;
-
-                    for (let i = 0; i < that.unison; i++) {
-                        let series = that.oscillators[i];
-
-                        if (i === (unison - 1) / 2) {
-                            series.g.gain.setValueAtTime(centerBlend, 0);
-                        } else {
-                            series.g.gain.setValueAtTime(peripheralBlend, 0);
-                        }
-                    }
-                }
-            }
-        };
-
-        Object.defineProperties(this.blend, {
-            minValue: {
-                value: MIN_BLEND,
-                writable: false
-            },
-            maxValue: {
-                value: MAX_BLEND,
-                writable: false
-            },
-            defaultValue: {
-                value: 0.5,
-                writable: false
-            }
-        });
-
-        delete this._frequency;
-        delete this._detune;
-        delete this._blend;
-    }
-
-    get unison() {
-        return this._unison_obj.value;
+        this.stop_at_destruction.push(stereo_c, blend_c, freq_c, det_c, peripheral);
     }
 
     get type() {
-        return this._type;
+        return this.oscillators[0].o.type;
     }
 
     set type(value) {
-        this._type = value;
         for (let i = 0; i < this.unison; i++) {
             this.oscillators[i].o.type = value;
         }
@@ -363,20 +134,20 @@ class UnisonOscillator extends SourceNode {
         return 1;
     }
 
-    static get context() {
-        return this._context;
-    }
-
-    start(time = this._context.currentTime) {
+    start(time = audio.Context.currentTime) {
         for (let i = 0; i < this.oscillators.length; i++) {
             let series = this.oscillators[i];
 
-            series.o.start(time);
+            series.o.start(time + 1 / this.frequency.value * Math.random());
         }
     }
 
-    stop(time = this._context.currentTime) {
+    stop(time = audio.Context.currentTime) {
         //console.log(this.oscillators);
+
+        this.stop_at_destruction.forEach(x => {
+            x.stop(time);
+        });
 
         for (let i = 0; i < this.oscillators.length; i++) {
             let series = this.oscillators[i];

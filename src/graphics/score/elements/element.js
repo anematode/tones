@@ -18,8 +18,7 @@ class ScoreElement extends ScoreGroup {
         this.makeParam("bounding_box", () => {
             if (this.needs_bb_recalculate || this.needs_recalculate)
                 bounding_box = this.getBBox();
-            
-            return bounding_box;
+            return bounding_box; // may have to do Object.assign / spread
         }, () => {
             throw new Error("Cannot set bounding box");
         });

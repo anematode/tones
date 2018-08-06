@@ -8,8 +8,6 @@ function stretchToExp(minX, maxX, x) {
     return Math.pow(2, MIN_FREQ_LOG2 + FREQ_DIFF * x);
 }
 
-window.ian = stretchToExp;
-
 class ArrayGrapher {
     constructor(params = {}) {
         if (params.domElement) {
