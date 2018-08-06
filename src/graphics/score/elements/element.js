@@ -20,7 +20,7 @@ class ScoreElement extends ScoreGroup {
                 bounding_box = this.getBBox();
             return bounding_box; // may have to do Object.assign / spread
         }, () => {
-            throw new Error("Cannot set bounding box")
+            throw new Error("Cannot set bounding box");
         });
 
         this.makeParam("offset_x", () => translation.x, (value) => {
