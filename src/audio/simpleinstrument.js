@@ -45,10 +45,10 @@ class SimpleInstrumentNode extends SourceNode {
 
         tone.type = parent.waveform;
 
-        tone.frequency.setValueAtTime(frequency, 0);
-        gain.gain.setValueAtTime(0, 0);
-        vel.gain.setValueAtTime(velocity, 0);
-        pan.pan.setValueAtTime(panValue, 0);
+        tone.frequency.value = frequency;
+        gain.gain.value = 0;
+        vel.gain.value = velocity;
+        pan.pan.value = panValue;
 
         tone.start(start);
 

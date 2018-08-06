@@ -112,7 +112,7 @@ class UnisonOscillator extends SourceNode {
 
                 audio.chainNodes([
                     series.o,
-                    //series.delay,
+                    series.delay,
                     series.g,
                     series.pan,
                     this.exit
@@ -122,14 +122,10 @@ class UnisonOscillator extends SourceNode {
             }
         }
 
-        this.channelCount = 2;
-        this.channelCountMode = "max";
-        this.channelInterpretation = "speakers";
-
         let that = this;
 
         this.frequency = {
-            setValueAtTime: (value, time) => {
+            /*setValueAtTime: (value, time) => {
                 value = utils.clamp(value, MIN_FREQUENCY, MAX_FREQUENCY, "frequency");
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.setValueAtTime(value, time);
@@ -165,7 +161,7 @@ class UnisonOscillator extends SourceNode {
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.frequency.cancelScheduledValues();
                 }
-            },
+            },*/
             get value() {
                 return that.oscillators[0].o.frequency.value;
             },
@@ -177,7 +173,7 @@ class UnisonOscillator extends SourceNode {
             }
         };
 
-        Object.defineProperties(this.frequency, {
+        /*Object.defineProperties(this.frequency, {
             minValue: {
                 value: MIN_FREQUENCY,
                 writable: false
@@ -190,10 +186,10 @@ class UnisonOscillator extends SourceNode {
                 value: 440,
                 writable: false
             }
-        });
+        });*/
 
         this.detune = {
-            setValueAtTime: (value, time) => {
+            /*setValueAtTime: (value, time) => {
                 value = utils.clamp(value, 0, that.detune.maxValue, "detune");
 
                 for (let i = 0; i < this.unison; i++) {
@@ -244,7 +240,7 @@ class UnisonOscillator extends SourceNode {
                 for (let i = 0; i < this.unison; i++) {
                     this.oscillators[i].o.detune.cancelScheduledValues();
                 }
-            },
+            },*/
             get value() {
                 return that.oscillators[0].o.detune.value / that.oscillators[0].d;
             },
@@ -258,7 +254,7 @@ class UnisonOscillator extends SourceNode {
             }
         };
 
-        Object.defineProperties(this.detune, {
+        /*Object.defineProperties(this.detune, {
             minValue: {
                 value: 0,
                 writable: false
@@ -271,7 +267,7 @@ class UnisonOscillator extends SourceNode {
                 value: 50,
                 writable: false
             }
-        });
+        });*/
 
         // TODO: Allow blend enveloping and such, not trivial, might not actually do it
         this.blend = {
@@ -294,7 +290,7 @@ class UnisonOscillator extends SourceNode {
                     for (let i = 0; i < that.unison; i++) {
                         let series = that.oscillators[i];
 
-                         if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
+                        if (i === unison / 2 - 1 || i === unison / 2 || unison === 2) {
                             series.g.gain.value = centerBlend;
                         } else {
                             series.g.gain.value = peripheralBlend;
@@ -320,7 +316,7 @@ class UnisonOscillator extends SourceNode {
             }
         };
 
-        Object.defineProperties(this.blend, {
+        /*Object.defineProperties(this.blend, {
             minValue: {
                 value: MIN_BLEND,
                 writable: false
@@ -333,7 +329,7 @@ class UnisonOscillator extends SourceNode {
                 value: 0.5,
                 writable: false
             }
-        });
+        });*/
 
         delete this._frequency;
         delete this._detune;
