@@ -21,11 +21,14 @@
             }
             
             .thing:hover {
-                opacity: 0;
-                transition: 0.1s;
+                transform: translate(140px, 105px) scale(2) translate(-140px, -105px);
+                transform-origin: 50% 50%;
+                transition: 1s;
+            }
+            #vis {
+                transform: scale(0.5);
             }
         </style>
-        
         <script src="../build/tones.js"></script>
     </head>
 
@@ -35,6 +38,9 @@
                 <rect x="0" y="49" width="750" height="1" fill="#ccc"></rect>
                 <rect x="0" y="0" width="750" height="500" fill-opacity="0" stroke="#333" stroke-width="2"></rect>
                 <text x="10" y="40" fill="#000" class="title">TONES</text>
+                <foreignObject width="25" height="250" x="400">
+                    <canvas id="vis" width="50" height="500"></canvas>
+                </foreignObject>
             </g>
         </svg>
         

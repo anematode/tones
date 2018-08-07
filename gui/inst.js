@@ -196,4 +196,24 @@ function playDDD() {
 
 let downsampler = new TONES.Downsampler();
 
+let canvas = document.getElementById("vis");
+let vis = new TONES.AudioLevelVisualizer({
+    canvas: canvas,
+    orient: "up",
+    background_color: "#fff",
+    normal_color: "#3c9",
+    warning_color: "#fc3",
+    peak_color: "#f36",
+    text_color: "#333",
+    font: "15px Abel",
+    line_color: "#fff",
+    bar_width: 2
+});
+
+setTimeout(() => {
+    vis.start();
+}, 1000);
+
+TONES.masterEntryNode.connect(vis.entry);
+
 downsampler.connectFrom(TONES.masterEntryNode);
