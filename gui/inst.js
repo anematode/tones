@@ -73,23 +73,23 @@ wavb4.change = function() {
 };
 
             
-unik.change = function() {
-    let val = Math.floor(unik.v * 15) + 1;
-    unii.set(val);
+els1.uni.k.change = function() {
+    let val = Math.floor(els1.uni.k.v * 15) + 1;
+    els1.uni.i.set(val);
     tParams.unison = val;
     refreshInst();
 }
 
-detk.change = function() {
-    let val = detk.v * 200;
-    deti.set(Math.round(val));
+els1.det.k.change = function() {
+    let val = els1.det.k.v * 200;
+    els1.det.i.set(Math.round(val));
     tParams.detune = val;
     refreshInst();
 };
 
-blek.change = function() {
-    let val = blek.v;
-    blei.set(Math.round(val * 100));
+els1.ble.k.change = function() {
+    let val = els1.ble.k.v;
+    els1.ble.i.set(Math.round(val * 100));
     tParams.blend = val;
     refreshInst();
 };
@@ -138,7 +138,8 @@ sclo.change = function() {
 };
 
 let reader = new TONES.ScalaReader(function(scalaFile) {
-    tParams.scale = TONES.sclFileToScale(scalaFile);
+    tParams.scale = scalaFile.scale;
+    
     refreshInst();
 }, {
     domElement: sclo.dialog
