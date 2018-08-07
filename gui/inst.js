@@ -43,7 +43,7 @@ function refreshInst() {
     instrument.params.attack_envelope = attack_env;
     instrument.params.release_length = tParams.release;
 }
-
+/*
 wavb1.change = function() {
     if (wavb1.v) {
         tParams.waveform = "sine";
@@ -71,29 +71,31 @@ wavb4.change = function() {
         refreshInst();
     }
 };
+*/
 
+let osc1 = synth.elements.osc1;
             
-els1.uni.k.change = function() {
-    let val = Math.floor(els1.uni.k.v * 15) + 1;
-    els1.uni.i.set(val);
+osc1.uni.k.change = function() {
+    let val = Math.floor(osc1.uni.k.v * 15) + 1;
+    osc1.uni.i.set(val);
     tParams.unison = val;
     refreshInst();
 }
 
-els1.det.k.change = function() {
-    let val = els1.det.k.v * 200;
-    els1.det.i.set(Math.round(val));
+osc1.det.k.change = function() {
+    let val = osc1.det.k.v * 200;
+    osc1.det.i.set(Math.round(val));
     tParams.detune = val;
     refreshInst();
 };
 
-els1.ble.k.change = function() {
-    let val = els1.ble.k.v;
-    els1.ble.i.set(Math.round(val * 100));
+osc1.ble.k.change = function() {
+    let val = osc1.ble.k.v;
+    osc1.ble.i.set(Math.round(val * 100));
     tParams.blend = val;
     refreshInst();
 };
-
+/*
 resk.change = function() {
     let val = Math.pow(2, (resk.v * 0.5 + 0.5) * 14.5);
     resi.set(Math.round(val / 100) / 10);
@@ -103,38 +105,43 @@ resk.change = function() {
     let result = lowpass_filter.getMagnitudeResponse(graph);
     t.set(result);
 };
+*/
 
-atts.change = function() {
-    let val = Math.pow(2, 5 * atts.v / 4) - 1;
-    atti.set(Math.round(val * 100));
+let env = synth.elements.env;
+
+env.att.s.change = function() {
+    let val = Math.pow(2, 5 * env.att.s.v / 4) - 1;
+    env.att.i.set(Math.round(val * 100));
     tParams.attack = val;
     refreshInst();
 };
 
-decs.change = function() {
-    let val = Math.pow(2, 7 * decs.v / 4) - 0.99;
-    deci.set(Math.round(val * 100));
+env.dec.s.change = function() {
+    let val = Math.pow(2, 7 * env.dec.s.v / 4) - 0.99;
+    env.dec.i.set(Math.round(val * 100));
     tParams.decay = val;
     refreshInst();
 };
 
-suss.change = function() {
-    let val = suss.v;
-    susi.set(Math.round(val * 100));
+env.sus.s.change = function() {
+    let val = env.sus.s.v;
+    env.sus.i.set(Math.round(val * 100));
     tParams.sustain = val;
     refreshInst();
 };
 
-rels.change = function() {
-    let val = Math.pow(2, 7 * rels.v / 4) - 0.99;
-    reli.set(Math.round(val * 100));
+env.rel.s.change = function() {
+    let val = Math.pow(2, 7 * env.rel.s.v / 4) - 0.99;
+    env.rel.i.set(Math.round(val * 100));
     tParams.release = val;
     refreshInst();
 };
 
-sclo.change = function() {
-    let val = sclo.v.name.replace('.scl', '');
-    sclt.set(val.substring(0, 8) + (val.length > 8 ? '...' : ''));
+let scl = synth.elements.scl;
+
+scl.fil.o.change = function() {
+    let val = scl.fil.o.v.name.replace('.scl', '');
+    scl.fil.t.set(val.substring(0, 8) + (val.length > 8 ? '...' : ''));
 };
 
 let reader = new TONES.ScalaReader(function(scalaFile) {
@@ -142,7 +149,7 @@ let reader = new TONES.ScalaReader(function(scalaFile) {
     
     refreshInst();
 }, {
-    domElement: sclo.dialog
+    domElement: scl.fil.o.dialog
 });
 
 let BASS_1 = "(G2{d:e,v:0.5}D3G3){d:1.3*e}R{d:-0.3*e}";
