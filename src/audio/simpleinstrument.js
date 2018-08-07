@@ -1,6 +1,7 @@
 import {KeyboardInstrument} from "./keyboardinstrument.js";
-import {SourceNode} from "./node.js";
+import {SourceNode, ParameterValue} from "./node.js";
 import * as audio from "./audio.js";
+import * as utils from "../utils.js";
 import {LinearEnvelopeSegment, Envelope, EnvelopeHorizontal} from "./envelope.js";
 import {UnisonOscillator} from "./unisonoscillator.js";
 
@@ -27,8 +28,21 @@ class SimpleInstrumentNode extends SourceNode {
 
         if (parent.params.unison === 1) {
             var tone = audio.Context.createOscillator();
+
+            parent.params.pitch_c.connect(tone.detune);
         } else {
-            var tone = new UnisonOscillator(parent.params);
+            var tone = new UnisonOscillator({
+                unison: parent.params.unison,
+                detune: 0,
+                blend: 0,
+                stereo: 0,
+                frequency: 0
+            });
+
+            parent.params.pitch_c.connect(tone.frequency_detune); // allow channel pitch modulation
+            parent.params.detune_c.connect(tone.detune);
+            parent.params.blend_c.connect(tone.blend);
+            parent.params.stereo_c.connect(tone.stereo);
         }
 
         let gain = audio.Context.createGain();
@@ -44,10 +58,7 @@ class SimpleInstrumentNode extends SourceNode {
         ]);
 
         tone.type = parent.waveform;
-
         tone.frequency.value = frequency;
-
-        window.ian = tone;
         gain.gain.value = 0;
         vel.gain.value = velocity;
         pan.pan.value = panValue;
@@ -74,6 +85,7 @@ class SimpleInstrumentNode extends SourceNode {
         this.vel = vel;
         this.start = start;
         this.end = end;
+
         this.parent = parent;
 
         if (end !== Infinity) {
@@ -119,11 +131,43 @@ class SimpleInstrument extends KeyboardInstrument {
     constructor(parameters = {}) {
         super(parameters);
 
-        this.params = {};
+        let detune_c = new ParameterValue(utils.select(parameters.detune, 20));
+        let pitch_c = new ParameterValue(utils.select(parameters.pitch, 0));
+        let blend_c = new ParameterValue(utils.select(parameters.blend, 0.3));
+        let stereo_c = new ParameterValue(utils.select(parameters.stereo, 1));
+
+        this.params = {
+            get detune() { // Spread of detune (cents)
+                return detune_c.value;
+            },
+            set detune(value) {
+                detune_c.value.value = value;
+            },
+            get blend() { // Blend between central and peripheral oscillators
+                return blend_c.value;
+            },
+            set blend(value) {
+                blend_c.value.value = value;
+            },
+            get pitch() {
+                return pitch_c.value;
+            },
+            set pitch(value) {
+                pitch_c.value.value = value;
+            },
+            get stereo() {
+                return stereo_c.value;
+            },
+            set stereo(value) {
+                stereo_c.value.value = value;
+            },
+            detune_c: detune_c,
+            pitch_c: pitch_c,
+            blend_c: blend_c,
+            stereo_c: stereo_c
+        };
 
         this.params.unison = parameters.unison || 8; // Unison (integer >= 1)
-        this.params.detune = (parameters.detune === 0) ? 0 : (parameters.detune || 20); // Spread of detune (cents)
-        this.params.blend = (parameters.blend === 0) ? 0 : (parameters.blend || 0.6); // Blend between central and peripheral oscillators
         this.params.release_length = (parameters.release_length === 0) ? 0 : (parameters.release_length || 0.1); // Decay (sec)
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
         this.params.waveform = parameters.waveform || "square";
@@ -152,32 +196,6 @@ class SimpleInstrument extends KeyboardInstrument {
 
     oscillatorApply(func) {
         this.iterateOverNodes(x => func(x.node.node));
-    }
-
-    set detune(value) {
-        this.params.detune = value;
-        if (this.params.unison !== 1) {
-            this.oscillatorApply(function (x) {
-                x.detune.value = value;
-            });
-        }
-    }
-
-    get detune() {
-        return this.params.detune;
-    }
-
-    set blend(value) {
-        this.params.blend = value;
-        if (this.params.unison !== 1) {
-            this.oscillatorApply(function (x) {
-                x.blend.value = value;
-            });
-        }
-    }
-
-    get blend() {
-        return this.params.blend;
     }
 
     set waveform(value) {
