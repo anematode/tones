@@ -1,6 +1,6 @@
 import * as audio from "./audio.js";
 import * as utils from "../utils.js";
-import {SourceNode, ParameterValue, LinearParameterTransform, ParameterAdd, ParameterMultiply} from "./node.js";
+import {SourceNode, ParameterValue, LinearParameterTransform, ParameterAdd, ParameterConstantMultiply} from "./node.js";
 
 const MAX_DETUNE_CENTS = 200;
 const MIN_FREQUENCY = -22050;
@@ -23,34 +23,25 @@ function redirectChain(...args) {
     return audio.chainNodes(...args);
 }
 
-function make1(...args) {
-    return new ParameterMultiply(...args);
-}
-
-function make2(...args) {
-    return new ParameterMultiply(...args);
-}
-
-function make3(...args) {
-    return new ParameterMultiply(...args);
-}
-
 class UnisonOscillator extends SourceNode {
-    constructor(parameters = {}) {
-        super(parameters.context);
+    constructor(prms = {}) {
+        super(prms.context);
 
-        let frequency = utils.select(parameters.frequency, 440);
-        let detune = utils.select(parameters.detune, 20);
-        let unison = utils.select(parameters.unison, 4);
-        let blend = utils.select(parameters.blend, 1);
-        let stereo = utils.select(parameters.stereo, 1);
+        let frequency = utils.select(prms.frequency, 440);
+        let frequency_detune = utils.select(prms.frequency_detune, 0);
+        let detune = utils.select(prms.detune, 20);
+        let unison = utils.select(prms.unison, 4);
+        let blend = utils.select(prms.blend, 0.3);
+        let stereo = utils.select(prms.stereo, 1);
 
-        let freq_c = new ParameterValue(frequency, "freq");
-        let det_c = new ParameterValue(detune, "det");
-        let stereo_c = new ParameterValue(stereo, "width");
-        let blend_c = new ParameterValue(blend, "blend");
+        let freq_c = frequency.connect ? frequency : new ParameterValue(frequency, "freq");
+        let freq_det_c = frequency_detune.connect ? frequency_detune : new ParameterValue(frequency_detune);
+        let det_c = detune.connect ? detune : new ParameterValue(detune, "det");
+        let stereo_c = stereo.connect ? stereo : new ParameterValue(stereo, "width");
+        let blend_c = blend.connect ? blend : new ParameterValue(blend, "blend");
 
         this.frequency = freq_c.value;
+        this.frequency_detune = freq_det_c.value;
         this.detune = det_c.value;
         this.stereo = stereo_c.value;
         this.blend = blend_c.value;
@@ -79,25 +70,27 @@ class UnisonOscillator extends SourceNode {
 
             let range = (2 * i - unison + 1) / (2 * unison - 2);
 
-            let detune_multiplier = new ParameterMultiply(det_c, range);
+            let detune_multiplier = new ParameterConstantMultiply(det_c, range);
             detune_multiplier.connect(series.o.detune);
 
-            let stereo_multiplier = new ParameterMultiply(stereo_c, blendMapping(2 * range));
+            freq_det_c.connect(series.o.detune);
+
+            let stereo_multiplier = new ParameterConstantMultiply(stereo_c, blendMapping(2 * range));
             stereo_multiplier.connect(series.p.pan);
 
             let blend_multiplier;
 
             if (unison % 2 === 0) {
                 if (i === unison / 2 || i === unison / 2 - 1) {
-                    blend_multiplier = new ParameterMultiply(center, 0.5);
+                    blend_multiplier = new ParameterConstantMultiply(center, 0.5);
                 } else {
-                    blend_multiplier = new ParameterMultiply(peripheral, 1 / (unison - 2));
+                    blend_multiplier = new ParameterConstantMultiply(peripheral, 1 / (unison - 2));
                 }
             } else {
                 if (i === (unison - 1) / 2) {
                     blend_multiplier = center;
                 } else {
-                    blend_multiplier = new ParameterMultiply(peripheral, 1 / (unison - 1));
+                    blend_multiplier = new ParameterConstantMultiply(peripheral, 1 / (unison - 1));
                 }
             }
 
@@ -105,7 +98,7 @@ class UnisonOscillator extends SourceNode {
 
             blend_multiplier.connect(series.g.gain);
 
-            redirectChain([
+            audio.chainNodes([
                 ...Object.values(series), this.exit
             ]);
 
@@ -113,7 +106,7 @@ class UnisonOscillator extends SourceNode {
             this.stop_at_destruction.push(stereo_multiplier, blend_multiplier, detune_multiplier);
         }
 
-        this.stop_at_destruction.push(stereo_c, blend_c, freq_c, det_c, peripheral);
+        this.stop_at_destruction.push(stereo_c, blend_c, freq_c, det_c, freq_det_c, peripheral);
     }
 
     get type() {
@@ -126,25 +119,16 @@ class UnisonOscillator extends SourceNode {
         }
     }
 
-    static get numberOfInputs() {
-        return 0;
-    }
-
-    static get numberOfOutputs() {
-        return 1;
-    }
-
     start(time = audio.Context.currentTime) {
-        for (let i = 0; i < this.oscillators.length; i++) {
+        let len = this.oscillators.length;
+        for (let i = 0; i < len; i++) {
             let series = this.oscillators[i];
 
-            series.o.start(time + 1 / this.frequency.value * Math.random());
+            series.o.start(time + 4 / this.frequency.value * (Math.random() * i) / len);
         }
     }
 
     stop(time = audio.Context.currentTime) {
-        //console.log(this.oscillators);
-
         this.stop_at_destruction.forEach(x => {
             x.stop(time);
         });

@@ -176,20 +176,43 @@ node with no output
 class EndingNode {
     constructor() {
         this.entry = audio.Context.createGain();
-        this.source = null;
+        this.sources = [];
     }
 
     connectFrom(node) { // connect from input node
         node.connect(this.entry);
-        this.source = node;
+        this.sources.push(node);
     }
     
     connectFromMaster() { // connect from master node
         this.connectFrom(audio.masterEntryNode);
     }
 
-    disconnectFrom() { // disconnect from node
-        this.source.disconnect(this.entry);
+    disconnectFrom(node) { // disconnect from node
+        if (!node) {
+            this.sources.forEach(x => {
+                try {
+                    x.disconnect(this.entry)
+                } catch (e) {
+
+                }
+            });
+
+            this.sources = [];
+        } else {
+            let index = this.sources.findIndex(node);
+
+            if (index === -1)
+                throw new Error("Node is not connected to this");
+
+            this.sources.splice(index, 1);
+
+            try {
+                node.disconnect(this.entry)
+            } catch (e) {
+
+            }
+        }
     }
 }
 
@@ -269,6 +292,30 @@ class ParameterMultiply {
     }
 }
 
+class ParameterConstantMultiply {
+    constructor(x, a) {
+        this.exit = audio.Context.createGain();
+        this.exit.gain.value = a;
+
+        x.connect(this.exit);
+    }
+
+    connect(node) {
+        this.exit.connect(node.entry || node);
+    }
+
+    disconnect(node) {
+        if (!node)
+            this.exit.disconnect();
+        else
+            this.exit.disconnect(node.entry || node);
+    }
+
+    stop(time) {
+
+    }
+}
+
 /*
 Parameter linear node
  */
@@ -344,4 +391,4 @@ class ParameterAdd {
     }
 }
 
-export {Node, SourceNode, EndingNode, ParameterValue, LinearParameterTransform, ParameterAdd, ParameterMultiply};
+export {Node, SourceNode, EndingNode, ParameterValue, LinearParameterTransform, ParameterAdd, ParameterMultiply, ParameterConstantMultiply};
