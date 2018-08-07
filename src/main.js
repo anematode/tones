@@ -42,6 +42,7 @@ export * from "./graphics/score/elements/barline.js";
 export * from "./graphics/score/elements.js";
 export * from "./graphics/score/optimizer.js";
 export * from "./graphics/score/elements/scoreshapes.js";
+export * from "./graphics/audiovisualizer.js";
 
 // Utils
 

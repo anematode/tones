@@ -199,29 +199,16 @@ function playDDD() {
     note_group.schedule(instrument, time_context);
 }
 
-let visualizer = new TONES.FrequencyVisualizer();
-let canvas = document.getElementById("vis_canvas");
-let g_canvas = document.getElementById("dup_canvas");
+let canvas = document.querySelector("#canv1");
+let visualizer = new TONES.AudioLevelVisualizer({canvas: canvas, orient: "right"});
 
-visualizer.setCanvas(canvas);
-//visualizer.startDrawLoop();
+let vertical = document.querySelector("#vert1");
+let visualizer2 = new TONES.AudioLevelVisualizer({canvas: vertical, orient: "up"});
 
-visualizer.connectFrom(TONES.masterEntryNode);
+setTimeout(() => {
+    visualizer.start();
+    visualizer2.start();
+}, 1000);
 
-let transformation = TONES.stretchToCanvas(g_canvas, 0, 1000, 3, 0);
-
-let grapher = new TONES.ArrayGrapher({
-    domElement: g_canvas,
-    transformation: transformation
-});
-
-let x_before = [...Array(1000).keys()];
-let x = x_before.map(x => Math.pow(2, x * 15 / 1000 + 1));
-
-function drawEQ() {
-    let resp = eq.getMagnitudeResponse(x);
-    grapher.drawLineSegments(x_before, resp);
-    requestAnimationFrame(drawEQ);
-}
-
-drawEQ();
+TONES.masterEntryNode.connect(visualizer.entry);
+TONES.masterEntryNode.connect(visualizer2.entry);
