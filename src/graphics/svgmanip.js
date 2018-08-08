@@ -68,7 +68,6 @@ class SVGElement extends ChildUpdater {
         }, this._id);
 
         this.updateTransform();
-        this.set("class", ""); // TODO stop this
     }
 
     updateTransform() {
@@ -126,6 +125,8 @@ class SVGElement extends ChildUpdater {
     remove() {
         this.element.remove();
         this.parent.removeChild(this);
+
+        this.removeChildDefs();
     }
 
     get(attribute) {
@@ -181,14 +182,16 @@ class SVGElement extends ChildUpdater {
         return this.element.removeEventListener(...args);
     }
 
-    getClasses() {
-        let classes = this.get("class");
+    getClasses(asArray = true) {
+        let classes;
+
+        classes = this.get("class");
 
         if (!classes) {
-            return [];
+            return asArray ? [] : "";
         }
 
-        return classes.split('\n');
+        return asArray ? classes.split(' ') : classes;
     }
 
     addClass(x) {
@@ -200,7 +203,7 @@ class SVGElement extends ChildUpdater {
             if (x === Class) return;
         }
 
-        this.set("class", this.get("class") + x);
+        this.set("class", this.getClasses(false) + x);
         return this;
     }
 
@@ -228,6 +231,40 @@ class SVGElement extends ChildUpdater {
 
     show() {
         this.set("display", "");
+    }
+
+    addChildDef(id, tag) {
+        let defs = this.context.definitions;
+
+        let elem = defs.addGroup({tag, id});
+
+        if (this.child_defs === undefined)
+            this.child_defs = [];
+
+        this.child_defs.push(elem);
+
+        return elem;
+    }
+
+    removeChildDef(id) {
+        this.child_defs.forEach(x => {
+            let eid = x.get("id");
+
+            if (id === eid)
+                x.destroy();
+        })
+    }
+
+    removeChildDefs() {
+        if (this.child_defs) {
+            this.child_defs.forEach(x => {
+                try {
+                    x.destroy()
+                } catch (e) {
+
+                }
+            });
+        }
     }
 }
 
@@ -278,7 +315,7 @@ class SVGGroup extends SVGElement {
     }
 
     makeGroup(attribs = {}, append = false) {
-        let elem = document.createElementNS(SVGNS, 'g');
+        let elem = document.createElementNS(SVGNS, attribs.tag || 'g');
 
         Object.keys(attribs).forEach((key) => {
             elem.setAttributeNS(null, key, attribs[key]);
@@ -347,13 +384,14 @@ class SVGGroup extends SVGElement {
             }
 
             if (func(child)) {
-                this.children[i].destroy();
-                this.children.splice(i--, 1);
+                child.destroy();
+                i--;
+
                 count += 1;
             }
         }
 
-        return 0;
+        return count;
     }
 
     destroy() {
@@ -363,6 +401,77 @@ class SVGGroup extends SVGElement {
 
         this.remove();
         this._id = -1;
+    }
+
+    select(func, recursive = false) {
+        let ret = [];
+
+        for (let i = 0; i < this.children.length; i++) {
+            let child = this.children[i];
+
+            if (recursive && child.select) {
+                let res = child.select(func, recursive);
+                ret.push(...res);
+            }
+
+            if (func(child)) {
+                ret.push(child);
+            }
+        }
+
+        return ret;
+    }
+
+    getChild(child, recursive = false) {
+        let id;
+        if (child._id) {
+            id = child._id;
+        } else {
+            id = child;
+        }
+
+        let found = this.select((x) => x._id === id, recursive);
+
+        if (found.length === 0)
+            return null;
+        return found[0];
+    }
+
+    isChild(child, recursive = false) {
+        return !!this.getChild(child, recursive);
+    }
+
+    getChildIndex(child) {
+        let id;
+        if (child._id) {
+            id = child._id;
+        } else {
+            id = child;
+        }
+
+        for (let i = 0; i < this.children.length; i++) {
+            let child = this.children[i];
+
+            if (child._id === id)
+                return i;
+        }
+
+        return -1;
+    }
+
+    swapIndices(i1, i2) {
+        let c1 = this.children[i1];
+        let c2 = this.children[i2];
+
+        this.element.replaceChild(c1.element, c2.element);
+        this.element.insertBefore(c2.element, c1.element);
+
+        this.children[i1] = c2;
+        this.children[i2] = c1;
+    }
+
+    swap(c1, c2) {
+        this.swapIndices(this.getChildIndex(c1), this.getChildIndex(c2));
     }
 }
 
@@ -384,6 +493,7 @@ class SVGContext extends SVGGroup {
         this._id = getID();
 
         this.element.setAttributeNS(null, "_id", this._id);
+        this.definitions = this.addGroup({tag: "defs"});
     }
 
     get width() {
@@ -400,10 +510,6 @@ class SVGContext extends SVGGroup {
 
     set height(value) {
         this.element.setAttributeNS(SVGNS, "height", value);
-    }
-
-    makeCircle(cx = 0, cy = 0, r = 0) {
-        return svgClassFactory(this, Circle, 'circle', cx, cy, r);
     }
 }
 
@@ -726,17 +832,17 @@ class Circle extends SVGElement {
 
     set cx(value) {
         this._cx = value;
-        this.updateSVG();
+        this.set("cx", this._cx);
     }
 
     set cy(value) {
         this._cy = value;
-        this.updateSVG();
+        this.set("cy", this._cy);
     }
 
     set r(value) {
         this._r = value;
-        this.updateSVG();
+        this.set("r", this._r);
     }
 
     area() {
@@ -787,7 +893,7 @@ class Rectangle extends SVGElement {
 
     set width(value) {
         this._width = value;
-        this.updateSVG();
+        this.set("width", this._width);
     }
 
     get height() {
@@ -796,7 +902,7 @@ class Rectangle extends SVGElement {
 
     set height(value) {
         this._height = value;
-        this.updateSVG();
+        this.set("height", this._height);
     }
 
     get x() {
@@ -805,7 +911,7 @@ class Rectangle extends SVGElement {
 
     set x(value) {
         this._x = value;
-        this.updateSVG();
+        this.set("x", this._x);
     }
 
     get y() {
@@ -814,7 +920,7 @@ class Rectangle extends SVGElement {
 
     set y(value) {
         this._y = value;
-        this.updateSVG();
+        this.set("y", this._y);
     }
 
     get rx() {
@@ -823,7 +929,7 @@ class Rectangle extends SVGElement {
 
     set rx(value) {
         this._rx = value;
-        this.updateSVG();
+        this.set("rx", this._rx);
     }
 
     get ry() {
@@ -832,7 +938,7 @@ class Rectangle extends SVGElement {
 
     set ry(value) {
         this._ry = value;
-        this.updateSVG();
+        this.set("ry", this._ry);
     }
 
     static tag() {
@@ -997,6 +1103,54 @@ class Path extends SVGElement {
     }
 }
 
+class Line extends SVGElement {
+    constructor(parent, params = {}) {
+        super(parent, 'line');
+
+        this.x1 = utils.select(params.x1, 0);
+        this.x2 = utils.select(params.x2, 0);
+        this.y1 = utils.select(params.y1, 0);
+        this.y2 = utils.select(params.y2, 0);
+    }
+
+    get x1() {
+        return this._x1;
+    }
+
+    get x2() {
+        return this._x2;
+    }
+
+    get y1() {
+        return this._y1;
+    }
+
+    get y2() {
+        return this._y2;
+    }
+
+    set x1(value) {
+        this._x1 = value;
+        this.set("x1", value);
+    }
+
+    set x2(value) {
+        this._x2 = value;
+        this.set("x2", value);
+    }
+
+    set y1(value) {
+        this._y1 = value;
+        this.set("y1", value);
+    }
+
+    set y2(value) {
+        this._y2 = value;
+        this.set("y2", value);
+    }
+
+}
+
 class Polygon extends SVGElement {
     constructor(parent, points = []) { // Note: you'll have to call updateSVG when changing points because IMPLOSION
         super(parent, 'polygon');
@@ -1033,5 +1187,6 @@ export {
     ScaleTransform,
     Rotation,
     ChildUpdater,
+    Line,
     SVGNS
 };
