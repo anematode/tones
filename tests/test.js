@@ -35,8 +35,8 @@ function refreshInst() {
     let keyboardPlay = instrument.keyboardPlayEnabled;
 
     instrument.params.unison = tParams.unison;
-    instrument.detune = tParams.detune;
-    instrument.blend = tParams.blend;
+    instrument.params.detune.value = tParams.detune;
+    instrument.params.blend.value = tParams.blend;
     instrument.waveform = tParams.waveform;
 
     instrument.pitch_mapping = TONES.pitchMappingFromScale(tParams.scale, tParams.baseNote, tParams.baseFrequency);
@@ -199,16 +199,25 @@ function playDDD() {
     note_group.schedule(instrument, time_context);
 }
 
-let canvas = document.querySelector("#canv1");
-let visualizer = new TONES.AudioLevelVisualizer({canvas: canvas, orient: "right"});
+let svg = new TONES.SVGContext("svg1");
 
-let vertical = document.querySelector("#vert1");
-let visualizer2 = new TONES.AudioLevelVisualizer({canvas: vertical, orient: "up"});
+let visualizers = [];
+
+visualizers.push(new TONES.SVGLevelVisualizer(svg, {orient: "up", x: 0, y: 0, width: 100, height: 700}));
+
+for (let i = 0; i < 13; i++) {
+    visualizers.push(new TONES.SVGLevelVisualizer(svg, {
+        orient: (i % 2 === 0) ? "right" : "left",
+        x: 120,
+        y: 54 * i,
+        width: 200,
+        height: 50,
+        show_decibels: false
+    }));
+}
+
+visualizers.forEach(x => TONES.masterEntryNode.connect(x.entry));
 
 setTimeout(() => {
-    visualizer.start();
-    visualizer2.start();
+    visualizers.forEach(x => x.start());
 }, 1000);
-
-TONES.masterEntryNode.connect(visualizer.entry);
-TONES.masterEntryNode.connect(visualizer2.entry);

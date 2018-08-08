@@ -80,7 +80,9 @@ class UnisonOscillator extends SourceNode {
 
             let blend_multiplier;
 
-            if (unison % 2 === 0) {
+            if (unison === 2) {
+                blend_multiplier = new ParameterValue(0.5);
+            } else if (unison % 2 === 0) {
                 if (i === unison / 2 || i === unison / 2 - 1) {
                     blend_multiplier = new ParameterConstantMultiply(center, 0.5);
                 } else {
