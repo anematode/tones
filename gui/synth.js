@@ -1,3 +1,5 @@
+console.log(LACTOSE);
+
 class Synth {
     constructor(s) {
         this.svg = s;
@@ -10,7 +12,7 @@ class Synth {
     }
     
     addOsc(l, x, y, n, c) {
-        l.g = new Group(10 + x, 60 + y, 210 + x, 260 + y, 'Osc ' + n, c);
+        l.g = new LACTOSE.Group(10 + x, 60 + y, 210 + x, 260 + y, 'Osc ' + n, c);
         
         l.uni = {};
         l.det = {};
@@ -18,25 +20,25 @@ class Synth {
         l.pan = {};
         l.lev = {};
 
-        l.uni.k = new Knob(60 + x, 115 + y, 25, 0.6, '#096', c);
-        l.uni.t = new Text(80 + x, 120 + y, 'start', 'Vcs', '#333', c);
-        l.uni.i = new Text(40 + x, 120 + y, 'end', '10', '#096', c);
+        l.uni.k = new LACTOSE.Knob(60 + x, 115 + y, 25, 0.6, '#096', c);
+        l.uni.t = new LACTOSE.Text(80 + x, 120 + y, 'start', 'Vcs', '#333', c);
+        l.uni.i = new LACTOSE.Text(40 + x, 120 + y, 'end', '10', '#096', c);
 
-        l.det.k = new Knob(60 + x, 165 + y, 25, 0.3, '#096', c);
-        l.det.t = new Text(80 + x, 170 + y, 'start', 'Det', '#333', c);
-        l.det.i = new Text(40 + x, 170 + y, 'end', '60', '#096', c);
+        l.det.k = new LACTOSE.Knob(60 + x, 165 + y, 25, 0.3, '#096', c);
+        l.det.t = new LACTOSE.Text(80 + x, 170 + y, 'start', 'Det', '#333', c);
+        l.det.i = new LACTOSE.Text(40 + x, 170 + y, 'end', '60', '#096', c);
 
-        l.ble.k = new Knob(60 + x, 215 + y, 25, 0.3, '#096', c);
-        l.ble.t = new Text(80 + x, 220 + y, 'start', 'Bld', '#333', c);
-        l.ble.i = new Text(40 + x, 220 + y, 'end', '30', '#096', c);
+        l.ble.k = new LACTOSE.Knob(60 + x, 215 + y, 25, 0.3, '#096', c);
+        l.ble.t = new LACTOSE.Text(80 + x, 220 + y, 'start', 'Bld', '#333', c);
+        l.ble.i = new LACTOSE.Text(40 + x, 220 + y, 'end', '30', '#096', c);
 
-        l.pan.k = new Knob(160 + x, 115 + y, 25, 0.6, '#c90', c);
-        l.pan.t = new Text(140 + x, 120 + y, 'end', 'Pan', '#333', c);
-        l.pan.i = new Text(180 + x, 120 + y, 'start', '10', '#c90', c);
+        l.pan.k = new LACTOSE.Knob(160 + x, 115 + y, 25, 0.6, '#c90', c);
+        l.pan.t = new LACTOSE.Text(140 + x, 120 + y, 'end', 'Pan', '#333', c);
+        l.pan.i = new LACTOSE.Text(180 + x, 120 + y, 'start', '10', '#c90', c);
 
-        l.lev.k = new Knob(160 + x, 165 + y, 25, 0.6, '#c90', c);
-        l.lev.t = new Text(140 + x, 170 + y, 'end', 'Lev', '#333', c);
-        l.lev.i = new Text(180 + x, 170 + y, 'start', '10', '#c90', c);
+        l.lev.k = new LACTOSE.Knob(160 + x, 165 + y, 25, 0.6, '#c90', c);
+        l.lev.t = new LACTOSE.Text(140 + x, 170 + y, 'end', 'Lev', '#333', c);
+        l.lev.i = new LACTOSE.Text(180 + x, 170 + y, 'start', '10', '#c90', c);
     }
 
     build(s) {
@@ -71,23 +73,23 @@ class Synth {
         env.sus = {};
         env.rel = {};
 
-        env.g = new Group(210, 260, 410, 460, 'Envelope', container);
+        env.g = new LACTOSE.Group(210, 260, 410, 460, 'Envelope', container);
 
-        env.att.s = new Slider(250, 365, 100, 0.1, '#069', container);
-        env.att.t = new Text(250, 440, 'middle', 'A', '#333', container);
-        env.att.i = new Text(250, 305, 'middle', '9', '#333', container);
+        env.att.s = new LACTOSE.Slider(250, 365, 100, 0.1, '#069', container);
+        env.att.t = new LACTOSE.Text(250, 440, 'middle', 'A', '#333', container);
+        env.att.i = new LACTOSE.Text(250, 305, 'middle', '9', '#333', container);
 
-        env.dec.s = new Slider(290, 365, 100, 0.8, '#069', container);
-        env.dec.t = new Text(290, 440, 'middle', 'D', '#333', container);
-        env.dec.i = new Text(290, 305, 'middle', '165', '#333', container);
+        env.dec.s = new LACTOSE.Slider(290, 365, 100, 0.8, '#069', container);
+        env.dec.t = new LACTOSE.Text(290, 440, 'middle', 'D', '#333', container);
+        env.dec.i = new LACTOSE.Text(290, 305, 'middle', '165', '#333', container);
 
-        env.sus.s = new Slider(330, 365, 100, 0.6, '#069', container);
-        env.sus.t = new Text(330, 440, 'middle', 'S', '#333', container);
-        env.sus.i = new Text(330, 305, 'middle', '60', '#333', container);
+        env.sus.s = new LACTOSE.Slider(330, 365, 100, 0.6, '#069', container);
+        env.sus.t = new LACTOSE.Text(330, 440, 'middle', 'S', '#333', container);
+        env.sus.i = new LACTOSE.Text(330, 305, 'middle', '60', '#333', container);
 
-        env.rel.s = new Slider(370, 365, 100, 0.2, '#069', container);
-        env.rel.t = new Text(370, 440, 'middle', 'R', '#333', container);
-        env.rel.i = new Text(370, 305, 'middle', '27', '#333', container);
+        env.rel.s = new LACTOSE.Slider(370, 365, 100, 0.2, '#069', container);
+        env.rel.t = new LACTOSE.Text(370, 440, 'middle', 'R', '#333', container);
+        env.rel.i = new LACTOSE.Text(370, 305, 'middle', '27', '#333', container);
 
         //ehh
 
@@ -98,10 +100,10 @@ class Synth {
         let wavb3 = new Button(570, 300, 20, true, '#903', svg);
         let wavb4 = new Button(570, 350, 20, false, '#903', svg);
 
-        let wavt1 = new Text(590, 205, 'left', 'SINE', '#333', svg);
-        let wavt2 = new Text(590, 255, 'left', 'SQUARE', '#333', svg);
-        let wavt3 = new Text(590, 305, 'left', 'SAW', '#333', svg);
-        let wavt4 = new Text(590, 355, 'left', 'TRIANGLE', '#333', svg);
+        let wavt1 = new LACTOSE.Text(590, 205, 'left', 'SINE', '#333', svg);
+        let wavt2 = new LACTOSE.Text(590, 255, 'left', 'SQUARE', '#333', svg);
+        let wavt3 = new LACTOSE.Text(590, 305, 'left', 'SAW', '#333', svg);
+        let wavt4 = new LACTOSE.Text(590, 355, 'left', 'TRIANGLE', '#333', svg);
 
         wavr.add(wavb1);
         wavr.add(wavb2);
@@ -112,12 +114,12 @@ class Synth {
 
         scl.fil = {};
         
-        scl.fil.o = new Open(20, 480, 20, '#903', container);
-        scl.fil.t = new Text(40, 485, 'left', 'LOAD .SCL', '#333', container);
+        scl.fil.o = new LACTOSE.Open(20, 480, 20, '#903', container);
+        scl.fil.t = new LACTOSE.Text(40, 485, 'left', 'LOAD .SCL', '#333', container);
 
-        /*let resk = new Knob(650, 100, 50, 0.6, '#c90', svg);
-        let rest = new Text(650, 150, 'middle', 'FREQ', '#333', svg);
-        let resi = new Text(650, 105, 'middle', '3.1', '#c90', svg);
+        /*let resk = new LACTOSE.Knob(650, 100, 50, 0.6, '#c90', svg);
+        let rest = new LACTOSE.Text(650, 150, 'middle', 'FREQ', '#333', svg);
+        let resi = new LACTOSE.Text(650, 105, 'middle', '3.1', '#c90', svg);
 
         //stuff
 
