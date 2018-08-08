@@ -201,6 +201,28 @@ function playDDD() {
     note_group.schedule(instrument, time_context);
 }
 
+let svg = new TONES.SVGContext("bar");
+
+let bar = new TONES.SVGLevelVisualizer(svg, {
+    width: 50,
+    height: 500,
+    show_lines: false,
+    bar_width: 1,
+    normal_color: "#3c9",
+    warning_color: "#fc3",
+    peak_color: "#f36",
+    background_color: "#fff",
+    text_color: "#000",
+    font: "Abel"
+});
+
+TONES.masterEntryNode.connect(bar.entry);
+
+setTimeout(() => {
+    bar.start();
+}, 1000);
+
+
 let downsampler = new TONES.Downsampler();
 
 downsampler.connectFrom(TONES.masterEntryNode);
