@@ -15,8 +15,8 @@ class ScoreContext extends SVGContext {
 }
 
 class ScoreGroup extends SVGGroup {
-    constructor(parent) {
-        super(parent);
+    constructor(parent, tag = 'g', params = {}) {
+        super(parent, tag, Object.assign(params, {use_zindex: false}));
     }
 
     propagateParentsUpdate(execbefore = true) {

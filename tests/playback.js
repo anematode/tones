@@ -1,30 +1,22 @@
-let osc = TONES.Context.createOscillator();
-let mod_osc = TONES.Context.createOscillator();
+let svg = new TONES.SVGContext("svg_test");
 
-let parameter = new TONES.ParameterMultiply(mod_osc, 20);
-parameter.connect(osc.detune);
+let group = svg.addGroup();
 
-osc.connect(TONES.masterEntryNode);
+let rect = new TONES.Rectangle(group, {width: 400, height: 200, fill: "#eee"});
+let circle = new TONES.Circle(group, {r: 10, cx: 30, cy: 30, fill: "#333"});
 
-let downsampler = new TONES.Downsampler({
-    rate: 1,
-    size: 512
-});
+let point = new TONES.Circle(group, {r: 5, fill: "#f00"});
 
-parameter.connect(downsampler);
+let rotation = new TONES.Rotation(0, 200, 100);
 
-let canvas = document.getElementById('waveform');
-let grapher = new TONES.ArrayGrapher({domElement: canvas});
+group.addTransform(rotation);
+group.addTransform(new TONES.MatrixTransform(1, 0, 0, 1, 0, 0));
 
-grapher.transformation = TONES.stretchToCanvas(canvas, 0, 1000, -5, 5);
+function rotate() {
+    rotation.a += 5;
+    [point.cx, point.cy] = group.applyInverseTransform(0, 0);
 
-function drawGraph() {
-    grapher.drawRange(downsampler.getData(), 0, 1000);
-    requestAnimationFrame(drawGraph);
+    requestAnimationFrame(rotate);
 }
 
-osc.start();
-mod_osc.frequency.value = 2;
-mod_osc.start();
-
-drawGraph();
+rotate();

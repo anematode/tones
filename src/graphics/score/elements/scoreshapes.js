@@ -387,7 +387,7 @@ const SHAPES = {
 function makeShape(parent, shape_name, offset = true) { // TODO optimize
     let shape_props = SHAPES[shape_name];
 
-    let shape = new Path(parent, shape_props.path);
+    let shape = new Path(parent, {d: shape_props.path});
 
     /*let shape = parent.addElement("use", {}, true, "http://www.w3.org/1999/xlink");
     shape.element.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#SYM" + shape_name);*/
@@ -397,8 +397,8 @@ function makeShape(parent, shape_name, offset = true) { // TODO optimize
 
     let shape_translation = new Translation(offset_x, offset_y);
 
-    shape.addTransform(shape_translation);
     shape.addTransform(new ScaleTransform(0.04, -0.04));
+    shape.addTransform(shape_translation);
 
     shape.translation = shape_translation;
 
