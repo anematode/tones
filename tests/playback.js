@@ -10,7 +10,7 @@ let point = new TONES.Circle(group, {r: 5, fill: "#f00"});
 let rotation = new TONES.Rotation(0, 200, 100);
 
 group.addTransform(rotation);
-group.addTransform(new TONES.MatrixTransform(1, 0, 0, 1, 0, 0));
+group.addTransform(new TONES.MatrixTransform(1, 1, 0, 1, 0, 0));
 
 function rotate() {
     rotation.a += 5;

@@ -36,6 +36,9 @@ class ChildUpdater {
     }
 
     propagateChange(...args) {
+        if (this._propagateChange)
+            this._propagateChange(...args);
+
         Object.keys(this.propagators).forEach(key => {
             this.propagators[key](...args);
         });
@@ -56,13 +59,19 @@ class SVGElement {
         if (!parent && tag instanceof Element) { // used in construction of SVGContext, which has no parent
             this.context = this;
             this.element = tag;
-            this.parent = null;
+            Object.defineProperty(this, "parent", {
+                value: null,
+                writable: false
+            });
         } else { // Other nodes go here
             utils.assert(parent, "parent must be passed to SVGElement constructor");
 
             this.context = parent.context;
             this.element = utils.isString(tag) ? parent.createRawElement(tag, {}, params.append) : tag;
-            this.parent = parent;
+            Object.defineProperty(this, "parent", {
+                value: parent,
+                writable: false
+            });
 
             parent.children.push(this);
         }
@@ -83,6 +92,10 @@ class SVGElement {
         this.setPresentationAttributes(params);
     }
 
+    get tag() {
+        return this.element.tagName;
+    }
+
     setPresentationAttributes(params = {}) {
         for (let key in params) {
             if (params.hasOwnProperty(key) && presentationAttributes[key]) {
@@ -94,11 +107,6 @@ class SVGElement {
             }
         }
     }
-
-    /*setParent(parent) {
-        this.remove();
-        parent.addChild(this);
-    }*/
 
     updateID() { // update the DOM element's id
         this.checkDestroyed();
@@ -123,10 +131,22 @@ class SVGElement {
         return this.transform.inverse(x, y);
     }
 
-    addTransform(...args) { // add simple transformation to transform
+    addTransform(x) { // add simple transformation to transform
         this.checkDestroyed();
-        this.transform.addTransform(...args);
+
+        if (Array.isArray(x)) {
+            x.forEach(item => this.transform.addTransform(item));
+        } else {
+            this.transform.addTransform(x);
+        }
+
         this.updateTransform();
+
+        return this;
+    }
+
+    squishTransform() {
+        this.transform.squish();
 
         return this;
     }
@@ -139,14 +159,30 @@ class SVGElement {
         return this.element.getScreenCTM();
     }
 
+    bringToFront() {
+        if (this.parent)
+            this.parent.bringFront(this);
+    }
+
+    sendToBack() {
+        if (this.parent)
+            this.parent.sendBack(this);
+    }
+
     get transforms() { // this element's transforms
         this.checkDestroyed();
         return this.transform.transforms;
     }
 
-    removeTransform(...args) { // remove simple transformation from transform
+    removeTransform(t) { // remove simple transformation from transform
         this.checkDestroyed();
-        this.transform.removeTransform(...args);
+
+        if (Array.isArray(t)) {
+            t.forEach(item => this.transform.removeTransform(item));
+        } else {
+            this.transform.removeTransform(t);
+        }
+
         this.updateTransform();
 
         return this;
@@ -194,10 +230,14 @@ class SVGElement {
     /*
     Remove the element, but not necessarily destroy it
      */
-    remove() {
+    _removeElementDOM() {
         this.checkDestroyed();
         this.element.remove();
         this.parent.removeChild(this);
+    }
+
+    remove() { // alias for destroy
+        this.destroy();
     }
 
     /*
@@ -227,11 +267,15 @@ class SVGElement {
     /*
     Utility function to highlight an element
      */
-    highlight() { // TODO fix for changing getBBox
-
+    highlight() { // TODO fix for changing getBBox, no class highlight
         this.checkDestroyed();
-        if (!this._highlight_box)
-            this._highlight_box = new TONES.Rectangle(this.parent, this.getBBox()).addClass("highlight");
+
+        if (!this._highlight_box) {
+            this._highlight_box = new TONES.Rectangle(this.parent, this.getBBox());
+            this._highlight_box.fill = "#ff5";
+            this._highlight_box.opacity = 0.3;
+        }
+
         return this;
     }
 
@@ -239,10 +283,12 @@ class SVGElement {
     Utility function to unhighlight an element
      */
     unhighlight() {
-
         this.checkDestroyed();
-        this._highlight_box.destroy();
-        this._highlight_box = undefined;
+
+        if (this._highlight_box) {
+            this._highlight_box.destroy();
+            this._highlight_box = undefined;
+        }
 
         return this;
     }
@@ -267,7 +313,7 @@ class SVGElement {
      */
     destroy() {
         this.checkDestroyed();
-        this.remove();
+        this._removeElementDOM();
         this.destroyChildDefs();
 
         this.id = -1;
@@ -308,17 +354,7 @@ class SVGElement {
     get class names as array or as string
      */
     getClasses(asArray = true) {
-        this.checkDestroyed();
-
-        let classes;
-
-        classes = this.get("class");
-
-        if (!classes) {
-            return asArray ? [] : "";
-        }
-
-        return asArray ? classes.split(' ') : classes;
+        return asArray ? [...this.element.classList.values()] : this.element.classList.value;
     }
 
     /*
@@ -327,16 +363,19 @@ class SVGElement {
     addClass(x) {
         this.checkDestroyed();
 
-        let classes = this.getClasses();
+        if (!Array.isArray(x))
+            x = [x];
 
-        for (let i = 0; i < classes.length; i++) { // check for duplicates
-            let Class = classes[i];
+        x.forEach(item => this.element.classList.add(item));
 
-            if (x === Class) return;
-        }
-
-        this.set("class", this.getClasses(false) + x);
         return this;
+    }
+
+    /*
+    Check whether the element has a class
+     */
+    hasClass(x) {
+        return this.element.classList.contains(x);
     }
 
     /*
@@ -348,17 +387,8 @@ class SVGElement {
         if (!Array.isArray(x))
             x = [x];
 
-        let classes = this.getClasses();
+        x.forEach(item => this.element.classList.remove(item));
 
-        for (let i = 0; i < x.length; i++) {
-            for (let j = 0; j < classes.length; j++) {
-                if (x[i] === classes[j]) {
-                    classes.splice(j--, 1);
-                }
-            }
-        }
-
-        this.set("class", classes.join(' '));
         return this;
     }
 
@@ -971,17 +1001,17 @@ class SVGGroup extends SVGElement {
     /*
     Traverse group's nodes recursively
      */
-    traverseNodes(func, recursive = true, evalBefore = true) {
+    traverseNodes(func, recursive = true, onlyLeaf = false, evalBefore = true) {
         this.checkDestroyed();
         for (let i = 0; i < this.children.length; i++) {
             let child = this.children[i];
 
-            if (evalBefore)
-                func(child, this, i);
+            if (evalBefore && (!onlyLeaf || !child.traverseNodes))
+                func(child, i);
             if (recursive && child.traverseNodes)
                 child.traverseNodes(func, evalBefore);
-            if (!evalBefore)
-                func(child, this, i);
+            if (!evalBefore && (!onlyLeaf || !child.traverseNodes))
+                func(child, i);
         }
     }
 
@@ -1029,10 +1059,10 @@ class SVGGroup extends SVGElement {
         return this.createElement(name, attribs, true, namespace);
     }
 
-    createGroup(tag = 'g', attribs = {}, append = false) {
+    createGroup(tag = 'g', attribs = {}, append = false, namespace = SVGNS) {
         this.checkDestroyed();
 
-        let elem = document.createElementNS(SVGNS, tag);
+        let elem = document.createElementNS(namespace, tag);
 
         Object.keys(attribs).forEach((key) => {
             elem.setAttributeNS(null, key, attribs[key]);
@@ -1049,10 +1079,14 @@ class SVGGroup extends SVGElement {
         return svgElement;
     }
 
-    addGroup(tag = 'g', attribs = {}) {
+    addGroup(tag = 'g', attribs = {}, namespace = SVGNS) {
         this.checkDestroyed();
 
-        return this.createGroup(tag, attribs, true);
+        return this.createGroup(tag, attribs, true, namespace);
+    }
+
+    destroyElement(...args) {
+        this.removeElement(...args);
     }
 
     removeElement(elem, recursive = false) {
@@ -1066,6 +1100,10 @@ class SVGGroup extends SVGElement {
         }
 
         return this.removeIf(e => e.id === id);
+    }
+
+    destroyChild(...args) {
+        this.removeChild(...args);
     }
 
     removeChild(elem, recursive = false) {
@@ -1124,6 +1162,14 @@ class SVGGroup extends SVGElement {
         return count;
     }
 
+    removeAll() {
+        this.removeIf(() => true);
+    }
+
+    destroyIf(...args) {
+        this.removeIf(...args);
+    }
+
     destroy() {
         this.checkDestroyed();
 
@@ -1131,7 +1177,7 @@ class SVGGroup extends SVGElement {
             this.children[i].destroy();
         }
 
-        this.remove();
+        this._removeElementDOM();
         this.destroyChildDefs();
 
         this.id = -1;
@@ -1176,9 +1222,14 @@ class SVGGroup extends SVGElement {
         return found[0];
     }
 
-    isChild(child, recursive = false) {
+    isChild(child, recursive = true) {
         this.checkDestroyed();
-        return !!this.getChild(child, recursive);
+
+        if (child.id && recursive) {
+            return this.element.contains(child.element) && this.element !== child.element;
+        } else {
+            return !!this.getChild(child, recursive);
+        }
     }
 
     getIndex(child) {
@@ -1202,6 +1253,7 @@ class SVGGroup extends SVGElement {
     }
 
     child(index) {
+        this.checkDestroyed();
         utils.assert(index < this.children.length && index >= 0, `Index ${index} out of range [0, ${this.children.length})`);
         return this.children[index];
     }
@@ -1237,6 +1289,7 @@ class SVGGroup extends SVGElement {
         }
 
         this.swapIndices(c1, c2);
+        this.sortZIndex();
     }
 
     moveIndexToAfter(i1, i2) {
@@ -1263,6 +1316,8 @@ class SVGGroup extends SVGElement {
     }
 
     sortZIndex() {
+        this.checkDestroyed();
+
         if (this.use_zindex) {
             let children = this.children;
             let prev = -Infinity;
@@ -1346,22 +1401,27 @@ class SVGGroup extends SVGElement {
     }
 
     bringIndexToFront(i1) {
+        this.checkDestroyed();
         this.moveIndexToAfter(i1, this.children.length - 1);
     }
 
     bringFront(c1) {
+        this.checkDestroyed();
         this.moveAfter(c1, this.children.length - 1);
     }
 
     sendIndexToBack(i1) {
+        this.checkDestroyed();
         this.moveIndexToBefore(i1, 0);
     }
 
     sendBack(c1) {
+        this.checkDestroyed();
         this.moveBefore(c1, 0);
     }
 
     sort(func) {
+        this.checkDestroyed();
         if (!func)
             func = () => 0;
 
@@ -1376,9 +1436,11 @@ class SVGContext extends SVGGroup {
             domElem = document.getElementById(domElem);
         }
 
-        if (!domElem) {
+        if (!domElem)
             throw new Error("Must pass valid DOM element or id");
-        }
+
+        if (domElem.tagName !== "svg")
+            throw new Error("passed DOM element is not an SVG");
 
         super(null, domElem);
 
@@ -1390,7 +1452,7 @@ class SVGContext extends SVGGroup {
         this.element.setAttributeNS(null, "id", this.id);
 
         this.definitions = this.addGroup("defs");
-        this.definitions._z_index = -Infinity;
+        this.definitions._z_index = -Infinity; // defs should come first
     }
 
     get width() {
@@ -1414,9 +1476,167 @@ class SVGContext extends SVGGroup {
     }
 }
 
+class TMatrix {
+    constructor(arr, b, c, d, e, f) {
+        if (Array.isArray(arr) || (arr && arr.BYTES_PER_ELEMENT && arr.buffer instanceof ArrayBuffer)) { // arr is an array
+            this.data = new Float32Array(6);
+
+            for (let i = 0; i < Math.min(6, arr.length); i++) {
+                this.data[i] = arr[i];
+            }
+        } else if (arr && arr.a) {
+            this.data = new Float32Array([arr.a, arr.b, arr.c, arr.d, arr.e, arr.f]);
+
+            for (let i = 0; i < 6; i++) {
+                if (isNaN(this.data[i]))
+                    this.data[i] = 0;
+            }
+        } else if (!arr) {
+            this.data = new Float32Array([1, 0, 0, 1, 0, 0]);
+        } else {
+            this.data = new Float32Array([arr, b, c, d, e, f]);
+
+            for (let i = 0; i < 6; i++) {
+                if (isNaN(this.data[i]))
+                    this.data[i] = 0;
+            }
+        }
+    }
+
+    get a() {
+        return this.data[0];
+    }
+
+    set a(value) {
+        this.data[0] = value;
+    }
+
+    get b() {
+        return this.data[1];
+    }
+
+    set b(value) {
+        this.data[1] = value;
+    }
+
+    get c() {
+        return this.data[2];
+    }
+
+    set c(value) {
+        this.data[2] = value;
+    }
+
+    get d() {
+        return this.data[3];
+    }
+
+    set d(value) {
+        this.data[3] = value;
+    }
+
+    get e() {
+        return this.data[4];
+    }
+
+    set e(value) {
+        this.data[4] = value;
+    }
+
+    get f() {
+        return this.data[5];
+    }
+
+    set f(value) {
+        this.data[5] = value;
+    }
+
+    clone() {
+        return new TMatrix(this.data);
+    }
+
+    static identity() {
+        return new TMatrix(1, 0, 0, 1, 0, 0);
+    }
+
+    setIdentity() {
+        this.data[0] = 1;
+        this.data[1] = 0;
+        this.data[2] = 0;
+        this.data[3] = 1;
+        this.data[4] = 0;
+        this.data[5] = 0;
+    }
+
+    multiply(matrix) {
+        let m2 = ((matrix instanceof TMatrix) ? matrix : new TMatrix(...arguments)).data;
+
+        this.multiplyMatrix(m2);
+    }
+
+    multiplyMatrix(matrix) {
+        let m1 = this.data;
+        let m2 = matrix.data;
+
+        let a = m1[0] * m2[0] + m1[2] * m2[1],
+            b = m1[1] * m2[0] + m1[3] * m2[1],
+            c = m1[0] * m2[2] + m1[2] * m2[3],
+            d = m1[1] * m2[2] + m1[3] * m2[3];
+
+        m1[4] = m1[0] * m2[4] + m1[2] * m2[5] + m1[4];
+        m1[5] = m1[1] * m2[4] + m1[3] * m2[5] + m1[5];
+
+        m1[0] = a, m1[1] = b, m1[2] = c, m1[3] = d;
+
+        return this;
+    }
+
+    inverse() {
+        let det = this.determinant();
+
+        let m = this.data;
+
+        return new TMatrix(
+            m[3] / det, // a = d
+            -m[1] / det, // b = -b
+            -m[2] / det, // c = -c
+            m[0] / det, // d = a
+            (m[2] * m[5] - m[3] * m[4]) / det, // e = cf - de
+            (m[1] * m[4] - m[0] * m[5]) / det // f = be - af
+        );
+    }
+
+    toSVGValue() {
+        return `matrix(${this.data.join(' ')})`;
+    }
+
+    transform(x, y) {
+        if (Array.isArray(x)) {
+            y = x[1];
+            x = x[0];
+        }
+
+        return [this.a * x + this.c * y + this.e, this.b * x + this.d * y + this.f];
+    }
+
+    determinant() {
+        return this.a * this.d - this.b * this.c;
+    }
+}
+
 class SimpleTransformation extends ChildUpdater {
     constructor() {
         super();
+
+        this.matrix = new TMatrix();
+    }
+
+    transform(x, y) {
+        return this.matrix.transform(x, y);
+    }
+
+    inverse(x, y) {
+        return this.matrix.inverse(x, y);
     }
 }
 
@@ -1425,6 +1645,7 @@ class Transformation extends ChildUpdater {
         super();
 
         this.transforms = transforms;
+        this.matrix = new TMatrix();
         this.id = getID("T");
     }
 
@@ -1434,56 +1655,79 @@ class Transformation extends ChildUpdater {
             x = x[0];
         }
 
-        for (let i = 0; i < this.transforms.length; i++) {
-            let result = this.transforms[i].transform(x, y);
-
-            x = result[0];
-            y = result[1];
-        }
-
-        return [x, y];
+        return this.matrix.transform(x, y);
     }
 
-    inverse(x, y) {
+    inverse(x, y, cacheInverseMatrix = false) {
         if (Array.isArray(x)) {
             y = x[1];
             x = x[0];
         }
 
-        for (let i = this.transforms.length - 1; i >= 0; i--) {
-            let result = this.transforms[i].inverse(x, y);
+        let inverse_matrix;
 
-            x = result[0];
-            y = result[1];
+        if (cacheInverseMatrix && !this.inverse_matrix) {
+            inverse_matrix = this.inverse_matrix = this.matrix.inverse();
+        } else {
+            inverse_matrix = this.inverse_matrix ? this.inverse_matrix : this.matrix.inverse();
         }
 
-        return [x, y];
+        return (x === undefined) ? inverse_matrix : inverse_matrix.transform(x, y);
+    }
+
+    squish() {
+        let matrix = this.matrix.clone();
+        this.removeAll();
+
+        this.transforms = [new MatrixTransform(matrix)];
+        this._update();
+    }
+
+    updateMatrix() {
+        let matrix = this.matrix;
+        matrix.setIdentity();
+
+        for (let i = 0; i < this.transforms.length; i++) {
+            matrix.multiplyMatrix(this.transforms[i].matrix);
+        }
+
+        if (this.inverse_matrix)
+            this.inverse_matrix = undefined; // Invalidate cached inverse matrix
     }
 
     toSVGValue() {
-        let text = "";
+        return this.matrix.toSVGValue();
+    }
 
-        for (let i = this.transforms.length - 1; i >= 0; i--) {
-            text += this.transforms[i].toSVGValue() + ' ';
-        }
-
-        return text;
+    _update() {
+        this.updateMatrix();
+        this.propagateChange();
     }
 
     addTransform(t) {
         this.transforms.push(t);
+        this._update();
 
         t._setModificationPropagation(() => {
-            this.propagateChange();
+            this._update();
         }, this.id);
+    }
+
+    add(t) {
+        this.addTransform(t);
     }
 
     prependTransform(t) {
         this.transforms.unshift(t);
+        this._update();
 
         t._setModificationPropagation(() => {
-            this.propagateChange();
+            this._update();
         }, this.id);
+    }
+
+    prepend(t) {
+        this.prependTransform(t);
     }
 
     removeTransform(elem) {
@@ -1498,13 +1742,23 @@ class Transformation extends ChildUpdater {
         this.propagateChange();
     }
 
+    remove(t) {
+        this.removeTransform(t);
+    }
+
     removeIf(func) {
+        let count = 0;
+
         for (let i = 0; i < this.transforms.length; i++) {
             if (func(this.transforms[i])) {
                 this.transforms[i]._removeModificationPropagation(this.id);
-                this.transforms.splice(i--, 0);
+                this.transforms.splice(i--, 1);
+                count += 1;
             }
         }
+
+        if (count > 0)
+            this._update();
     }
 
     removeAll() {
@@ -1516,49 +1770,28 @@ class Translation extends SimpleTransformation {
     constructor(xd = 0, yd = 0) {
         super();
 
-        this._x = xd;
-        this._y = yd;
+        this.x = xd;
+        this.y = yd;
 
         this.id = getID("T");
     }
 
     get x() {
-        return this._x;
+        return this.matrix.e;
     }
 
     get y() {
-        return this._y;
+        return this.matrix.f;
     }
 
     set x(value) {
-        this._x = value;
+        this.matrix.e = value;
         this.propagateChange();
     }
 
     set y(value) {
-        this._y = value;
+        this.matrix.f = value;
         this.propagateChange();
-    }
-
-    transform(x, y) {
-        if (Array.isArray(x)) {
-            y = x[1];
-            x = x[0];
-        }
-
-        return [x + this.x, y + this.y];
-    }
-
-    inverse(x, y) {
-        if (x === undefined)
-            return new Translation(-this.x, -this.y);
-
-        if (Array.isArray(x)) {
-            y = x[1];
-            x = x[0];
-        }
-
-        return [x - this.x, y - this.y];
     }
 
     toSVGValue() {
@@ -1567,87 +1800,85 @@ class Translation extends SimpleTransformation {
 }
 
 class MatrixTransform extends SimpleTransformation {
-    constructor(a, b, c, d, e, f) {
+    constructor(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) {
         super();
 
-        if (a instanceof SVGMatrix) {
+        if (a.a) {
             b = a.b;
             c = a.c;
             d = a.d;
             e = a.e;
             f = a.f;
             a = a.a;
+        } else if (Array.isArray(a)) {
+            b = a[1];
+            c = a[2];
+            d = a[3];
+            e = a[4];
+            f = a[5];
+            a = a[0];
         }
 
-        this._a = a;
-        this._b = b;
-        this._c = c;
-        this._d = d;
-        this._e = e;
-        this._f = f;
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.d = d;
+        this.e = e;
+        this.f = f;
     }
 
     get a() {
-        return this._a;
-    }
-
-    get b() {
-        return this._b;
-    }
-
-    get c() {
-        return this._c;
-    }
-
-    get d() {
-        return this._d;
-    }
-
-    get e() {
-        return this._e;
-    }
-
-    get f() {
-        return this._f;
+        return this.matrix.a;
     }
 
     set a(value) {
-        this._a = value;
+        this.matrix.a = value;
         this.propagateChange();
+    }
+
+    get b() {
+        return this.matrix.b;
     }
 
     set b(value) {
-        this._b = value;
+        this.matrix.b = value;
         this.propagateChange();
+    }
+
+    get c() {
+        return this.matrix.c;
     }
 
     set c(value) {
-        this._c = value;
+        this.matrix.c = value;
         this.propagateChange();
+    }
+
+    get d() {
+        return this.matrix.d;
     }
 
     set d(value) {
-        this._d = value;
+        this.matrix.d = value;
         this.propagateChange();
+    }
+
+    get e() {
+        return this.matrix.e;
     }
 
     set e(value) {
-        this._e = value;
+        this.matrix.e = value;
         this.propagateChange();
+    }
+
+    get f() {
+        return this.matrix.f;
     }
 
     set f(value) {
-        this._f = value;
+        this.matrix.f = value;
         this.propagateChange();
-    }
-
-    transform(x, y) {
-        if (Array.isArray(x)) {
-            y = x[1];
-            x = x[0];
-        }
-
-        return [this.a * x + this.c * y + this.e, this.b * x + this.d * y + this.f];
     }
 
     toSVGValue() {
@@ -1655,47 +1886,73 @@ class MatrixTransform extends SimpleTransformation {
     }
 }
 
-class ScaleTransform extends SimpleTransformation {
-    constructor(xs, ys = xs) {
+class SkewX extends SimpleTransformation {
+    constructor(a) {
         super();
 
-        this._xs = xs;
-        this._ys = ys;
+        this.a = a;
     }
 
-    transform(x, y) {
-        if (Array.isArray(x)) {
-            y = x[1];
-            x = x[0];
-        }
-
-        return [x * this.xs, y * this.ys];
+    get a() {
+        return this.matrix.c;
     }
 
-    inverse(x, y) {
-        if (Array.isArray(x)) {
-            y = x[1];
-            x = x[0];
-        }
+    set a(value) {
+        this.matrix.c = value;
+        this.propagateChange();
+    }
 
-        return [x / this.xs, y / this.ys];
+    toSVGValue() {
+        return `skewX(${this.a})`;
+    }
+}
+
+class SkewY extends SimpleTransformation {
+    constructor(a) {
+        super();
+
+        this.a = a;
+    }
+
+    get a() {
+        return this.matrix.b;
+    }
+
+    set a(value) {
+        this.matrix.b = value;
+        this.propagateChange();
+    }
+
+    toSVGValue() {
+        return `skewY(${this.a})`;
+    }
+}
+
+class ScaleTransform extends SimpleTransformation {
+    constructor(xs = 1, ys = xs) {
+        super();
+
+        this.xs = xs;
+        this.ys = ys;
     }
 
     get xs() {
-        return this._xs;
+        return this.matrix.a;
     }
 
     get ys() {
-        return this._ys;
+        return this.matrix.d;
     }
 
     set xs(value) {
-        this._xs = value;
+        this.matrix.a = value;
+
         this.propagateChange();
     }
 
     set ys(value) {
-        this._ys = value;
+        this.matrix.d = value;
+
         this.propagateChange();
     }
 
@@ -1711,38 +1968,21 @@ class Rotation extends SimpleTransformation {
         this._a = a;
         this._x = x;
         this._y = y;
+
+        this.updateMatrix();
     }
 
-    transform(x, y) {
-        let xr = this.x;
-        let yr = this.y;
-        let a = this.a * Math.PI / 180;
+    updateMatrix() {
+        let angle = this._a * Math.PI / 180;
 
-        x -= xr;
-        y -= yr;
+        let s = Math.sin(angle), c = Math.cos(angle), x = this._x, y = this._y;
 
-        let s = Math.sin(a), c = Math.cos(a);
-
-        let xn = x * c - y * s;
-        let yn = x * s + y * c;
-
-        return [xn + xr, yn + yr];
-    }
-
-    inverse(x, y) {
-        let xr = this.x;
-        let yr = this.y;
-        let a = -this.a * Math.PI / 180;
-
-        x -= xr;
-        y -= yr;
-
-        let s = Math.sin(a), c = Math.cos(a);
-
-        let xn = x * c - y * s;
-        let yn = x * s + y * c;
-
-        return [xn + xr, yn + yr];
+        this.matrix.a = c;
+        this.matrix.b = s;
+        this.matrix.c = -s;
+        this.matrix.d = c;
+        this.matrix.e = x - x * c + y * s;
+        this.matrix.f = y - y * c - x * s;
     }
 
     get a() {
@@ -1759,16 +1999,22 @@ class Rotation extends SimpleTransformation {
 
     set a(value) {
         this._a = value;
+
+        this.updateMatrix();
         this.propagateChange();
     }
 
     set x(value) {
         this._x = value;
+
+        this.updateMatrix();
         this.propagateChange();
     }
 
     set y(value) {
         this._y = value;
+
+        this.updateMatrix();
         this.propagateChange();
     }
 
@@ -2163,5 +2409,8 @@ export {
     Rotation,
     ChildUpdater,
     Line,
-    SVGNS
+    SVGNS,
+    TMatrix,
+    SkewX,
+    SkewY
 };
