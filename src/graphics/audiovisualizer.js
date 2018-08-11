@@ -646,7 +646,8 @@ class SVGLevelVisualizer extends EndingNode {
     constructor(parent, params = {}) {
         super();
 
-        ["width", "height", "line_width", "line_color", "background_color", "text_color", "font", "split_lines", "font_size", "show_decibels", "show_lines"].forEach(x => this.addBGParam(x));
+        ["width", "height", "line_width", "line_color", "background_color", "text_color", "font", "split_lines",
+            "font_size", "show_decibels", "show_lines", "text_alignment", "text_line_distance", "show_negatives"].forEach(x => this.addBGParam(x));
         ["warning_gain", "peak_gain", "normal_color", "warning_color", "peak_color", "trans_thickness"].forEach(x => this.addGradientParam(x));
 
         this.translation = new Translation();
@@ -694,6 +695,11 @@ class SVGLevelVisualizer extends EndingNode {
         this.text_color = utils.select(params.text_color, "#222"); // color of decibel marking text
         this.font = utils.select(params.font, "Open Sans"); // font of decibel marking text
         this.font_size = utils.select(params.font_size, "15px"); // size of decibel marking text font
+
+        this.text_alignment = utils.select(params.text_alignment, "guess"); // alignment of text, values top, bottom, right, left, middle
+        this.text_line_distance = utils.select(params.text_line_distance, 5); // distance in pixels between decibel text and decibel lines
+
+        this.show_negatives = utils.select(params.show_negatives, true); // show - sign in decibel text
 
         /*
         Heights (or x values, if the orientation is "right" or "left") at which to draw the decibel marking lines
@@ -886,7 +892,7 @@ class SVGLevelVisualizer extends EndingNode {
 
         let rect = this.background.background_rect;
 
-        rect.set("fill", this.background_color);
+        rect.fill = this.background_color;
         rect.width = this.width;
         rect.height = this.height;
     }
@@ -922,10 +928,59 @@ class SVGLevelVisualizer extends EndingNode {
                 let p2 = dr(end_x, y);
 
                 path.d = `M ${p1.join(' ')} L ${p2.join(' ')}`;
-                path.set("stroke", this.line_color);
+                path.stroke = this.line_color;
 
                 line_index++;
             }
+
+
+            let alignment = this.text_alignment;
+            let anchor, baseline, go_around = false;
+
+            let x_m = 0, y_m = 0;
+            let text_line_distance = this.text_line_distance;
+
+            do {
+                go_around = false;
+                switch (alignment) {
+                    case "guess":
+                        alignment = this.orient;
+                        go_around = true;
+
+                        break;
+                    case "up":
+                        anchor = "middle";
+                        baseline = "bottom";
+                        y_m = -text_line_distance;
+
+                        break;
+                    case "down":
+                        anchor = "middle";
+                        baseline = "top";
+                        y_m = text_line_distance;
+
+                        break;
+                    case "right":
+                        anchor = "left";
+                        baseline = "middle";
+                        x_m = text_line_distance;
+
+                        break;
+                    case "left":
+                        anchor = "right";
+                        baseline = "middle";
+                        x_m = -text_line_distance;
+
+                        break;
+                    case "middle":
+                        anchor = "middle";
+                        baseline = "middle";
+
+                        break;
+                    default:
+                        throw new Error(`Unknown alignment value`);
+                }
+            } while (go_around);
 
             if (this.show_decibels) {
                 let text_obj;
@@ -945,14 +1000,15 @@ class SVGLevelVisualizer extends EndingNode {
 
                 let m1 = dr((start_x + end_x) / 2, y);
 
-                text.text = y.toString();
-                text.x = m1[0];
-                text.y = m1[1];
+                text.text = (this.show_negatives ? y : Math.abs(y)).toString();
 
-                text.set("text-anchor", "middle");
-                text.set("alignment-baseline", "middle");
-                text.set("font-family", this.font);
-                text.set("font-size", this.font_size);
+                text.x = m1[0] + x_m;
+                text.y = m1[1] + y_m;
+
+                text.textAnchor = anchor;
+                text.alignmentBaseline = baseline;
+                text.fontFamily = this.font;
+                text.fontSize = this.font_size;
 
                 let bbox = text.getBBox();
 
@@ -970,9 +1026,9 @@ class SVGLevelVisualizer extends EndingNode {
                     obscure.x = bbox.x - 1;
                     obscure.y = bbox.y;
                     obscure.width = bbox.width + 2;
-                    obscure.height = bbox.height + 2;
+                    obscure.height = bbox.height;
 
-                    obscure.set("fill", this.background_color);
+                    obscure.fill = this.background_color;
                 }
 
                 index++;
@@ -1004,7 +1060,7 @@ class SVGLevelVisualizer extends EndingNode {
         }
 
         if (!this.gradient) {
-            this.gradient = this.element.addChildDef(this.element._id + "grad", "linearGradient");
+            this.gradient = this.element.addChildDef("linearGradient", {id: this.element._id + "grad"});
 
             let g = this.gradient;
 
@@ -1068,7 +1124,7 @@ class SVGLevelVisualizer extends EndingNode {
 
                 if (!levels.level) {
                     levels.level = new Rectangle(levels);
-                    levels.level.set("fill", `url(#${gradient_id})`);
+                    levels.level.fill = `url(#${gradient_id})`;
                 }
 
                 if (this.bar_mod_last > this.track_max) {
@@ -1093,7 +1149,7 @@ class SVGLevelVisualizer extends EndingNode {
 
                 if (!levels.bar) {
                     levels.bar = new Line(levels);
-                    levels.bar.set("stroke", `url(#${gradient_id})`);
+                    levels.bar.stroke = `url(#${gradient_id})`;
                 }
 
                 let rs = tr(0, this.bar);
@@ -1111,7 +1167,7 @@ class SVGLevelVisualizer extends EndingNode {
                 this._last_bar_x2 = re[0];
 
                 if (this._last_bar_width !== this.bar_width)
-                    levels.bar.set("stroke-width", `${this.bar_width}px`);
+                    levels.bar.strokeWidth = `${this.bar_width}px`;
 
                 this._last_bar_width = this.bar_width;
             }
@@ -1147,12 +1203,12 @@ class SVGLevelVisualizer extends EndingNode {
 
                 if (!levels.l_level) {
                     levels.l_level = new Rectangle(levels);
-                    levels.l_level.set("fill", `url(#${gradient_id})`);
+                    levels.l_level.fill = `url(#${gradient_id})`;
                 }
 
                 if (!levels.l_bar) {
                     levels.l_bar = new Line(levels);
-                    levels.l_bar.set("stroke", `url(#${gradient_id})`);
+                    levels.l_bar.stroke = `url(#${gradient_id})`;
                 }
 
                 setRect(levels.l_level, ...tr(0, 0), ...tr(0.465, all_max));
@@ -1185,12 +1241,12 @@ class SVGLevelVisualizer extends EndingNode {
 
                 if (!levels.r_level) {
                     levels.r_level = new Rectangle(levels);
-                    levels.r_level.set("fill", `url(#${gradient_id})`);
+                    levels.r_level.fill = `url(#${gradient_id})`;
                 }
 
                 if (!levels.r_bar) {
                     levels.r_bar = new Line(levels);
-                    levels.r_bar.set("stroke", `url(#${gradient_id})`);
+                    levels.r_bar.stroke = `url(#${gradient_id})`;
                 }
 
                 setRect(levels.r_level, ...tr(.535, 0), ...tr(1, all_max));
@@ -1210,8 +1266,8 @@ class SVGLevelVisualizer extends EndingNode {
                 this._last_r_bar_x2 = le[0];
 
                 if (this._last_bar_width !== this.bar_width) {
-                    levels.r_bar.set("stroke-width", `${this.bar_width}px`);
-                    levels.l_bar.set("stroke-width", `${this.bar_width}px`);
+                    levels.r_bar.strokeWidth = `${this.bar_width}px`;
+                    levels.l_bar.strokeWidth = `${this.bar_width}px`;
                 }
 
                 this._last_bar_width = this.bar_width;

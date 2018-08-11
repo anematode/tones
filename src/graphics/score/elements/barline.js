@@ -76,7 +76,7 @@ class Barline extends ScoreGroup {
             case "none":
                 return;
             case "normal":
-                let path = new Path(this, `M 0 0 L 0 ${this.height}`);
+                let path = new Path(this, {d: `M 0 0 L 0 ${this.height}`});
                 path.addClass("barline-normal");
                 this.components.push(path);
                 break;
@@ -91,7 +91,7 @@ class Barline extends ScoreGroup {
 
                 utils.assert(width > 0, "Width of double barline must be positive");
 
-                let lpath = new Path(this, `M ${s_x} 0 L ${s_x} ${this.height} M ${f_x} 0 L ${f_x} ${this.height}`);
+                let lpath = new Path(this, {d: `M ${s_x} 0 L ${s_x} ${this.height} M ${f_x} 0 L ${f_x} ${this.height}`});
                 lpath.addClass("barline-double");
                 this.components.push(lpath);
 
