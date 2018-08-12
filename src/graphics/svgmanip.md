@@ -189,7 +189,7 @@ If you only want "leaf" elements, i.e. SVGElement instances, not SVGGroup, you c
 group.traverseNodes(console.log, true /* is recursive */, true /* only call on leaf elements */);
 ```
 
-Note that groups without children do not count as "leaf" elements, so they will not be called.
+Note that groups without children do count as "leaf" elements, so they will be called.
 
 To remove children from the group, you can of course call destroy() on each child you want to destroy, or you can use *destroyIf*.
 

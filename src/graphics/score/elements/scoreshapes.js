@@ -397,8 +397,8 @@ function makeShape(parent, shape_name, offset = true) { // TODO optimize
 
     let shape_translation = new Translation(offset_x, offset_y);
 
-    shape.addTransform(shape_translation);
     shape.addTransform(new ScaleTransform(0.04, -0.04));
+    shape.addTransform(shape_translation);
 
     shape.translation = shape_translation;
 

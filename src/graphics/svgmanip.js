@@ -74,6 +74,7 @@ class SVGElement {
             });
 
             parent.children.push(this);
+            parent.sortZIndex();
         }
 
         this.id = utils.select(params.id, getID()); // id of element
@@ -90,6 +91,10 @@ class SVGElement {
             this.set("class", params.class);
 
         this.setPresentationAttributes(params);
+    }
+
+    hasChildren() {
+        return false;
     }
 
     get tag() {
@@ -457,6 +462,10 @@ class SVGElement {
                 }
             });
         }
+    }
+
+    clientRect() {
+        return this.element.getBoundingClientRect();
     }
 
     get z_index() {
@@ -1006,11 +1015,11 @@ class SVGGroup extends SVGElement {
         for (let i = 0; i < this.children.length; i++) {
             let child = this.children[i];
 
-            if (evalBefore && (!onlyLeaf || !child.traverseNodes))
+            if (evalBefore && (!onlyLeaf || !child.hasChildren()))
                 func(child, i);
             if (recursive && child.traverseNodes)
                 child.traverseNodes(func, evalBefore);
-            if (!evalBefore && (!onlyLeaf || !child.traverseNodes))
+            if (!evalBefore && (!onlyLeaf || !child.hasChildren()))
                 func(child, i);
         }
     }
@@ -1029,6 +1038,10 @@ class SVGGroup extends SVGElement {
             this.sortZIndex();
 
         return svgElement;
+    }
+
+    hasChildren() {
+        return !!this.children.length;
     }
 
     /*
@@ -1172,6 +1185,8 @@ class SVGGroup extends SVGElement {
 
     destroy() {
         this.checkDestroyed();
+        if (this._destroy)
+            this._destroy();
 
         for (let i = 0; i < this.children.length; i++) {
             this.children[i].destroy();
@@ -1431,7 +1446,7 @@ class SVGGroup extends SVGElement {
 }
 
 class SVGContext extends SVGGroup {
-    constructor(domElem) {
+    constructor(domElem, params = {}) {
         if (typeof domElem === "string") {
             domElem = document.getElementById(domElem);
         }
@@ -1442,7 +1457,7 @@ class SVGContext extends SVGGroup {
         if (domElem.tagName !== "svg")
             throw new Error("passed DOM element is not an SVG");
 
-        super(null, domElem);
+        super(null, domElem, params);
 
         this.context = this;
 
@@ -1457,12 +1472,12 @@ class SVGContext extends SVGGroup {
 
     get width() {
         this.checkDestroyed();
-        return parseInt(this.element.getAttributeNS(null, "width"));
+        return this.clientRect().width;
     }
 
     get height() {
         this.checkDestroyed();
-        return parseInt(this.element.getAttributeNS(null, "height"));
+        return this.clientRect().height;
     }
 
     set width(value) {
@@ -1687,7 +1702,7 @@ class Transformation extends ChildUpdater {
         let matrix = this.matrix;
         matrix.setIdentity();
 
-        for (let i = 0; i < this.transforms.length; i++) {
+        for (let i = this.transforms.length - 1; i >= 0; i--) {
             matrix.multiplyMatrix(this.transforms[i].matrix);
         }
 
