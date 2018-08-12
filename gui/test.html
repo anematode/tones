@@ -41,6 +41,10 @@
         <script>
             let synth = new Synth(document.getElementById('svg'))
             synth.build();
+            
+            function stop(event) {
+                event.preventDefault();
+            }
         </script>
         
         <script src="inst.js"></script>

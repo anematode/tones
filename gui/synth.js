@@ -58,8 +58,8 @@ class Synth {
         frame.appendChild(r2);
         frame.appendChild(t1);
         
-        svg.appendChild(container);
         svg.appendChild(frame);
+        svg.appendChild(container);
         
         this.addOsc(this.elements.osc1, 0, 0, 1, container);
         this.addOsc(this.elements.osc2, 0, 200, 2, container);

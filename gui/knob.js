@@ -16,6 +16,10 @@
             this.v = v;
             this.c = c;
             this.svg = svg;
+            this.parent = svg;
+            while (this.parent.tagName !== 'svg') {
+                this.parent = this.parent.parentNode;
+            }
             this.mod = [];
             this.sx = 0;
             this.sy = 0;
@@ -43,6 +47,7 @@
                 x: this.s * Math.cos(angle) / 2,
                 y: this.s * Math.sin(angle) / 2
             };
+            
             this.mod[0].style.opacity = this.v === 1 ? 1 : 0;
 
             this.mod[1].setAttribute('d', 'M ' + (this.cx + d.x) + ' ' + (this.cy + d.y) +
@@ -50,8 +55,6 @@
                                      ' 0 ' + (this.v > 0.5 ? 1 : 0) + ' 0 ' +
                                      this.cx + ' ' + (this.cy + this.s / 2) +
                                      ' L ' + this.cx + ' ' + this.cy);
-
-            this.mod[2].setAttribute('transform', 'rotate(' + (this.v * 360) + ' ' + this.cx + ' ' + this.cy + ')');
 
             this.change();
         }
@@ -86,7 +89,7 @@
 
                 document.onmousemove = function(event) {
                     if (event.clientX > 0 && event.clientY > 0) { 
-                        let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) / 4 + self.old;
+                        let result = 1000 * (self.sy - event.clientY) / (self.parent.clientWidth * self.s) / 4 + self.old;
 
                         result = result < 0 ? 0 : result > 1 ? 1 : result;
                         self.v = result;
@@ -142,7 +145,7 @@
 
                 document.onmousemove = function(event) {
                     if (event.clientX > 0 && event.clientY > 0) {
-                        let result = 1000 * (self.sy - event.clientY) / (self.svg.clientWidth * self.s) + self.old;
+                        let result = 1000 * (self.sy - event.clientY) / (self.parent.clientWidth * self.s) + self.old;
 
                         result = result < 0 ? 0 : result > 1 ? 1 : result;
                         self.v = result;
