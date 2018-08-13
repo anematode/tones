@@ -1,3 +1,5 @@
+import * as utils from "../utils.js";
+
 import {KeyboardPitch} from "./keyboardpitch.js";
 import {Pitch, Interval} from "./pitch.js";
 
@@ -9,7 +11,7 @@ class PitchMapping {
     }
 
     transform(keyboardPitch) {
-        return this.pitchMap(this.dict[this.kPitchMap(keyboardPitch.value)]);
+        return this.pitchMap(this.dict[this.kPitchMap(utils.select(keyboardPitch.value, keyboardPitch))]);
     }
 
     dictApply(func) {

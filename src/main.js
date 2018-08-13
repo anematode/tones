@@ -20,12 +20,15 @@ export * from "./audio/pitchedinstrument.js";
 export * from "./audio/filters.js";
 export * from "./audio/analyzers.js";
 export * from "./audio/node.js";
+export * from "./audio/nodewrappers.js";
+export * from "./audio/sampler.js";
 
 // Music
 
 export * from "./music/note.js";
 export * from "./music/notegroup.js";
 export * from "./music/time.js";
+export * from "./music/scheduler.js";
 
 // Graphics
 

@@ -15,7 +15,7 @@ let delay = new TONES.Delay({delay: 60/140 * 2/2, loss: 0.3});
 
 eq.connect(delay.entry);
 delay.connect(reverb);
-reverb.connect(TONES.masterEntryNode);
+reverb.connect(TONES.master);
 
 let tParams = {
     scale: TONES.Scales.ET12,
@@ -216,7 +216,7 @@ for (let i = 0; i < 13; i++) {
     }));
 }
 
-visualizers.forEach(x => TONES.masterEntryNode.connect(x.entry));
+visualizers.forEach(x => TONES.master.connect(x.entry));
 
 setTimeout(() => {
     visualizers.forEach(x => x.start());

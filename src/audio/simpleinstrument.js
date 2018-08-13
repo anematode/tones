@@ -172,14 +172,14 @@ class SimpleInstrument extends KeyboardInstrument {
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
         this.params.waveform = parameters.waveform || "square";
 
-        this.entries = [];
+        /*this.entries = [];
 
         for (let i = 0; i < 10; i++) {
             let entry = audio.Context.createGain();
             entry.connect(this.entryNode);
 
             this.entries.push(entry);
-        }
+        }*/
 
         this.createReleaseEnvelope = (gain_value) => {
             return new Envelope([new LinearEnvelopeSegment([0, gain_value], [this.params.release_length, 0])]);
@@ -187,7 +187,7 @@ class SimpleInstrument extends KeyboardInstrument {
     }
 
     _getEntry() {
-        return this.entries[~~(Math.random() * this.entries.length)];
+        return this.entryNode; //this.entries[~~(Math.random() * this.entries.length)];
     }
 
     createNode(frequency, start, end, vel, pan) {

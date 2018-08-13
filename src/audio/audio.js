@@ -129,11 +129,25 @@ function setTimeoutAbsoluteAudioCtx(func, audioCtxTime) {
     return new ContextTimeout(timingNode, audioCtxTime, func); // Returns a cancelable ContextTimeout object
 }
 
+/* Get an audio buffer from a URL */
+function getAudioBuffer(url, onerror = console.error) {
+    return new Promise((resolve, reject) => fetch(url).then((response) => {
+        if (response.status !== 200)
+            throw new Error("Status not 200");
+
+        response.arrayBuffer().then((buffer) => {
+            resolve(Context.decodeAudioData(buffer));
+        });
+    }).catch((error) => {
+        reject(error);
+    }));
+}
+
 export {
     Context,
-    masterEntryNode,
-    masterGainNode,
-    masterAnalyzerNode,
+    masterEntryNode as master,
+    masterGainNode as masterGain,
+    masterAnalyzerNode as masterAnalyzer,
     setMasterGain,
     mute as masterMute,
     unmute as masterUnmute,
@@ -143,7 +157,9 @@ export {
     setTimeoutAbsoluteAudioCtx as setTimeoutAbsolute,
     voidNode,
     ContextTimeout,
-    removeNodesTimeout
+    removeNodesTimeout,
+    getAudioBuffer,
+    contextTime as now
 }
 
 

@@ -55,7 +55,7 @@ class UnisonOscillator extends SourceNode {
 
         this.oscillators = [];
 
-        let peripheral = new LinearParameterTransform(blend_c, -1, 1);
+        let peripheral = blend_c.invert().add(1);
         let center = blend_c;
 
         for (let i = 0; i < unison; i++) {
@@ -70,12 +70,12 @@ class UnisonOscillator extends SourceNode {
 
             let range = (2 * i - unison + 1) / (2 * unison - 2);
 
-            let detune_multiplier = new ParameterConstantMultiply(det_c, range);
+            let detune_multiplier = det_c.multiply(range);
             detune_multiplier.connect(series.o.detune);
 
             freq_det_c.connect(series.o.detune);
 
-            let stereo_multiplier = new ParameterConstantMultiply(stereo_c, blendMapping(2 * range));
+            let stereo_multiplier = stereo_c.multiply(blendMapping(2 * range));
             stereo_multiplier.connect(series.p.pan);
 
             let blend_multiplier;
@@ -84,15 +84,15 @@ class UnisonOscillator extends SourceNode {
                 blend_multiplier = new ParameterValue(0.5);
             } else if (unison % 2 === 0) {
                 if (i === unison / 2 || i === unison / 2 - 1) {
-                    blend_multiplier = new ParameterConstantMultiply(center, 0.5);
+                    blend_multiplier = center.multiply(0.5);
                 } else {
-                    blend_multiplier = new ParameterConstantMultiply(peripheral, 1 / (unison - 2));
+                    blend_multiplier = peripheral.multiply(1 / (unison - 2));
                 }
             } else {
                 if (i === (unison - 1) / 2) {
                     blend_multiplier = center;
                 } else {
-                    blend_multiplier = new ParameterConstantMultiply(peripheral, 1 / (unison - 1));
+                    blend_multiplier = peripheral.multiply(1 / (unison - 1));
                 }
             }
 
