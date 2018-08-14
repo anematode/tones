@@ -189,13 +189,31 @@ ${BASS_1}
 ${BASS_1}
 ${BASS_1}
 ${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
+${BASS_1}
 `;
 
 let note_group = TONES.parseAbbreviatedGroup(strn);
 
 function playDDD() {
     instrument.cancelAll();
-    let time_context = new TONES.TimeContext(140, TONES.Context.currentTime + 0.3);
+    let time_context = new TONES.TimeContext(200, TONES.Context.currentTime + 0.3);
     note_group.schedule(instrument, time_context);
 }
 

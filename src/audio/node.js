@@ -342,7 +342,7 @@ function targetInterpolate(x1, y1, y2, time_constant, x) {
     if (x < x1)
         return y1;
     else
-        return y2 + (y2 - y1) * Math.exp(-(x - x1) / time_constant);
+        return y2 + (y1 - y2) * Math.exp(-(x - x1) / time_constant);
 }
 
 /*
@@ -357,6 +357,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
         p.cancelScheduledValues(0);
         p.value = 0;
 
+        this.entry.connect(this._param);
 
         this.type = type;
 
@@ -405,8 +406,17 @@ class Param extends EndingNode { // meant for an easier interface TODO
                 return expRampInterpolate(event.x1, event.y1, event.x2, event.y2, t);
             case "lin":
                 return linearRampInterpolate(event.x1, event.y1, event.x2, event.y2, t);
-            case "tar":
-                return targetInterpolate(event.x1, event.y1, event.y2, event.tc, t);
+            case "tar": {
+                let value;
+
+                if (index - 1 >= 0) {
+                    value = this.events[index - 1].y2;
+                } else {
+                    value = this._param.defaultValue;
+                }
+
+                return targetInterpolate(event.x1, value, event.y2, event.tc, t);
+            }
             case "cur":
                 return curveInterpolate(event.values, event.x1, event.x2);
             default:
@@ -417,6 +427,17 @@ class Param extends EndingNode { // meant for an easier interface TODO
     /* evt name: (none) */
     cancelScheduledValues(time = audio.Context.currentTime) {
         this._param.cancelScheduledValues(time);
+
+        let index = this._eventIndex(time);
+        let i = index;
+
+        for (; i < this.events.length; i++) {
+            if (this.events[i].x2 >= time) {
+                break;
+            }
+        }
+
+        this.events.splice(i, 1e9);
     }
 
     /* evt name: (none) */
@@ -479,30 +500,23 @@ class Param extends EndingNode { // meant for an easier interface TODO
         let index = this._eventIndex(x) + 1;
 
         if (index - 1 >= 0) {
-            let before = this.events[index - 1];
+            let event = this.events[index - 1];
 
-            switch (before.type) {
-                case "exp":
+            switch (event.type) {
                 case "lin":
-                    if (before.x2 >= x && before.x1 <= x) {
-                        before.x1 = x;
-                        before.y1 = value;
+                case "exp":
+                    if (event.x1 <= x && event.x2 >= x) {
+                        event.x1 = x;
+                        event.y1 = value;
+
                         index--;
                     }
                     break;
-            }
-        }
-
-        if (index < this.events.length) {
-            let after = this.events[index];
-
-            switch (after.type) {
-                case "exp":
-                case "lin":
-                    if (after.x2 >= x && after.x1 <= x) {
-                        after.x1 = x;
-                        after.y1 = value;
+                case "tar":
+                    if (event.x1 <= x && event.x2 >= x) {
+                        event.x2 = x;
                     }
+                    break;
             }
         }
 
@@ -515,8 +529,28 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
         this._param.setTargetAtTime(target, startTime, timeConstant);
 
-        this._insertEvent({type: "tar", x1: startTime, y2: target, tc: timeConstant});
+        let event = {type: "tar", x1: startTime, y1: this.value, x2: Infinity, y2: target, tc: timeConstant}
 
+        let index = this._eventIndex(startTime) + 1;
+
+        event.y1 = this.valueAt(startTime);
+
+        if (index < this.events.length) {
+            let after = this.events[index];
+
+            switch (after.type) {
+                case "exp":
+                case "lin":
+                    if (after.x1 >= startTime) {
+                        after.x1 = audio.Context.currentTime;
+                        after.y1 = this.value;
+                    }
+
+                    break;
+            }
+        }
+
+        this.events.splice(index, 0, event);
     }
 
     /* evt name: exp */
@@ -533,19 +567,35 @@ class Param extends EndingNode { // meant for an easier interface TODO
         if (index - 1 >= 0) {
             let before = this.events[index - 1];
 
-            event.x1 = before.x2;
-            event.y1 = before.y2;
-
-            /*switch (before.type) {
+            switch (before.type) {
+                case "set":
+                    if (before.x1 <= event.x2) {
+                        event.x1 = before.x2;
+                        event.y1 = before.y2;
+                    }
+                    break;
                 case "exp":
                 case "lin":
-                    if (before.x2 >= x && before.x1 <= x) {
+                    if (before.x2 <= event.x2) {
+                        event.x1 = before.x2;
+                        event.y1 = before.y2;
+                    } else if (event.x2 >= before.x1) {
+                        event.x1 = before.x1;
+                        event.y1 = before.y1;
+
                         before.x1 = x;
                         before.y1 = value;
                         index--;
                     }
                     break;
-            }*/
+                case "tar":
+                    console.log(before);
+                    event.x1 = audio.Context.currentTime;
+                    event.y1 = targetInterpolate(before.x1, before.y1, before.y2, before.tc, event.x1);
+
+                    before.x2 = before.x1; // basically make the setTarget impotent
+                    break;
+            }
         }
 
 
@@ -566,20 +616,32 @@ class Param extends EndingNode { // meant for an easier interface TODO
         if (index - 1 >= 0) {
             let before = this.events[index - 1];
 
-            switch (event.type) {
-                case "set":
-                    event.x1 = before.x2;
-                    event.y1 = before.y2;
-            }
-
             switch (before.type) {
+                case "set":
+                    if (before.x1 <= event.x2) {
+                        event.x1 = before.x2;
+                        event.y1 = before.y2;
+                    }
+                    break;
                 case "exp":
                 case "lin":
-                    if (before.x2 >= x && before.x1 <= x) {
+                    if (before.x2 <= event.x2) {
+                        event.x1 = before.x2;
+                        event.y1 = before.y2;
+                    } else if (event.x2 >= before.x1) {
+                        event.x1 = before.x1;
+                        event.y1 = before.y1;
+
                         before.x1 = x;
                         before.y1 = value;
                         index--;
                     }
+                    break;
+                case "tar":
+                    event.x1 = audio.Context.currentTime;
+                    event.y1 = targetInterpolate(before.x1, before.y1, before.y2, before.tc, event.x1);
+
+                    before.x2 = before.x1; // basically make the setTarget impotent
                     break;
             }
         }
@@ -587,10 +649,13 @@ class Param extends EndingNode { // meant for an easier interface TODO
         this.events.splice(index, 0, event);
     }
 
-    /* evt name: curve */
-
     setValueCurveAtTime(values, startTime, duration) {
+        let len = values.length;
 
+        for (let i = 0; i < len; i++) {
+            let t = (i / (len - 1)) * duration + startTime;
+            this.linearRampToValueAtTime(values[i], t);
+        }
     }
 }
 
