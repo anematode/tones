@@ -432,18 +432,29 @@ class Param extends EndingNode { // meant for an easier interface TODO
         let i = index;
 
         for (; i < this.events.length; i++) {
-            if (this.events[i].x2 >= time) {
+            if (this.events[i].time >= time) {
                 break;
             }
         }
 
         this.events.splice(i, 1e9);
+        return this;
     }
 
     /* evt name: (none) */
     cancelAndHoldAtTime(time = audio.Context.currentTime) {
         this._param.cancelAndHoldAtTime(time);
 
+        let index = this._eventIndex(time);
+        let event = this.events[index];
+
+        if (event.x1 <= time && event.x2 > time) {
+            switch (event.type) {
+
+            }
+        }
+
+        return this;
     }
 
     _eventIndex(time) {
@@ -494,7 +505,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
         this._param.setValueAtTime(value, startTime);
 
-        let event = {type: "set", x1: startTime, x2: startTime, y1: value, y2: value};
+        let event = {type: "set", x1: startTime, x2: startTime, y1: value, y2: value, time: startTime};
         let x = event.x1;
 
         let index = this._eventIndex(x) + 1;
@@ -521,6 +532,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
         }
 
         this.events.splice(index, 0, event);
+        return this;
     }
 
     /* evt name: tar */
@@ -529,7 +541,15 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
         this._param.setTargetAtTime(target, startTime, timeConstant);
 
-        let event = {type: "tar", x1: startTime, y1: this.value, x2: Infinity, y2: target, tc: timeConstant}
+        let event = {
+            type: "tar",
+            x1: startTime,
+            y1: this.value,
+            x2: Infinity,
+            y2: target,
+            tc: timeConstant,
+            time: startTime
+        };
 
         let index = this._eventIndex(startTime) + 1;
 
@@ -551,6 +571,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
         }
 
         this.events.splice(index, 0, event);
+        return this;
     }
 
     /* evt name: exp */
@@ -559,7 +580,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
         this._param.exponentialRampToValueAtTime(value, endTime);
 
-        let event = {type: "exp", x1: audio.Context.currentTime, x2: endTime, y1: this.value, y2: value};
+        let event = {type: "exp", x1: audio.Context.currentTime, x2: endTime, y1: this.value, y2: value, time: endTime};
         let x = endTime;
 
         let index = this._eventIndex(x) + 1;
@@ -600,6 +621,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
 
         this.events.splice(index, 0, event);
+        return this;
     }
 
     /* evt name: lin */
@@ -608,7 +630,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
 
         this._param.linearRampToValueAtTime(value, endTime);
 
-        let event = {type: "lin", x1: audio.Context.currentTime, x2: endTime, y1: this.value, y2: value};
+        let event = {type: "lin", x1: audio.Context.currentTime, x2: endTime, y1: this.value, y2: value, time: endTime};
         let x = endTime;
 
         let index = this._eventIndex(x) + 1;
@@ -647,6 +669,7 @@ class Param extends EndingNode { // meant for an easier interface TODO
         }
 
         this.events.splice(index, 0, event);
+        return this;
     }
 
     setValueCurveAtTime(values, startTime, duration) {
@@ -656,6 +679,8 @@ class Param extends EndingNode { // meant for an easier interface TODO
             let t = (i / (len - 1)) * duration + startTime;
             this.linearRampToValueAtTime(values[i], t);
         }
+
+        return this;
     }
 }
 

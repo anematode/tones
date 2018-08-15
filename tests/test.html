@@ -35,6 +35,8 @@
             <label for="sawtooth">Sawtooth</label>
             <input type="radio" id="triangle" name="waveform">
             <label for="triangle">Triangle</label>
+            <p>Harmonics</p>
+            <input type="text" id="harmonic_input" placeholder="2, 1, 1.5">
             <p>Temperament File (.scl):</p>
             <input type="file" id="scala_file_input" multiple>
             <p>Base Note:</p>
@@ -61,8 +63,7 @@
         </div>
 
         <div class="col">
-            <canvas width="200" height="700" id="vert1"></canvas>
-            <canvas width="400" height="80" id="canv1"></canvas>
+            <canvas width="800" height="200" id="canv"></canvas>
         </div>
 
         <svg width="800" height="700" id="svg1">

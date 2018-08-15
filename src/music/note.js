@@ -21,6 +21,7 @@ class Note {
 
         this.vel = (params.vel !== undefined) ? params.vel : 1;
         this.pan = (params.pan !== undefined) ? params.pan : 0;
+        this.params = params.params || {};
     }
 
     get end() {
@@ -63,7 +64,14 @@ class Note {
     }
 
     clone() {
-        return new Note({pitch: this.pitch, duration: this.duration, start: this.start, vel: this.vel, pan: this.pan});
+        return new Note({
+            pitch: this.pitch,
+            duration: this.duration,
+            start: this.start,
+            vel: this.vel,
+            pan: this.pan,
+            params: this.params
+        });
     }
 
     keyboardNote(timeContext) {
@@ -72,7 +80,8 @@ class Note {
             end: timeContext.beatToCtxTime(this.end),
             vel: this.vel,
             pan: this.pan,
-            pitch: this.pitch
+            pitch: this.pitch,
+            params: Object.assign({}, this.params)
         });
     }
 }

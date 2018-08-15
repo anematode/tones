@@ -57,7 +57,9 @@ class SimpleInstrumentNode extends SourceNode {
             parent._getEntry()
         ]);
 
-        tone.type = parent.waveform;
+        if (parent.waveform !== "custom")
+            tone.type = parent.waveform;
+
         tone.frequency.value = frequency;
         gain.gain.value = 0;
         vel.gain.value = velocity;
@@ -93,6 +95,10 @@ class SimpleInstrumentNode extends SourceNode {
                 this.destroy();
             }, (end - audio.Context.currentTime + parent.params.release_length) * 1000);
         }
+    }
+
+    setWave(wave) {
+        this.node.setWave(wave);
     }
 
     release() {
@@ -171,6 +177,7 @@ class SimpleInstrument extends KeyboardInstrument {
         this.params.release_length = (parameters.release_length === 0) ? 0 : (parameters.release_length || 0.1); // Decay (sec)
         this.params.attack_envelope = (parameters.attack_envelope || DefaultAttackEnvelope);
         this.params.waveform = parameters.waveform || "square";
+        this.params.waveform_wave = null; // TODO add a parameterizer for waveform wave
 
         /*this.entries = [];
 
@@ -191,7 +198,10 @@ class SimpleInstrument extends KeyboardInstrument {
     }
 
     createNode(frequency, start, end, vel, pan) {
-        return new SimpleInstrumentNode(this, ...arguments);
+        let node = new SimpleInstrumentNode(this, ...arguments);
+        if (this.params.waveform === "custom")
+            node.setWave(this.params.waveform_wave);
+        return node;
     }
 
     oscillatorApply(func) {
@@ -200,9 +210,26 @@ class SimpleInstrument extends KeyboardInstrument {
 
     set waveform(value) {
         this.params.waveform = value;
+        if (value !== "custom") {
             this.oscillatorApply(function (x) {
                 x.type = value;
             });
+        }
+    }
+
+    setWave(real, imag) {
+        if (utils.isArray(real))
+            real = new Float32Array(real);
+        if (utils.isArray(imag))
+            imag = new Float32Array(imag);
+
+        if (real.length !== imag.length)
+            throw new Error("Imaginary and real arrays must be of the same length");
+
+        this.params.waveform_wave = audio.Context.createPeriodicWave(real, imag);
+        this.waveform = "custom";
+
+        this.oscillatorApply(x => x.setWave(this.params.waveform_wave));
     }
 
     get waveform() {

@@ -182,4 +182,25 @@ function inStrictRange(x, min, max) {
     return (min < x) && (x < max);
 }
 
-export {equal, clamp, isNumeric, CancellableTimeout, isString, desmosPrint, getID, assert, compareObjects, select, time, isInteger, inRange, inStrictRange};
+function isTypedArray(arr) {
+    return ArrayBuffer.isView(arr) && (!(arr instanceof DataView));
+}
+
+export {
+    equal,
+    clamp,
+    isNumeric,
+    CancellableTimeout,
+    isString,
+    desmosPrint,
+    getID,
+    assert,
+    compareObjects,
+    select,
+    time,
+    isInteger,
+    inRange,
+    inStrictRange,
+    isArray,
+    isTypedArray
+};

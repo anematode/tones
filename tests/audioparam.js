@@ -2,25 +2,16 @@ let param = new TONES.TonesParam();
 let osc = new TONES.Osc();
 osc.connect(TONES.master);
 
-param.connect(osc.frequency);
+let real = new Float32Array([0, 1, 0.5, 0, 0.4, 0.7]);
+let imag = new Float32Array([0, 0, 0, 0, 0, 0]);
 
-param.value.setValueAtTime(10, TONES.now() + 1);
-param.value.setValueAtTime(50, TONES.now() + 2);
-param.value.setTargetAtTime(-50, TONES.now() + 8, 1);
-console.log(JSON.stringify(param.value.events));
-param.value.exponentialRampToValueAtTime(1000, TONES.now() + 5);
-console.log(JSON.stringify(param.value.events));
-param.value.setValueAtTime(200, TONES.now() + 3);
-console.log(JSON.stringify(param.value.events));
-param.value.linearRampToValueAtTime(220, TONES.now() + 3.1);
-console.log(JSON.stringify(param.value.events));
-param.value.linearRampToValueAtTime(230, TONES.now() + 3.2);
-console.log(JSON.stringify(param.value.events));
-param.value.linearRampToValueAtTime(170, TONES.now() + 3.3);
-console.log(JSON.stringify(param.value.events));
-param.value.linearRampToValueAtTime(170, TONES.now() + 4.95);
-console.log(JSON.stringify(param.value.events));
-param.value.linearRampToValueAtTime(170, TONES.now() + 3.25);
+param.connect(osc.frequency);
+osc.setWave(TONES.Context.createPeriodicWave(real, imag));
+
+let now = TONES.now();
+
+param.value.linearRampToValueAtTime(-50, now + 20);
+
 
 osc.start();
 

@@ -121,6 +121,12 @@ class UnisonOscillator extends SourceNode {
         }
     }
 
+    setWave(wave) {
+        for (let i = 0; i < this.unison; i++) {
+            this.oscillators[i].o.setPeriodicWave(wave);
+        }
+    }
+
     start(time = audio.Context.currentTime) {
         let len = this.oscillators.length;
         for (let i = 0; i < len; i++) {
